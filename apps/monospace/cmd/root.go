@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"monospace/monospace/cmd/colors"
-	"monospace/monospace/cmd/utils"
+	"monospace/monospace/colors"
+	"monospace/monospace/utils"
 )
 
 var ColorOutput bool

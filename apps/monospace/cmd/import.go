@@ -8,8 +8,8 @@ package cmd
 
 import (
 	"fmt"
-	"monospace/monospace/cmd/colors"
-	"monospace/monospace/cmd/utils"
+	"monospace/monospace/colors"
+	"monospace/monospace/utils"
 
 	"github.com/spf13/cobra"
 )

@@ -9,8 +9,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"monospace/monospace/cmd/colors"
-	"monospace/monospace/cmd/utils"
+	"monospace/monospace/colors"
+	"monospace/monospace/utils"
 
 	"github.com/spf13/cobra"
 )

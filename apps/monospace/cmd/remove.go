@@ -7,7 +7,7 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package cmd
 
 import (
-	"monospace/monospace/cmd/utils"
+	"monospace/monospace/utils"
 
 	"github.com/spf13/cobra"
 )

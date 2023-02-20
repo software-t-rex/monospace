@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"monospace/monospace/cmd/colors"
 	"os"
 )
 
@@ -15,7 +14,7 @@ func Exit(errorMsg string) {
 
 func PrintError(err error) {
 	if err != nil {
-		fmt.Fprintln(os.Stderr, colors.EmphasedError("Error:"), colors.Error(err.Error()))
+		fmt.Fprintln(os.Stderr, EmphasedError("Error:"), ErrorStyle(err.Error()))
 	}
 }
 
@@ -27,7 +26,7 @@ func CheckErr(err error) {
 }
 func CheckErrWithMsg(err error, msg string) {
 	if err != nil {
-		fmt.Fprintln(os.Stderr, colors.Error(msg))
+		fmt.Fprintln(os.Stderr, ErrorStyle(msg))
 		CheckErr(err)
 	}
 }

@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"monospace/monospace/cmd/colors"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -28,21 +27,6 @@ func (p ProjectKind) EnumIndex() int {
 	return int(p)
 }
 
-// const ProjectKind = Struct{
-// 	local: KIND_LOCAL,
-// 	internal: KIND_INTERNAL,
-// 	external: KIND_EXTERNAL
-// }
-
-// func (p ProjectKind) Valid() bool {
-// 	switch p {
-// 	case "internal", "external", "local":
-// 		return true
-// 	default:
-// 		return false
-// 	}
-// }
-
 type Project struct {
 	// Name is relative path of the project in the monospace
 	Name string
@@ -53,9 +37,9 @@ type Project struct {
 }
 
 var styles = map[ProjectKind](func(s string) string){
-	Internal: colors.Style(colors.Green),
-	External: colors.Style(colors.Blue),
-	Local:    colors.Style(colors.Red),
+	Internal: Green,
+	External: Blue,
+	Local:    Red,
 }
 
 func (p Project) StyledString() string {
@@ -215,7 +199,7 @@ func ProjectCreate(projectName string, repoUrl string, skipPmTasks bool) {
 		CheckErr(MonospaceCloneRepo(project.Name, project.RepoUrl))
 	}
 
-	fmt.Println(colors.Success("project successfully added to your monospace"))
+	fmt.Println(Success("project successfully added to your monospace"))
 }
 
 /* exit on error */
@@ -230,7 +214,7 @@ func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 	CheckErr(err)
 
 	rootDir := MonospaceGetRoot()
-	printSuccess := func() { fmt.Println(colors.Success("Project " + projectName + " successfully removed")) }
+	printSuccess := func() { fmt.Println(Success("Project " + projectName + " successfully removed")) }
 
 	if project.Kind != Internal {
 		fmt.Println("Remove from gitignore")
