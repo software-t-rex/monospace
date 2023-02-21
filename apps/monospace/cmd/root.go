@@ -7,28 +7,37 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package cmd
 
 import (
+	"errors"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"monospace/monospace/colors"
+	"monospace/colors"
 	"monospace/monospace/utils"
 )
 
 var ColorOutput bool
 var DisableColorOutput bool
+var configFound bool
+
+func CheckConfigFound() bool {
+	if !configFound {
+		utils.CheckErr(errors.New(".monospace.yml not found in path"))
+	}
+	return true
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Version: "0.0.1",
 	Use:     "monospace",
 	Short:   "monospace is not monorepo",
-	Long: colors.Style(colors.BrightBlue)(`
+	Long: utils.BrightBlue(`
    _    __     ___   _  _    ___   ____ _ _     __ _   ___  ___
-`) + colors.Style(colors.Green)(`  | '_ ' _ \  / _ \ | '_ \  / _ \ / __|| '_ \  / _' | / __|/ _ \
-`) + colors.Style(colors.Yellow)(`  | | | | | || (_) || | | || (_) |\__ \| |_) || (_| || (__|  __/
-`) + colors.Style(colors.Red)(`  |_| |_| |_| \___/ |_| |_| \___/ |___/| .__/  \__,_| \___|\___|
+`) + utils.Green(`  | '_ ' _ \  / _ \ | '_ \  / _ \ / __|| '_ \  / _' | / __|/ _ \
+`) + utils.Yellow(`  | | | | | || (_) || | | || (_) |\__ \| |_) || (_| || (__|  __/
+`) + utils.Red(`  |_| |_| |_| \___/ |_| |_| \___/ |___/| .__/  \__,_| \___|\___|
                                        | |
                                        |_|
 `) + `
@@ -76,6 +85,9 @@ func initConfig() {
 	viper.SetDefault("js_package_manager", "^pnpm@7.27.0")
 	// viper.AutomaticEnv() // read in environment variables that match
 	// If a config file is found, read it in.
-	utils.CheckErr(viper.ReadInConfig())
+	err := viper.ReadInConfig()
+	if err == nil {
+		configFound = true
+	}
 	colors.Toggle(!DisableColorOutput)
 }

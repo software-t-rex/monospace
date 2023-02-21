@@ -2,10 +2,12 @@ package utils
 
 import (
 	"errors"
+	"fmt"
+	"monospace/parallel"
 	"os"
 	"path/filepath"
+	"strings"
 
-	git "github.com/go-git/go-git/v5"
 	"github.com/spf13/viper"
 )
 
@@ -23,7 +25,8 @@ func MonospaceGetRoot() string {
 	CheckErr(err)
 
 	for path != "" && path != "." {
-		if FileExists(filepath.Join(path, "/", DfltcfgFileName)) {
+		configExists, _ := FileExists(filepath.Join(path, "/", DfltcfgFileName))
+		if configExists {
 			foundConfigDir = true
 			break
 		}
@@ -69,23 +72,57 @@ func MonospaceAddProjectToGitignore(projectName string) error {
 	return FileAppend(filepath.Join(MonospaceGetRoot(), "/.gitignore"), projectName)
 }
 
-func MonospaceCloneRepo(projectName string, repoUrl string) (err error) {
-	err = MonospaceAddProjectToGitignore(projectName)
-	if err == nil {
-		projectPath := filepath.Join(MonospaceGetRoot(), "/", projectName)
-		_, err = git.PlainClone(projectPath, false, &git.CloneOptions{
-			URL:      repoUrl,
-			Progress: os.Stdout,
-		})
+/* exit on error */
+func MonospaceClone(destDirectory string, repoUrl string) {
+	if CheckErrOrReturn(FileExists(destDirectory)) {
+		PrintError(errors.New("path already exists"))
+		os.Exit(1)
 	}
-	return
+	fmt.Println("Cloning root repository...")
+	err := GitClone(repoUrl, destDirectory)
+	CheckErr(err)
+	fmt.Println(Green("Cloning done."))
+	// move to the monorepo root
+	monospaceRoot = destDirectory
+	os.Chdir(destDirectory)
+	// read the config file
+	if CheckErrOrReturn(FileExists(DfltcfgFileName)) {
+		// proceed to clone external projects
+		configParser := viper.New()
+		configParser.SetConfigFile(DfltcfgFileName)
+		CheckErr(configParser.ReadInConfig())
+		projects := ProjectsAsStructs(configParser.GetStringMapString("projects"))
+		externals := Filter(projects, func(p Project) bool { return p.Kind == External })
+		var cmds [][]string
+		for _, project := range externals {
+			cmds = append(cmds, []string{"git", "clone", project.RepoUrl, project.Name})
+		}
+		fmt.Println("Cloning externals projects...")
+		errs := MapAndFilter(
+			parallel.Exec(cmds...),
+			func(val error) (string, bool) {
+				if val == nil {
+					return "", false
+				}
+				return val.Error(), true
+			},
+		)
+		fmt.Println(Green("Cloning done."))
+		if len(errs) > 0 {
+			fmt.Println(Red("Terminated with errors" + strings.Join(errs, "\n")))
+		} else {
+			fmt.Println(Green("Terminated with success"))
+		}
+
+	}
+
 }
 
 func MonospaceInitRepo(projectName string) (err error) {
 	err = MonospaceAddProjectToGitignore(projectName)
 	if err == nil {
 		projectPath := filepath.Join(MonospaceGetRoot(), "/", projectName)
-		_, err = git.PlainInit(projectPath, false)
+		err = GitInit(projectPath)
 	}
 	return
 }

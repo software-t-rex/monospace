@@ -7,15 +7,17 @@ import (
 	"os"
 )
 
-func Exit(errorMsg string) {
-	PrintError(errors.New(errorMsg))
-	os.Exit(1)
-}
-
 func PrintError(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, EmphasedError("Error:"), ErrorStyle(err.Error()))
 	}
+}
+
+func Exit(errorMsg string) {
+	if errorMsg != "" {
+		PrintError(errors.New(errorMsg))
+	}
+	os.Exit(1)
 }
 
 func CheckErr(err error) {
@@ -24,6 +26,12 @@ func CheckErr(err error) {
 		os.Exit(1)
 	}
 }
+
+func CheckErrOrReturn[T any](value T, err error) T {
+	CheckErr(err)
+	return value
+}
+
 func CheckErrWithMsg(err error, msg string) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, ErrorStyle(msg))

@@ -6,9 +6,26 @@ import (
 	"strings"
 )
 
-func FileExists(filePath string) bool {
+func IsDir(path string) (bool, error) {
+	stat, err := os.Stat(path)
+	if err == nil {
+		return stat.IsDir(), nil
+	}
+	// not exists is not an error in this context
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func FileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
-	return !os.IsNotExist(err)
+	if err == nil {
+		return true, err
+	} else if os.IsNotExist(err) { // not exists is not an error in this context
+		return false, nil
+	}
+	return false, err
 }
 
 func WriteFile(filePath string, body string) error {

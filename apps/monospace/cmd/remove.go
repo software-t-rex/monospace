@@ -35,6 +35,7 @@ ProjectName is relative path of project from the root of the monospace.
 		return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveNoFileComp
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		CheckConfigFound()
 		utils.ProjectRemove(args[0], true, !removeRmDir)
 	},
 }

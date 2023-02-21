@@ -9,7 +9,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"monospace/monospace/colors"
+	"monospace/colors"
 	"monospace/monospace/utils"
 
 	"github.com/spf13/cobra"
@@ -22,7 +22,7 @@ var italic = colors.Style(colors.Italic)
 // createCmd represents the create command
 var createCmd = &cobra.Command{
 	Use:   "create internal|local projectName",
-	Short: "Create a new project",
+	Short: "Create a new internal or local project",
 	Long: `Create a 'local' or 'internal' project:
 
 ` + underline("First argument:") + bold(" MUST") + ` be 'internal' or 'local':
@@ -59,6 +59,7 @@ you should look at the ` + italic("monospace import") + ` command instead
 		return []string{"local", "internal"}, cobra.ShellCompDirectiveNoFileComp
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		CheckConfigFound()
 		utils.ProjectCreate(args[1], args[0], false)
 	},
 }

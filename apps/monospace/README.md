@@ -24,7 +24,7 @@ monospace aim to provide you with the best possible subset of this too worlds:
 ## Why this name ?
 Nothing really fancy here, but a monorepository is compound of workspaces, so contracting this led to monospace, which is the word in french for family minivan vehicules. I found it being sufficiently expressive about the nature of the project and funny enough for me to like it, so yeah "monospace" :)
 
-# How does it work ?
+## How does it work ?
 The idea, while not new is inspired by meta-repository which is a javascript project, monospace main difference is it's written in go and should work with different package managers out of the box. By speaking of package manager, you will understand that monospace as many monorepository tools is mainly targeted for javascript/typescript projects. But there's no restriction on using it for other kind of projects, as monospace is a go project that is developped under a monospace.
 Only some commands maybe specificly made for js ecosystem.
 
@@ -36,7 +36,12 @@ But in monospace terms there is three kind of projects:
 - external: are projects that has their own repositories inside the monospace repository. They are gitignored by the monospace repository, and so they manage their own history.
 - local: this is exactly the same as externdal projects but without a configured remote repository, and so they are not published anywhere, but their name is reserved in the global monospace so the name won't be taken by another developper accidentally. This case can be used by a new library project you have not shared yet with the rest of the organisation.
 
-# Some Default opinionated choices:
+## requirements
+- git command should be available in your Path
+- js package manager defined in your config should also be available in your path
+	(can be omit if you don't plan to work on javascript projects)
+
+## Some Default opinionated choices:
 When initializing a new monospace it will declare some workspaces to your package manager:
 - apps/* for applications
 - packages/* for libraries
@@ -56,15 +61,8 @@ monospace .npmrc will contains the following default setttings
 
 If you think that this is not a good default feel free to contact me and explain why you think we should use other defaults. I'm always prone to change my mind about such decisisons when there's good reasons to do so.
 
-# Contributing
+## Contributing
 monospace is open source software under the MIT license, and by contributing to it you accepts to release your code under the same License. Contributions are always welcomed and will be reviewed in the shortest amount of time as possible. If you decide to contribute, please make small organized commits that adress one thing at a time, it will make it easier for me to review and accept your contribution.
 
-# Funding
+## Funding
 This project is free software, but to live it needs time, and to get time you needs money. So if this project is of any help to you and/or you want to make it evolve quicker, you can make a donation through => or sponsor the project.
-
-
-
-
-
-
-

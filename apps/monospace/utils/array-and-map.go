@@ -23,11 +23,12 @@ func Filter[T any](array []T, predicate func(T) bool) (res []T) {
 	return
 }
 
-func Map[T any, V any, Mapper func(T) V](array []T, mapper Mapper) (res []V) {
-	for _, val := range array {
-		res = append(res, mapper(val))
+func Map[T any, V any, Mapper func(T) V](array []T, mapper Mapper) []V {
+	res := make([]V, len(array))
+	for key, val := range array {
+		res[key] = mapper(val)
 	}
-	return
+	return res
 }
 
 func MapAndFilter[T any, V any, Mapper func(T) (V, bool)](array []T, mapper Mapper) (res []V) {

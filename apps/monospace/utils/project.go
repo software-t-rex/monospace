@@ -81,8 +81,7 @@ func ProjectsGetAllNameOnly() (res []string) {
 	return
 }
 
-func ProjectsGetAll() []Project {
-	projectsMap := getCachedProjectsMap()
+func ProjectsAsStructs(projectsMap map[string]string) []Project {
 	var res []Project
 	for name, repo := range projectsMap {
 		res = append(res, ProjectAsStruct(name, repo))
@@ -91,6 +90,10 @@ func ProjectsGetAll() []Project {
 		return res[i].Name < res[j].Name
 	})
 	return res
+}
+
+func ProjectsGetAll() []Project {
+	return ProjectsAsStructs(getCachedProjectsMap())
 }
 
 /* return all project names declared in the .monospace.yml that match the given prefix */
@@ -185,21 +188,33 @@ func ProjectCreate(projectName string, repoUrl string, skipPmTasks bool) {
 
 	// move to new package directory
 	CheckErr(ProjectChdir(project.Name))
-	if !skipPM {
+	if !skipPM && project.Kind != External {
 		fmt.Println("Initialize package manager")
 		CheckErr(PMinit())
 	}
 	if project.Kind == Local {
 		fmt.Println("Initialize local repository")
 		CheckErr(MonospaceInitRepo(project.Name))
+		fmt.Println("Add default .gitignore")
 		CheckErr(WriteTemplateGitinore("./"))
 	} else if project.Kind == Internal {
+		fmt.Println("Add default .gitignore")
 		CheckErr(WriteTemplateGitinore("./"))
 	} else if project.Kind == External {
-		CheckErr(MonospaceCloneRepo(project.Name, project.RepoUrl))
+		fmt.Println("Clone repository")
+		CheckErr(ProjectCloneRepo(project.Name, project.RepoUrl))
 	}
 
 	fmt.Println(Success("project successfully added to your monospace"))
+}
+
+func ProjectCloneRepo(projectName string, repoUrl string) (err error) {
+	err = MonospaceAddProjectToGitignore(projectName)
+	if err == nil {
+		projectPath := filepath.Join(MonospaceGetRoot(), "/", projectName)
+		err = GitClone(repoUrl, projectPath)
+	}
+	return
 }
 
 /* exit on error */

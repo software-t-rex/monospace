@@ -8,7 +8,7 @@ package cmd
 
 import (
 	"fmt"
-	"monospace/monospace/colors"
+	"monospace/colors"
 	"monospace/monospace/utils"
 
 	"github.com/spf13/cobra"
@@ -17,8 +17,8 @@ import (
 // importCmd represents the import command
 var importCmd = &cobra.Command{
 	Use:   "import projectName repoUrl",
-	Short: "Import an external repository in the monospace",
-	Long: `Import an 'external' repository in the monospace:
+	Short: "Import an external project repository",
+	Long: `Import an 'external' project repository:
 
 Import behave like the create command but instead of creating a new project,
 it will clone a remote 'external' repository into the current monospace.
@@ -41,6 +41,7 @@ example: monospace import packages/fancylib git@github.com:username/fancylib.git
 		return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveDefault
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		CheckConfigFound()
 		utils.ProjectCreate(args[0], args[1], false)
 	},
 }

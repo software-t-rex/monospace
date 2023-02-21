@@ -1,6 +1,6 @@
 package utils
 
-import "monospace/monospace/colors"
+import "monospace/colors"
 
 var ErrorStyle = colors.Error
 var EmphasedError = colors.EmphasedError
@@ -14,3 +14,5 @@ var Italic = colors.Style(colors.Italic)
 var Red = colors.Style(colors.Red)
 var Green = colors.Style(colors.Green)
 var Blue = colors.Style(colors.Blue)
+var Yellow = colors.Style(colors.Yellow)
+var BrightBlue = colors.Style(colors.BrightBlue)
