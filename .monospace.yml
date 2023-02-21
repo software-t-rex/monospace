@@ -1,3 +1,6 @@
 js_package_manager: ^pnpm@7.27.0
 projects:
     apps/monospace: internal
+    apps/test-go: local
+    gomodules/colors: internal
+    gomodules/parralel: internal
