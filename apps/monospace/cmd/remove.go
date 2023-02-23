@@ -12,8 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var removeRmDir = false
-
 // removeCmd represents the remove command
 var removeCmd = &cobra.Command{
 	Use:   "remove projectName",
@@ -36,13 +34,13 @@ ProjectName is relative path of project from the root of the monospace.
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound()
-		utils.ProjectRemove(args[0], true, !removeRmDir)
+		utils.ProjectRemove(args[0], true, !flagRemoveRmDir)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(removeCmd)
-	removeCmd.Flags().BoolVarP(&removeRmDir, "rmdir", "r", false, "Remove the project directory without confirm")
+	removeCmd.Flags().BoolVarP(&flagRemoveRmDir, "rmdir", "r", false, "Remove the project directory without confirm")
 	// Here you will define your flags and configuration settings.
 
 	// Here you will define your flags and configuration settings.

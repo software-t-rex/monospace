@@ -41,6 +41,15 @@ func MapAndFilter[T any, V any, Mapper func(T) (V, bool)](array []T, mapper Mapp
 	return
 }
 
+func Contains[T string | int](slice []T, search T) bool {
+	for _, val := range slice {
+		if val == search {
+			return true
+		}
+	}
+	return false
+}
+
 func PrefixPredicate(prefix string) func(string) bool {
 	return func(s string) bool {
 		return strings.HasPrefix(s, prefix)

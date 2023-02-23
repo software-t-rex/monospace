@@ -12,6 +12,11 @@ func PrintError(err error) {
 		fmt.Fprintln(os.Stderr, EmphasedError("Error:"), ErrorStyle(err.Error()))
 	}
 }
+func PrintWarning(warning string) {
+	if warning != "" {
+		fmt.Fprintln(os.Stderr, EmphasedWarning("Warning:"), Warning(warning))
+	}
+}
 
 func Exit(errorMsg string) {
 	if errorMsg != "" {

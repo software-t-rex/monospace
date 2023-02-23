@@ -17,10 +17,17 @@ import (
 	"monospace/monospace/utils"
 )
 
-var ColorOutput bool
-var DisableColorOutput bool
+var AppVersion = "0.0.1"
+
+// flags for the application
+var flagRootDisableColorOutput bool
+var flagRemoveRmDir bool
+var flagLsLongFormat bool
+var flagCreatePType string
+
 var configFound bool
 
+// command that require the config must call this method before continuing execution
 func CheckConfigFound() bool {
 	if !configFound {
 		utils.CheckErr(errors.New(".monospace.yml not found in path"))
@@ -30,7 +37,7 @@ func CheckConfigFound() bool {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Version: "0.0.1",
+	Version: AppVersion,
 	Use:     "monospace",
 	Short:   "monospace is not monorepo",
 	Long: utils.BrightBlue(`
@@ -67,7 +74,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().BoolVarP(&DisableColorOutput, "no-color", "C", false, "Disable color output mode (you can also use env var NO_COLOR)")
+	rootCmd.PersistentFlags().BoolVarP(&flagRootDisableColorOutput, "no-color", "C", false, "Disable color output mode (you can also use env var NO_COLOR)")
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -89,5 +96,5 @@ func initConfig() {
 	if err == nil {
 		configFound = true
 	}
-	colors.Toggle(!DisableColorOutput)
+	colors.Toggle(!flagRootDisableColorOutput)
 }

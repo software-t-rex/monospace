@@ -33,7 +33,10 @@ var createCmd = &cobra.Command{
 ` + underline("Second argument:") + ` 'ProjectName' is the relative path to the project from the root
 of the monospace repository. Example for a new application: apps/my-new-app
 
-` + underline("Example:") + italic(" monospace create local apps/my-new-app") + `
+` + underline("Example:") + `
+` + italic(" monospace create local apps/my-new-app") + `
+` + italic(" monospace create local apps/my-new-js-app --type=js") + `
+` + italic(" monospace create local gomodules/my-go-module -t go") + `
 
 If you want to ` + bold(`import`) + ` an existing ` + bold("'external'") + ` git repository into the monospace
 you should look at the ` + italic("monospace import") + ` command instead
@@ -66,6 +69,7 @@ you should look at the ` + italic("monospace import") + ` command instead
 
 func init() {
 	rootCmd.AddCommand(createCmd)
+	createCmd.Flags().StringVarP(&flagCreatePType, "type", "t", "", "type of project to create for now only 'go' and 'js' are supported")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command

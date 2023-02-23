@@ -78,10 +78,10 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 		PrintError(errors.New("path already exists"))
 		os.Exit(1)
 	}
-	fmt.Println("Cloning root repository...")
+	fmt.Println(Info("Cloning root repository..."))
 	err := GitClone(repoUrl, destDirectory)
 	CheckErr(err)
-	fmt.Println(Green("Cloning done."))
+	fmt.Println(Success("Cloning done."))
 	// move to the monorepo root
 	monospaceRoot = destDirectory
 	os.Chdir(destDirectory)
@@ -97,9 +97,9 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 		for _, project := range externals {
 			cmds = append(cmds, []string{"git", "clone", project.RepoUrl, project.Name})
 		}
-		fmt.Println("Cloning externals projects...")
+		fmt.Println(Info("Cloning externals projects..."))
 		errs := MapAndFilter(
-			parallel.Exec(cmds...),
+			parallel.ExecCmds(cmds...),
 			func(val error) (string, bool) {
 				if val == nil {
 					return "", false
@@ -107,11 +107,11 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 				return val.Error(), true
 			},
 		)
-		fmt.Println(Green("Cloning done."))
+		fmt.Println(Success("Cloning done."))
 		if len(errs) > 0 {
-			fmt.Println(Red("Terminated with errors" + strings.Join(errs, "\n")))
+			fmt.Println(ErrorStyle("Terminated with errors" + strings.Join(errs, "\n")))
 		} else {
-			fmt.Println(Green("Terminated with success"))
+			fmt.Println(Success("Terminated with success"))
 		}
 
 	}
