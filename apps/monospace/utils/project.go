@@ -36,7 +36,7 @@ type Project struct {
 	Kind ProjectKind
 }
 
-var styles = map[ProjectKind](func(s string) string){
+var styles = map[ProjectKind](func(s ...string) string){
 	Internal: Green,
 	External: Blue,
 	Local:    Red,

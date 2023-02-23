@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 )
 
 type style string
@@ -100,19 +101,19 @@ func init() {
 // The returned function will return an unstyled string if colors.Toggle(false)
 // have been called (or set to false on init by the env var NO_COLOR)
 // Sample usage: colors.Style(colors.Red, colors.Bold)("This will be red and bold.")
-func Style(styles ...style) func(s string) string {
+func Style(styles ...style) func(s ...string) string {
 	if !canColor {
-		return func(s string) string { return s }
+		return func(s ...string) string { return strings.Join(s, " ") }
 	}
 	styleString := ""
 	for _, style := range styles {
 		styleString = styleString + string(style)
 	}
-	return func(s string) string {
+	return func(s ...string) string {
 		if enabled {
-			return styleString + s + string(Reset)
+			return styleString + strings.Join(s, " ") + string(Reset)
 		}
-		return s
+		return strings.Join(s, " ")
 	}
 }
 
