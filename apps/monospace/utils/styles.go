@@ -6,6 +6,10 @@ var ErrorStyle = colors.Error
 var EmphasedError = colors.EmphasedError
 var Success = colors.Success
 var EmphasedSuccess = colors.EmphasedSuccess
+var Info = colors.Info
+var EmphasedInfo = colors.EmphasedInfo
+var Warning = colors.Warning
+var EmphasedWarning = colors.EmphasedWarning
 
 var Underline = colors.Style(colors.Underline)
 var Bold = colors.Style(colors.Bold)
