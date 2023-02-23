@@ -6,7 +6,6 @@ import (
 	"monospace/parallel"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -93,29 +92,23 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 		CheckErr(configParser.ReadInConfig())
 		projects := ProjectsAsStructs(configParser.GetStringMapString("projects"))
 		externals := Filter(projects, func(p Project) bool { return p.Kind == External })
-		var cmds [][]string
-		for _, project := range externals {
-			cmds = append(cmds, []string{"git", "clone", project.RepoUrl, project.Name})
+		if len(externals) == 0 {
+			fmt.Println(Success("Terminated with success"))
+			return
 		}
 		fmt.Println(Info("Cloning externals projects..."))
-		errs := MapAndFilter(
-			parallel.ExecCmds(cmds...),
-			func(val error) (string, bool) {
-				if val == nil {
-					return "", false
-				}
-				return val.Error(), true
-			},
-		)
+		jobPool := parallel.NewExecutor().WithProgressOutput()
+		for _, project := range externals {
+			jobPool.AddJobCmd("git", "clone", project.RepoUrl, project.Name)
+		}
+		errs := jobPool.Execute()
 		fmt.Println(Success("Cloning done."))
 		if len(errs) > 0 {
-			fmt.Println(ErrorStyle("Terminated with errors" + strings.Join(errs, "\n")))
+			fmt.Println(ErrorStyle("Terminated with errors" + errs.String()))
 		} else {
 			fmt.Println(Success("Terminated with success"))
 		}
-
 	}
-
 }
 
 func MonospaceInitRepo(projectName string) (err error) {
