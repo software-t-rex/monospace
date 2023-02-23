@@ -1,0 +1,257 @@
+package parallel
+
+import (
+	"fmt"
+	"html/template"
+	"os/exec"
+	"strings"
+)
+
+type jobEventHandler func(cps JobList, jobId int)
+type jobsEventHandler func(cps JobList)
+type JobPool struct {
+	jobs JobList
+	opts *ExecuteOptions
+}
+type JobError struct {
+	Id            int
+	OriginalError error
+}
+
+func NewJobError(jobId int, err error) JobError {
+	jobErr := JobError{Id: jobId, OriginalError: err}
+	return jobErr
+}
+func (e *JobError) Error() string {
+	return e.OriginalError.Error()
+}
+func (e *JobError) String() string {
+	return e.OriginalError.Error()
+}
+
+type JobsError map[int]JobError
+
+func (e JobsError) Error() string {
+	return e.String()
+}
+func (es JobsError) String() string {
+	strs := make([]string, len(es))
+	for i, err := range es {
+		strs[i] = err.Error()
+	}
+	return strings.Join(strs, "\n")
+}
+
+var parallelTemplate *template.Template
+var dfltTemplateString = `
+{{/* helper for job status */}}
+{{define "jobStateIndicator"}}{{
+	if .IsState 1
+}}🏃 running {{
+	else if .IsState 4
+}}👍 Success {{
+	else if .IsState 8
+}}💥 Error   {{
+	else
+}}⏳ pending {{end}}{{end}}
+
+{{/* return a single job status line*/}}
+{{define "jobStatusLine"}}
+{{- template "jobStateIndicator" .}} {{.Name}}
+{{end}}
+
+{{/* return a single job status + outputs */}}
+{{define "jobStatusFull"}}
+{{- template "jobStateIndicator" .}} {{.Name}}:{{if .Err}} {{.Err}}{{end}}
+{{if .Res}}{{.Res| trim | indent 2}}{{end}}
+{{end}}
+
+{{define "jobsStart"}}
+{{- .Name}} added to queue
+{{end}}
+
+{{define "jobStart"}}starting {{- template "command"}}{{end}}
+
+{{/* render summary for JobList */}}
+{{define "startSummary"}}Starting {{len .}} job{{if gt (len .) 1}}s{{end}}:
+{{range .}}  - {{.Name}}
+{{end}}{{end}}
+
+{{/* render Start for JobList */}}
+{{define "startProgressReport"}}Starting {{len .}} job{{if gt (len .) 1}}s{{end}}:
+{{range .}}{{template "jobStatusLine" .}}{{end -}}
+{{end}}
+
+{{/* render ordered Status for JobList */}}
+{{define "progressReport"}}
+{{- range .}}{{template "jobStatusLine" .}}{{end -}}
+{{end}}
+
+{{/* render ordered Status for JobList */}}
+{{define "doneReport"}}{{len .}} job{{if gt (len .) 1}}s{{end}} terminated:
+{{range .}}{{template "jobStatusFull" . }}{{end -}}
+{{end}}
+`
+
+func init() {
+	SetTemplateString(dfltTemplateString)
+}
+
+func indent(spaces int, v string) string {
+	pad := strings.Repeat(" ", spaces)
+	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
+}
+func trim(v string) string {
+	return strings.Trim(v, "\n")
+}
+
+// Template for all outputs related to jobs
+// it must define the following templates:
+// - startSummary: which will receive a JobList
+// - jobStatus: which will receive a single job
+// - progressReport: which will receive a jobList
+// - doneReport: which will receive a jobList
+func SetTemplateString(templateString string) {
+	parallelTemplate = template.Must(template.New("parallel").
+		Funcs(template.FuncMap{
+			"indent": indent,
+			"trim":   trim,
+		}).
+		Parse(templateString),
+	)
+}
+
+func augmentJobHandler(fn jobEventHandler, decoratorFn jobEventHandler) jobEventHandler {
+	if fn == nil {
+		return decoratorFn
+	}
+	return func(cps JobList, jobId int) {
+		fn(cps, jobId)
+		decoratorFn(cps, jobId)
+	}
+}
+func augmentJobsHandler(fn jobsEventHandler, decoratorFn jobsEventHandler) jobsEventHandler {
+	if fn == nil {
+		return decoratorFn
+	}
+	return func(cps JobList) {
+		fn(cps)
+		decoratorFn(cps)
+	}
+}
+
+// instanciate a new JobPool
+func NewExecutor() *JobPool {
+	executor := &JobPool{
+		opts: &ExecuteOptions{},
+	}
+	return executor
+}
+
+// return the total number of jobs in the pool
+func (p *JobPool) Len() int {
+	return len(p.jobs)
+}
+
+// Add miltiple job command to execute
+func (p *JobPool) AddJobCmds(cmdsAndArgs ...[]string) *JobPool {
+	for _, cmdAndArgs := range cmdsAndArgs {
+		p.AddJobCmd(cmdAndArgs[0], cmdAndArgs[1:]...)
+	}
+	return p
+}
+func (p *JobPool) AddJobCmd(cmd string, args ...string) *JobPool {
+	p.jobs = append(p.jobs, &job{Cmd: exec.Command(cmd, args...)})
+	return p
+}
+
+// Add one or more job function to run (func() (string, error))
+func (p *JobPool) AddJobFns(fns ...runnableFn) *JobPool {
+	for _, fn := range fns {
+		p.jobs = append(p.jobs, &job{Fn: fn})
+	}
+	return p
+}
+
+// Add an handler which will be call after a jobs is terminated
+func (p *JobPool) OnJobDone(fn jobEventHandler) *JobPool {
+	p.opts.onJobDone = augmentJobHandler(p.opts.onJobDone, fn)
+	return p
+}
+
+// Add an handler which will be call after all jobs are terminated
+func (p *JobPool) OnJobsDone(fn jobsEventHandler) *JobPool {
+	p.opts.onJobsDone = augmentJobsHandler(p.opts.onJobsDone, fn)
+	return p
+}
+
+// Add an handler which will be call before a jobs is started
+func (p *JobPool) OnJobStart(fn jobEventHandler) *JobPool {
+	p.opts.onJobStart = augmentJobHandler(p.opts.onJobStart, fn)
+	return p
+}
+
+// Add an handler which will be call before any jobs is started
+func (p *JobPool) OnJobsStart(fn jobsEventHandler) *JobPool {
+	p.opts.onJobsStart = augmentJobsHandler(p.opts.onJobsStart, fn)
+	return p
+}
+
+// Output a summary of the job that will be run
+func (p *JobPool) WithStartSummary() *JobPool {
+	p.opts.onJobsStart = func(cps JobList) {
+		fmt.Print(cps.execTemplate("startSummary"))
+	}
+	return p
+}
+
+// Output a line to say a job is starting
+func (p *JobPool) WithStartOutput() *JobPool {
+	p.opts.onJobStart = func(cps JobList, jobId int) {
+		fmt.Print("Starting " + cps[jobId].execTemplate("jobStatusLine"))
+		// fmt.Print(cps[jobId].execTemplate("jobStatusLine"))
+	}
+	return p
+}
+
+// Display full jobStatus as they arrive
+func (p *JobPool) WithFifoOutput() *JobPool {
+	p.opts.onJobDone = func(cps JobList, jobId int) {
+		fmt.Print(cps[jobId].execTemplate("jobStatusFull"))
+	}
+	return p
+}
+
+// display doneReport when all jobs are Done
+func (p *JobPool) WithOrderedOutput() *JobPool {
+	p.opts.onJobsDone = func(cps JobList) {
+		fmt.Print(cps.execTemplate("doneReport"))
+	}
+	return p
+}
+
+// will override onJobStarts / onJobStart / onJobDone handlers previsously defined
+// generally you should avoid using these method with other handlers bound to the
+// jobPool
+func (p *JobPool) WithProgressOutput() *JobPool {
+	p.opts.onJobsStart = func(cps JobList) {
+		fmt.Print(cps.execTemplate("startProgressReport"))
+	}
+	esc := fmt.Sprintf("\033[%dA", len(p.jobs)) // clean sequence
+	printProgress := func(cps JobList, jobId int) { fmt.Print(esc + cps.execTemplate("progressReport")) }
+	p.opts.onJobDone = printProgress
+	p.opts.onJobStart = printProgress
+	return p
+}
+
+func (p *JobPool) Execute() JobsError {
+	var errs JobsError
+	p.OnJobDone(func(jobs JobList, jobId int) {
+		err := jobs[jobId].Err
+		if err != nil {
+			errs[jobId] = NewJobError(jobId, err)
+		}
+	})
+	execute(p.jobs, *p.opts)
+	return errs
+}

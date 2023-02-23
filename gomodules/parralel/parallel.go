@@ -7,7 +7,6 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package parallel
 
 import (
-	"os"
 	"runtime"
 	"sync"
 )
@@ -26,60 +25,41 @@ func init() {
 	SetMaxConcurrentJobs(runtime.GOMAXPROCS(0))
 }
 
-func parrallelExecutor(cps []*childProcess, onJobDone func(cp *childProcess), onJobsDone func(cps []*childProcess)) {
-	nbChilds := len(cps)
+type ExecuteOptions struct {
+	onJobsStart func(cps JobList)
+	onJobStart  func(cps JobList, jobIndex int)
+	onJobDone   func(cps JobList, jobIndex int)
+	onJobsDone  func(cps JobList)
+}
+
+// effectively launch the child process, call on jobDone
+// you should prepare child process before by calling either
+// PrepareCmds, PrepareFns
+// returns the number of errors encountered
+// @todo add cancelation support
+func execute(jobs JobList, opts ExecuteOptions) {
+	if opts.onJobsStart != nil {
+		opts.onJobsStart(jobs)
+	}
 	var wg sync.WaitGroup
-	wg.Add(nbChilds)
-	for _, child := range cps {
-		cp := child
-		cp.onDone = func() {
-			<-limiterChan
-			wg.Done()
-			onJobDone(cp)
-		}
+	wg.Add(len(jobs))
+	for i, child := range jobs {
+		jobIndex := i
 		limiterChan <- struct{}{}
-		go cp.run()
+		if opts.onJobStart != nil {
+			opts.onJobStart(jobs, jobIndex)
+		}
+		go child.run(func() {
+			defer func() { <-limiterChan }()
+			defer wg.Done()
+			if opts.onJobDone != nil {
+				opts.onJobDone(jobs, jobIndex)
+			}
+		})
 	}
 	wg.Wait()
 	close(limiterChan)
-	onJobsDone(cps)
-}
-
-// execute given list of commands in parallel
-// print combined outputs on stdout as they arrive
-// You can change the output format by using the SetJobDoneTemplate function
-func Exec(cmdsAndArgs ...[]string) []error {
-	cps := cmdListtoChildProcess(cmdsAndArgs)
-	errs := make([]error, len(cps))
-	// keep values of template setted at launch time
-	tpl := jobDoneTemplate
-	onJobDone := func(cp *childProcess) {
-		cp.execTemplate(tpl, os.Stdout)
+	if opts.onJobsDone != nil {
+		opts.onJobsDone(jobs)
 	}
-	onJobsDone := func(cps []*childProcess) {
-		for i, cp := range cps {
-			errs[i] = cp.err
-		}
-	}
-	parrallelExecutor(cps, onJobDone, onJobsDone)
-	return errs
-}
-
-// execute given list of commands in parallel
-// returns
-// - ordered list of combined outputs from child process
-// - orderd list of errors from child process
-func ExecRes(cmdsAndArgs ...[]string) ([]string, []error) {
-	nbCommands := len(cmdsAndArgs)
-	cps := cmdListtoChildProcess(cmdsAndArgs)
-	res := make([]string, nbCommands)
-	err := make([]error, nbCommands)
-	onJobsDone := func(cps []*childProcess) {
-		for i, cp := range cps {
-			res[i] = string(cp.res)
-			err[i] = cp.err
-		}
-	}
-	parrallelExecutor(cps, func(cp *childProcess) {}, onJobsDone)
-	return res, err
 }
