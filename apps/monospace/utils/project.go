@@ -168,17 +168,19 @@ func ProjectChdir(projectName string) error {
 
 /* exit on error */
 func ProjectCreate(projectName string, repoUrl string, projectType string) {
-	name := projectName
-	// @TODO Check if directory already exists
 	// check name is Ok
-	if ProjectExists(name) {
+	if ProjectExists(projectName) {
 		Exit("project already exists")
-	} else if !ProjectIsValidName(name) {
+	} else if !ProjectIsValidName(projectName) {
 		Exit("invalid project name")
 	}
 
+	projectPath := ProjectGetPath(projectName)
+	dirExists, err := IsDir(projectPath)
+	CheckErr(err)
+
 	project := Project{
-		Name:    name,
+		Name:    projectName,
 		RepoUrl: repoUrl,
 		Kind:    Internal,
 	}
@@ -193,7 +195,13 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 
 	// set cwd to monospace directory
 	CheckErr(MonospaceChdir())
-	CheckErrWithMsg(ProjectCreateDirectory(project.Name), "Error while creating package")
+
+	// create dir if not exists
+	if !dirExists {
+		CheckErrWithMsg(ProjectCreateDirectory(project.Name), "Error while creating package")
+	}
+
+	// add to .monopace.yml
 	if project.Kind == External {
 		CheckErr(MonospaceAddProject(project.Name, project.RepoUrl))
 	} else {
@@ -203,14 +211,18 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 	// move to new package directory
 	CheckErr(ProjectChdir(project.Name))
 
-	if project.Kind == Local {
+	// strategy for different kind of projects
+	switch project.Kind {
+	case Local:
 		fmt.Println("Initialize local repository")
 		CheckErr(MonospaceInitRepo(project.Name)) // will add gitignore
-	} else if project.Kind == Internal {
+	case Internal:
 		CheckErr(GitAddGitIgnoreFile())
-	} else if project.Kind == External {
+	case External:
 		fmt.Println("Clone repository")
 		CheckErr(ProjectCloneRepo(project.Name, project.RepoUrl))
+	default:
+		Exit("unknown project kind must be local, internal or external")
 	}
 
 	// no need to init projects for external projects
@@ -223,7 +235,7 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 			fmt.Println("Initialize go module")
 			CheckErr(scaffolders.Golang())
 		default:
-			PrintWarning("Unknown project type '" + projectType + "'")
+			PrintWarning("Unknown project type '" + projectType + "' => ignored")
 		}
 	}
 

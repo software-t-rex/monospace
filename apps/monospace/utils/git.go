@@ -21,14 +21,22 @@ func GitClone(repoUrl string, destPath string) error {
 }
 
 func GitAddGitIgnoreFile() error {
+	if FileExistsNoErr(".gitignore") {
+		fmt.Println(".gitignore already exists, left untouched")
+		return nil
+	}
 	fmt.Println("Add default .gitignore")
 	return WriteFile(".gitignore", "node_modules\n.vscode\ndist\ncoverage\n")
 }
 
-func GitInit(directory string, addIgnoreFile bool) error {
-	err := gitExec("init", directory)
-	if err != nil {
-		return err
+func GitInit(directory string, addIgnoreFile bool) (err error) {
+	if FileExistsNoErr(".git") {
+		fmt.Println("git init: git already initialized => skip")
+	} else {
+		err = gitExec("init", directory)
+		if err != nil {
+			return err
+		}
 	}
 	if addIgnoreFile {
 		return GitAddGitIgnoreFile()

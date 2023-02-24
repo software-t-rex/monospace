@@ -116,7 +116,8 @@ func MonospaceInitRepo(projectName string) (err error) {
 	err = MonospaceAddProjectToGitignore(projectName)
 	if err == nil {
 		projectPath := filepath.Join(MonospaceGetRoot(), "/", projectName)
-		err = GitInit(projectPath, true)
+		hasGitIgnore := FileExistsNoErr(filepath.Join(projectPath, ".gitignore"))
+		err = GitInit(projectPath, !hasGitIgnore)
 	}
 	return
 }

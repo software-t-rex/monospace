@@ -29,19 +29,26 @@ func getPMcmd() string {
 	return "pnpm"
 }
 
-func Javascript() error {
-	pm := getPMcmd()
-	cmd := exec.Command(pm, pmInitArgs[pm]...)
-
-	fmt.Printf("init index.js file\n")
-	err := writeTemplateFile("index.js", "./index.js")
-	if err != nil {
-		printWarning("Error writing main.go")
-		err = nil
+func Javascript() (err error) {
+	hasPackageJson := fileExistsNoErr("package.json")
+	if hasPackageJson {
+		fmt.Println("JS scaffolding: package.json already exists => skip")
+		return
+	}
+	hasIndexJs := fileExistsNoErr("index.js")
+	if !hasIndexJs {
+		fmt.Printf("init index.js file\n")
+		err = writeTemplateFile("index.js", "./index.js")
+		if err != nil {
+			printWarning("Error writing index.js")
+			err = nil
+		}
 	}
 
 	//@todo propose to add to workspace file
 
+	pm := getPMcmd()
+	cmd := exec.Command(pm, pmInitArgs[pm]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
