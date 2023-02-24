@@ -42,7 +42,7 @@ example: monospace import packages/fancylib git@github.com:username/fancylib.git
 		return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveDefault
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		CheckConfigFound()
+		CheckConfigFound(true)
 		utils.ProjectCreate(args[0], args[1], "")
 	},
 }

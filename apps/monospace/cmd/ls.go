@@ -26,7 +26,7 @@ monospace ls [options]
 monospace ls [options] path/to/a/monospace
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		CheckConfigFound()
+		CheckConfigFound(true)
 		projects := utils.ProjectsGetAll()
 		if len(projects) < 1 {
 			fmt.Println("No projects found start by adding one to your monospace.")

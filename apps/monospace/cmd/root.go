@@ -28,9 +28,12 @@ var flagCreatePType string
 var configFound bool
 
 // command that require the config must call this method before continuing execution
-func CheckConfigFound() bool {
+func CheckConfigFound(exitOnError bool) bool {
 	if !configFound {
-		utils.CheckErr(errors.New(".monospace.yml not found in path"))
+		if exitOnError {
+			utils.CheckErr(errors.New(".monospace.yml not found in path"))
+		}
+		return false
 	}
 	return true
 }

@@ -63,7 +63,7 @@ you should look at the ` + italic("monospace import") + ` command instead
 		return []string{"local", "internal"}, cobra.ShellCompDirectiveNoFileComp
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		CheckConfigFound()
+		CheckConfigFound(true)
 		if !utils.Contains([]string{"", "go", "js"}, flagCreatePType) {
 			utils.Exit("Unknown project type '" + flagCreatePType + "'")
 		}
