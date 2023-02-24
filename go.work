@@ -1,0 +1,10 @@
+go 1.20
+
+use ./apps/monospace
+
+use ./gomodules/colors
+
+use (
+	./gomodules/parralel
+	./gomodules/scaffolders
+)

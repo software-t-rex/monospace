@@ -28,6 +28,14 @@ func FileExists(filePath string) (bool, error) {
 	return false, err
 }
 
+func FileExistsNoErr(filePath string) bool {
+	res, err := FileExists(filePath)
+	if err != nil {
+		return false
+	}
+	return res
+}
+
 func WriteFile(filePath string, body string) error {
 	bbody := []byte(body)
 	return os.WriteFile(filePath, bbody, 0644)

@@ -1,6 +1,8 @@
+go_mod_prefix: github.com/software-t-rex/monospace
 js_package_manager: ^pnpm@7.27.0
 projects:
     apps/monospace: internal
     apps/test-go: local
     gomodules/colors: internal
     gomodules/parralel: internal
+    gomodules/scaffolders: internal

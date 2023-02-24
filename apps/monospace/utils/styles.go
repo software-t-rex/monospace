@@ -1,6 +1,6 @@
 package utils
 
-import "monospace/colors"
+import "github.com/software-t-rex/monospace/colors"
 
 var ErrorStyle = colors.Error
 var EmphasedError = colors.EmphasedError

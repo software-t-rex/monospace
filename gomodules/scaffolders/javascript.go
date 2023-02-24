@@ -1,6 +1,7 @@
-package utils
+package scaffolders
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -28,14 +29,22 @@ func getPMcmd() string {
 	return "pnpm"
 }
 
-func PMinit() error {
+func Javascript() error {
 	pm := getPMcmd()
 	cmd := exec.Command(pm, pmInitArgs[pm]...)
+
+	fmt.Printf("init index.js file\n")
+	err := writeTemplateFile("index.js", "./index.js")
+	if err != nil {
+		printWarning("Error writing main.go")
+		err = nil
+	}
+
+	//@todo propose to add to workspace file
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
-
 }

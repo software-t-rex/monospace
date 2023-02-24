@@ -9,8 +9,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"monospace/colors"
-	"monospace/monospace/utils"
+
+	"github.com/software-t-rex/monospace/colors"
+	"github.com/software-t-rex/monospace/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -63,13 +64,20 @@ you should look at the ` + italic("monospace import") + ` command instead
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound()
-		utils.ProjectCreate(args[1], args[0], false)
+		if !utils.Contains([]string{"", "go", "js"}, flagCreatePType) {
+			utils.Exit("Unknown project type '" + flagCreatePType + "'")
+		}
+		utils.ProjectCreate(args[1], args[0], flagCreatePType)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(createCmd)
 	createCmd.Flags().StringVarP(&flagCreatePType, "type", "t", "", "type of project to create for now only 'go' and 'js' are supported")
+	createCmd.RegisterFlagCompletionFunc("type", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"go", "js"}, cobra.ShellCompDirectiveNoFileComp
+	})
+	//flagCreateSkipPM
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command

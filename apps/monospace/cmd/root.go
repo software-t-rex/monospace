@@ -13,11 +13,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"monospace/colors"
-	"monospace/monospace/utils"
+	"github.com/software-t-rex/monospace/colors"
+	"github.com/software-t-rex/monospace/utils"
 )
 
-var AppVersion = "0.0.1"
+var AppVersion = "0.0.2"
 
 // flags for the application
 var flagRootDisableColorOutput bool

@@ -1,9 +1,11 @@
 package utils
 
 import (
-	"monospace/colors"
+	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/software-t-rex/monospace/colors"
 )
 
 func gitExec(args ...string) error {
@@ -18,8 +20,20 @@ func GitClone(repoUrl string, destPath string) error {
 	return gitExec("clone", repoUrl, destPath)
 }
 
-func GitInit(directory string) error {
-	return gitExec("init", directory)
+func GitAddGitIgnoreFile() error {
+	fmt.Println("Add default .gitignore")
+	return WriteFile(".gitignore", "node_modules\n.vscode\ndist\ncoverage\n")
+}
+
+func GitInit(directory string, addIgnoreFile bool) error {
+	err := gitExec("init", directory)
+	if err != nil {
+		return err
+	}
+	if addIgnoreFile {
+		return GitAddGitIgnoreFile()
+	}
+	return err
 }
 
 func GitHistoryLastCommit(directory string) (res string, err error) {

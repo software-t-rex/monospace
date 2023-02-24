@@ -3,9 +3,10 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"monospace/parallel"
 	"os"
 	"path/filepath"
+
+	"github.com/software-t-rex/monospace/parallel"
 
 	"github.com/spf13/viper"
 )
@@ -97,11 +98,11 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 			return
 		}
 		fmt.Println(Info("Cloning externals projects..."))
-		jobPool := parallel.NewExecutor().WithProgressOutput()
+		jobExecutor := parallel.NewExecutor().WithProgressOutput()
 		for _, project := range externals {
-			jobPool.AddJobCmd("git", "clone", project.RepoUrl, project.Name)
+			jobExecutor.AddJobCmd("git", "clone", project.RepoUrl, project.Name)
 		}
-		errs := jobPool.Execute()
+		errs := jobExecutor.Execute()
 		fmt.Println(Success("Cloning done."))
 		if len(errs) > 0 {
 			fmt.Println(ErrorStyle("Terminated with errors" + errs.String()))
@@ -115,7 +116,7 @@ func MonospaceInitRepo(projectName string) (err error) {
 	err = MonospaceAddProjectToGitignore(projectName)
 	if err == nil {
 		projectPath := filepath.Join(MonospaceGetRoot(), "/", projectName)
-		err = GitInit(projectPath)
+		err = GitInit(projectPath, true)
 	}
 	return
 }

@@ -8,8 +8,9 @@ package cmd
 
 import (
 	"fmt"
-	"monospace/monospace/utils"
 	"strings"
+
+	"github.com/software-t-rex/monospace/utils"
 
 	"github.com/spf13/cobra"
 )

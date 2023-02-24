@@ -9,15 +9,17 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/software-t-rex/monospace/scaffolders"
+
 	"github.com/spf13/viper"
 )
 
 type ProjectKind int
 
 const (
-	Local    ProjectKind = iota
-	Internal ProjectKind = iota
-	External ProjectKind = iota
+	Local ProjectKind = iota
+	Internal
+	External
 )
 
 func (p ProjectKind) String() string {
@@ -34,6 +36,7 @@ type Project struct {
 	RepoUrl string
 	// wether the projet is managed by the monospace repository or not
 	Kind ProjectKind
+	// which type of project this is (eg: jg, go ...)
 }
 
 var styles = map[ProjectKind](func(s ...string) string){
@@ -120,6 +123,7 @@ func ProjectsGetByPrefix(prefix string, noPrefix bool) (res []string) {
 func ProjectAsStruct(name string, repoUrl string) (res Project) {
 	res.Name = name
 	res.RepoUrl = repoUrl
+	// determine project Kind
 	if repoUrl == "" || repoUrl == "internal" {
 		res.Kind = Internal
 	} else if repoUrl == "local" {
@@ -128,6 +132,16 @@ func ProjectAsStruct(name string, repoUrl string) (res Project) {
 		res.Kind = External
 	}
 	return
+}
+
+func ProjectDetectMainLang(name string) string {
+	projectPath := ProjectGetPath(name)
+	if FileExistsNoErr(filepath.Join(projectPath, "go.mod")) {
+		return "golang"
+	} else if FileExistsNoErr(filepath.Join(projectPath, "package.json")) {
+		return "js"
+	}
+	return "unknown"
 }
 
 func ProjectGetByName(name string) (Project, error) {
@@ -153,10 +167,10 @@ func ProjectChdir(projectName string) error {
 }
 
 /* exit on error */
-func ProjectCreate(projectName string, repoUrl string, skipPmTasks bool) {
+func ProjectCreate(projectName string, repoUrl string, projectType string) {
 	name := projectName
-	skipPM := skipPmTasks
-
+	// @TODO Check if directory already exists
+	// check name is Ok
 	if ProjectExists(name) {
 		Exit("project already exists")
 	} else if !ProjectIsValidName(name) {
@@ -188,21 +202,29 @@ func ProjectCreate(projectName string, repoUrl string, skipPmTasks bool) {
 
 	// move to new package directory
 	CheckErr(ProjectChdir(project.Name))
-	if !skipPM && project.Kind != External {
-		fmt.Println("Initialize package manager")
-		CheckErr(PMinit())
-	}
+
 	if project.Kind == Local {
 		fmt.Println("Initialize local repository")
-		CheckErr(MonospaceInitRepo(project.Name))
-		fmt.Println("Add default .gitignore")
-		CheckErr(WriteTemplateGitinore("./"))
+		CheckErr(MonospaceInitRepo(project.Name)) // will add gitignore
 	} else if project.Kind == Internal {
-		fmt.Println("Add default .gitignore")
-		CheckErr(WriteTemplateGitinore("./"))
+		CheckErr(GitAddGitIgnoreFile())
 	} else if project.Kind == External {
 		fmt.Println("Clone repository")
 		CheckErr(ProjectCloneRepo(project.Name, project.RepoUrl))
+	}
+
+	// no need to init projects for external projects
+	if projectType != "" && project.Kind != External {
+		switch projectType {
+		case "js":
+			fmt.Println("Initialize package manager")
+			CheckErr(scaffolders.Javascript())
+		case "go":
+			fmt.Println("Initialize go module")
+			CheckErr(scaffolders.Golang())
+		default:
+			PrintWarning("Unknown project type '" + projectType + "'")
+		}
 	}
 
 	fmt.Println(Success("project successfully added to your monospace"))

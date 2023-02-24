@@ -12,8 +12,10 @@ func Confirm(msg string, dflt bool) bool {
 		dfltString = " [" + Underline("Y") + "|n]: "
 	}
 	fmt.Print(msg + dfltString)
-	_, err := fmt.Scan(&response)
-	CheckErr(err)
+	_, err := fmt.Scanln(&response)
+	if err != nil && err.Error() != "unexpected newline" {
+		CheckErr(err)
+	}
 	switch strings.ToLower(response) {
 	case "y", "yes":
 		return true

@@ -8,8 +8,9 @@ package cmd
 
 import (
 	"fmt"
-	"monospace/colors"
-	"monospace/monospace/utils"
+
+	"github.com/software-t-rex/monospace/colors"
+	"github.com/software-t-rex/monospace/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -42,7 +43,7 @@ example: monospace import packages/fancylib git@github.com:username/fancylib.git
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound()
-		utils.ProjectCreate(args[0], args[1], false)
+		utils.ProjectCreate(args[0], args[1], "")
 	},
 }
 
