@@ -42,7 +42,7 @@ func fileExistsNoErr(filePath string) bool {
 }
 
 func writeTemplateFile(src string, dest string) error {
-	templateStr, err := templateFS.ReadFile("template/" + src + ".tpl")
+	templateStr, err := templateFS.ReadFile("templates/" + src + ".tpl")
 	if err != nil {
 		return err
 	}

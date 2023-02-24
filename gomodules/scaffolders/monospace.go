@@ -7,12 +7,12 @@ import (
 )
 
 func Monospace() error {
-
 	fmt.Printf("create .monospace.yml\n")
-	err := writeTemplateFile("monospace", ".monospace.yml")
+	err := writeTemplateFile("monospace.yml", ".monospace.yml")
 	if err != nil {
 		return err
 	}
+
 	// check for npmRc or create it
 	if !fileExistsNoErr(".npmrc") {
 		fmt.Printf("create .npmrc\n")
