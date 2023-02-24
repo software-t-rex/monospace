@@ -8,6 +8,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/software-t-rex/monospace/utils"
@@ -25,7 +26,13 @@ usage:
 monospace ls [options]
 monospace ls [options] path/to/a/monospace
 `,
+	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 1 {
+			utils.CheckErr(os.Chdir(args[0]))
+			utils.MonospaceGetRootNoCache()
+			initConfig() // force reload of monospace config
+		}
 		CheckConfigFound(true)
 		projects := utils.ProjectsGetAll()
 		if len(projects) < 1 {
