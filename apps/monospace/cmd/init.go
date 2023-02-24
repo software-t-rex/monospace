@@ -8,26 +8,67 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/software-t-rex/monospace/scaffolders"
+	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Initialize a new monospace",
+	Long: `Initialize a new monospace
+It will perform the following steps:
+- create some files if they are not present in the directory
+	(.monospace.yml, .npmrc, .gitignore, go.work if go installed detected)
+- init a git repository
+each of these steps won't overwrite existing files if any
+` + utils.Underline("usage:") + `
+monospace init
+monospace init path/to/new-monospace
+`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		// no more than one argument which shoult be path to the new monospace
+		if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("init called")
+		var parentMonospace string
+		if len(args) == 1 {
+			wd, err := filepath.Abs(args[0])
+			utils.CheckErr(err)
+			parentMonospace = utils.MonospaceGetRootForPath(wd)
+		} else {
+			parentMonospace = utils.MonospaceGetRootNoCache()
+		}
+
+		// check path is not inside a monospace directory
+		if parentMonospace != "" {
+			utils.Exit(fmt.Sprintf("'%s' is already a monospace directory", parentMonospace))
+		}
+
+		if len(args) == 1 {
+			utils.CheckErr(utils.MakeDir(args[0]))
+			utils.CheckErr(os.Chdir(args[0]))
+		}
+
+		// scaffold monospace
+		utils.CheckErr(scaffolders.Monospace())
+		utils.CheckErr(utils.GitInit("./", true))
+		fmt.Println(utils.Success("Monospace successfully initialized."))
+		if len(args) == 1 {
+			fmt.Printf("%s is ready for work\n", args[0])
+		}
 	},
 }
 
 func init() {
+	// @todo add prompt for prefered js package manager and go.mod default prefix
 	rootCmd.AddCommand(initCmd)
 
 	// Here you will define your flags and configuration settings.

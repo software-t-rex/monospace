@@ -31,7 +31,7 @@ var configFound bool
 func CheckConfigFound(exitOnError bool) bool {
 	if !configFound {
 		if exitOnError {
-			utils.CheckErr(errors.New(".monospace.yml not found in path"))
+			utils.CheckErr(errors.New("not inside a monospace"))
 		}
 		return false
 	}

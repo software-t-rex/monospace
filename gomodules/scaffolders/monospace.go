@@ -8,6 +8,8 @@ import (
 
 func Monospace() error {
 	fmt.Printf("create .monospace.yml\n")
+
+	// @todo handle some configs like gomodule prefix, and prefered package manager
 	err := writeTemplateFile("monospace.yml", ".monospace.yml")
 	if err != nil {
 		return err

@@ -19,28 +19,32 @@ func MonospaceGetRoot() string {
 	if monospaceRoot != "" {
 		return monospaceRoot
 	}
-	path, err := os.Getwd()
-	path = filepath.ToSlash(path)
-	foundConfigDir := false
-	CheckErr(err)
+	return MonospaceGetRootNoCache()
+}
 
-	for path != "" && path != "." {
-		configExists, _ := FileExists(filepath.Join(path, "/", DfltcfgFileName))
-		if configExists {
-			foundConfigDir = true
-			break
+func MonospaceGetRootNoCache() string {
+	path, err := os.Getwd()
+	CheckErr(err)
+	monospaceRoot = MonospaceGetRootForPath(path)
+	return monospaceRoot
+}
+
+func MonospaceGetRootForPath(absPath string) string {
+	absPath = filepath.ToSlash(absPath)
+
+	// @todo check this work on windows before release to public
+	for absPath != "" && absPath != "." {
+		if FileExistsNoErr(filepath.Join(absPath, "/", DfltcfgFileName)) {
+			return absPath
 		}
 		// go up one dir
-		path = filepath.Clean(filepath.Join(path, "/../"))
-		if path == "/home" || path == "." || path == "/" {
+		absPath = filepath.Clean(filepath.Join(absPath, "../"))
+		if absPath == "/home" || absPath == "." || absPath == "/" {
 			break
 		}
 	}
-	if !foundConfigDir {
-		return ""
-	}
-	monospaceRoot = path
-	return path
+
+	return ""
 }
 
 func MonospaceChdir() error {
