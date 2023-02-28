@@ -40,6 +40,7 @@ But in monospace terms there is three kind of projects:
 - git command should be available in your Path
 - js package manager defined in your config should also be available in your path
 	(can be omit if you don't plan to work on javascript projects)
+- go should be available in your path if you intend to work on go projects
 
 ## Some Default opinionated choices:
 When initializing a new monospace it will declare some workspaces to your package manager:
@@ -65,4 +66,20 @@ If you think that this is not a good default feel free to contact me and explain
 monospace is open source software under the MIT license, and by contributing to it you accepts to release your code under the same License. Contributions are always welcomed and will be reviewed in the shortest amount of time as possible. If you decide to contribute, please make small organized commits that adress one thing at a time, it will make it easier for me to review and accept your contribution.
 
 ## Funding
-This project is free software, but to live it needs time, and to get time you needs money. So if this project is of any help to you and/or you want to make it evolve quicker, you can make a donation through => or sponsor the project.
+This project is free software, but to live it needs time, and to get time you needs money. So if this project is of any help to you and/or you want to make it evolve quicker, you can make a donation or support the project through this button.
+<div id="donate-button-container">
+<div id="donate-button"></div>
+<script src="https://www.paypalobjects.com/donate/sdk/donate-sdk.js" charset="UTF-8"></script>
+<script>
+PayPal.Donation.Button({
+env:'production',
+hosted_button_id:'SRHXHER2G48CA',
+image: {
+src:'https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif',
+alt:'Donate with PayPal button',
+title:'PayPal - The safer, easier way to pay online!',
+}
+}).render('#donate-button');
+</script>
+</div>
+Donation over 1000€ will allow you to appears on this page as sponsors of the project, in such case contact us at contact.trex.software@gmail.com with the receipt of your donation.
