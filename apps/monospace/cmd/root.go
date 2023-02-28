@@ -17,7 +17,7 @@ import (
 	"github.com/software-t-rex/monospace/utils"
 )
 
-var AppVersion = "0.0.3"
+var AppVersion = "0.0.4"
 
 // flags for the application
 var flagRootDisableColorOutput bool
@@ -60,7 +60,7 @@ monospace init
 Want to discover more about monospace? Try the help command:
 monospace help [command]
 
-Or visit https://github.com/malko/monospace for more information.`,
+Or visit https://github.com/software-t-rex/monospace for more information.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },

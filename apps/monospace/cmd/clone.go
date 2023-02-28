@@ -14,11 +14,12 @@ import (
 
 // cloneCmd represents the clone command
 var cloneCmd = &cobra.Command{
-	Use:   "clone projectName repoUrl",
+	Use:   "clone destDirectory repoUrl",
 	Short: "Clone an entire monospace",
 	Long: `Clone is like git clone but for a whole monospace repo.
 It will clone the monospace git repo and then checkout all 'external' projects
 into it.`,
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		destDirectory := args[0]
 		repoUrl := args[1]
