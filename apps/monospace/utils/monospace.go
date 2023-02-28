@@ -6,8 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/software-t-rex/monospace/parallel"
-
+	"github.com/software-t-rex/go-jobExecutor"
 	"github.com/spf13/viper"
 )
 
@@ -102,7 +101,7 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 			return
 		}
 		fmt.Println(Info("Cloning externals projects..."))
-		jobExecutor := parallel.NewExecutor().WithProgressOutput()
+		jobExecutor := jobExecutor.NewExecutor().WithProgressOutput()
 		for _, project := range externals {
 			jobExecutor.AddJobCmd("git", "clone", project.RepoUrl, project.Name)
 		}

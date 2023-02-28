@@ -8,12 +8,12 @@ require github.com/software-t-rex/monospace/colors v0.0.0
 require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
-	github.com/software-t-rex/monospace/parallel v0.0.0
+	github.com/software-t-rex/go-jobExecutor v0.0.0
 )
 
 replace github.com/software-t-rex/monospace/colors => ../../gomodules/colors
 
-replace github.com/software-t-rex/monospace/parallel => ../../gomodules/parralel
+replace github.com/software-t-rex/go-jobExecutor => ../../gomodules/go-jobexecutor
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

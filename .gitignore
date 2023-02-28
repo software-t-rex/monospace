@@ -3,4 +3,4 @@ node_modules
 dist
 coverage
 apps/test-go
-gomodules/go-jobExecutor
+gomodules/go-jobexecutor
