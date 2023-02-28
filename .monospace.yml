@@ -4,5 +4,5 @@ projects:
     apps/monospace: internal
     apps/test-go: local
     gomodules/colors: internal
-    gomodules/parralel: git@github.com:software-t-rex/go-jobExecutor.git
+    gomodules/go-jobexecutor: git@github.com:software-t-rex/go-jobExecutor.git
     gomodules/scaffolders: internal

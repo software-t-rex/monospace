@@ -17,7 +17,7 @@ import (
 	"github.com/software-t-rex/monospace/utils"
 )
 
-var AppVersion = "0.0.4"
+var AppVersion = "0.0.5"
 
 // flags for the application
 var flagRootDisableColorOutput bool

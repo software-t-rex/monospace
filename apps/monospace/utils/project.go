@@ -251,25 +251,35 @@ func ProjectCloneRepo(projectName string, repoUrl string) (err error) {
 	return
 }
 
+func ProjectRemoveFromConfig(project Project, silent bool) error {
+	if !silent {
+		fmt.Println("Remove from monospace.yml")
+	}
+	projects := viper.GetStringMap("projects")
+	projects[project.Name] = nil
+	viper.Set("projects", projects)
+	return viper.WriteConfig()
+}
+
+func ProjectRemoveFromGitignore(project Project, silent bool) (err error) {
+	if project.Kind != Internal {
+		if !silent {
+			fmt.Println("Remove from gitignore")
+		}
+		err = FileRemoveLine(filepath.Join(MonospaceGetRoot(), ".gitignore"), project.Name)
+	}
+	return
+}
+
 /* exit on error */
 func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
-	project, err := ProjectGetByName(projectName)
-	CheckErr(err)
-	fmt.Println("Remove from monospace.yml")
-	projects := viper.GetStringMap("projects")
-	projects[projectName] = nil
-	viper.Set("projects", projects)
-	err = viper.WriteConfig()
-	CheckErr(err)
+	project := CheckErrOrReturn(ProjectGetByName(projectName))
+	CheckErr(ProjectRemoveFromConfig(project, false))
 
 	rootDir := MonospaceGetRoot()
 	printSuccess := func() { fmt.Println(Success("Project " + projectName + " successfully removed")) }
 
-	if project.Kind != Internal {
-		fmt.Println("Remove from gitignore")
-		err = FileRemoveLine(filepath.Join(rootDir, ".gitignore"), projectName)
-		CheckErr(err)
-	}
+	CheckErr(ProjectRemoveFromGitignore(project, false))
 
 	if !rmdir {
 		printSuccess()
