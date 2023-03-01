@@ -48,7 +48,7 @@ func Dump(o ...any) {
 	for _, val := range o {
 		fmt.Printf("%+v\n", val)
 		fmt.Printf("%#v\n", val)
-		out, _ := json.MarshalIndent(&val, "", "  ")
+		out, _ := json.MarshalIndent(val, "", "  ")
 		fmt.Print(string(out) + "\n")
 	}
 }

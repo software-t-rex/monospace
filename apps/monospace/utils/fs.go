@@ -38,29 +38,36 @@ func FileExistsNoErr(filePath string) bool {
 
 func WriteFile(filePath string, body string) error {
 	bbody := []byte(body)
-	return os.WriteFile(filePath, bbody, 0644)
+	// #nosec G306 - this is the purpose of this function to read a file
+	return os.WriteFile(filePath, bbody, 0640)
 }
 
 func FileAppend(filePath string, appendString string) error {
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+	// #nosec G304 - we need to pass a variable of fileName to append to
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 	if !strings.HasSuffix(appendString, "\n") {
 		appendString = appendString + "\n"
 	}
 	_, err = f.WriteString(appendString)
-	return err
+	if err != nil {
+		return err
+	}
+	return f.Close()
+
 }
 
 func FileRemoveLine(filePath string, line string) error {
+	// #nosec G304 - this is the purpose of this function to read a file
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}
 	cleanContent := bytes.Replace(content, []byte(line+"\n"), []byte(""), -1)
-	return os.WriteFile(filePath, cleanContent, 0644)
+	// #nosec G306 - we want to allow group access
+	return os.WriteFile(filePath, cleanContent, 0640)
 }
 
 func MakeDir(path string) error {

@@ -29,6 +29,7 @@ func GitIsClean(repoDir string, subDir string) bool {
 	if subDir != "" {
 		args = append(args, "--", subDir)
 	}
+	/* #nosec G204 - only directories come from the outside */
 	cmd := exec.Command("git", args...)
 	res, err := cmd.CombinedOutput()
 	if err == nil && strings.TrimSpace(string(res)) == "" {
@@ -74,6 +75,7 @@ func GitHistoryLastCommit(directory string) (res string, err error) {
 	if colors.ColorEnabled() {
 		cParam = "--c color.ui=always"
 	}
+	/* #nosec G204 - cParam is not a user input */
 	cmd := exec.Command(
 		"git",
 		"log",
@@ -97,6 +99,7 @@ type GitExternalizeOptions struct {
 }
 
 // initialize a new git repo in subdir for a project within the parentDir keeping its history
+// can exit on cleanup
 func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions) (err error) {
 	subRepoUrl := opts.Origin
 	cleanExp, err := regexp.Compile("[^a-zA-Z0-9_-]+")
@@ -131,7 +134,7 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 				fmt.Println("nothing to unstash")
 			} else if len(lines) > 0 && strings.Contains(lines[0], "monospace-externalizing") {
 				fmt.Println("Unstashing saved changes")
-				gitExec("stash", "pop")
+				CheckErr(gitExec("stash", "pop"))
 			}
 		}()
 	}
@@ -150,7 +153,7 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 		}
 		if os.Chdir(parentDir) == nil {
 			fmt.Println("delete temporary subtree branch", branchName)
-			gitExec("branch", "-D", branchName)
+			CheckErr(gitExec("branch", "-D", branchName))
 		}
 	}()
 
@@ -222,11 +225,16 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 	} else {
 		err = MonospaceAddProject(subDir, "local")
 	}
+	if err != nil {
+		return err
+	}
 
 	// stage modified files
-	gitExec("add", ".gitignore", ".monospace.yml")
-
-	fmt.Println("You can review the changes before committing")
+	fmt.Println("Stage changed files")
+	err = gitExec("add", ".gitignore", ".monospace.yml")
+	if err == nil {
+		fmt.Println("You can review the changes before committing")
+	}
 
 	return
 

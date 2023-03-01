@@ -87,7 +87,7 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 	fmt.Println(Success("Cloning done."))
 	// move to the monorepo root
 	monospaceRoot = destDirectory
-	os.Chdir(destDirectory)
+	CheckErr(os.Chdir(destDirectory))
 	// read the config file
 	if CheckErrOrReturn(FileExists(DfltcfgFileName)) {
 		// proceed to clone external projects

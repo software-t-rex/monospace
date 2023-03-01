@@ -44,11 +44,14 @@ func Javascript() (err error) {
 			err = nil
 		}
 	}
-
-	//@todo propose to add to workspace file
-
 	pm := getPMcmd()
-	cmd := exec.Command(pm, pmInitArgs[pm]...)
+	pmArgs, hasPmArgs := pmInitArgs[pm]
+	if !hasPmArgs {
+		printWarning(fmt.Sprintf("can't init '%s' package manager", pm))
+	}
+	//@todo propose to add to workspace file
+	// #nosec G204 - vars don't come from user inputs
+	cmd := exec.Command(pm, pmArgs...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

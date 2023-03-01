@@ -46,10 +46,13 @@ func Golang() error {
 		}
 		goModPrefix = fmt.Sprintf("host.local/%s", username)
 	}
+	// @todo check for valid go module prefix
+	moduleName := fmt.Sprintf("%s/%s", goModPrefix, pName)
 
 	//@todo propose to add to go.work
 
-	cmd := exec.Command("go", "mod", "init", goModPrefix+"/"+pName)
+	// #nosec G204 - module name should be verified
+	cmd := exec.Command("go", "mod", "init", moduleName)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

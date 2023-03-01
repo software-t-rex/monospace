@@ -46,6 +46,7 @@ func writeTemplateFile(src string, dest string) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(dest, []byte(templateStr), 0644)
+	// #nosec G306 - we want the group access
+	err = os.WriteFile(dest, []byte(templateStr), 0640)
 	return err
 }
