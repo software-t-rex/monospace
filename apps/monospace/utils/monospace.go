@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/software-t-rex/go-jobExecutor"
@@ -101,9 +102,9 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 			return
 		}
 		fmt.Println(Info("Cloning externals projects..."))
-		jobExecutor := jobExecutor.NewExecutor().WithProgressOutput()
+		jobExecutor := jobExecutor.NewExecutor().WithOngoingStatusOutput()
 		for _, project := range externals {
-			jobExecutor.AddJobCmd("git", "clone", project.RepoUrl, project.Name)
+			jobExecutor.AddJobCmds(exec.Command("git", "clone", project.RepoUrl, project.Name))
 		}
 		errs := jobExecutor.Execute()
 		fmt.Println(Success("Cloning done."))
