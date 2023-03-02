@@ -49,7 +49,7 @@ var rootCmd = &cobra.Command{
 `) + utils.Yellow(`  | | | | | || (_) || | | || (_) |\__ \| |_) || (_| || (__|  __/
 `) + utils.Red(`  |_| |_| |_| \___/ |_| |_| \___/ |___/| .__/  \__,_| \___|\___|
                                        | |
-                                       |_|
+                                       |_| v`+AppVersion+`
 `) + `
 Monospace try to bring you best of monorepo and poly-repo paradigms
 You'll enjoy work in a monorepo fashion while keeping advantages of polyrepo.
