@@ -22,34 +22,51 @@ var statusCmd = &cobra.Command{
 	Aliases: []string{"st"},
 	Use:     "status",
 	Short:   "Return aggregated git status information for all repositories in the monospace",
-	Long: `Return aggregated git status information for all repositories in the monospace
+	Long: `Return aggregated git status information for all repositories in the monospace:
+
+You can pass args to git status by separating them with double hyphen '--'
+example: monospace status -- --porcelain
+
+monospace st is an alias of this command but will add the --short and --branch
+flags to the underlying git status command.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
 		utils.CheckErr(utils.MonospaceChdir())
+
+		// add --short flag if called with 'st' alias
+		if cmd.CalledAs() == "st" {
+			args = append(args, "--short", "--branch")
+		}
+
+		isShort := utils.Contains(args, "--short") || utils.Contains(args, "--porcelain")
+		nameStyle := colors.Style(colors.Bold)
 		projects := utils.ProjectsGetAll()
-		executor := jobExecutor.NewExecutor().WithProgressBarOutput(len(projects), false, string(colors.BgBlack)+string(colors.BrightGreen))
-		executor.AddNamedJobCmd("'monospace' git status", getStatusCommand(""))
+		internals := []string{}
+		executor := jobExecutor.NewExecutor().WithProgressBarOutput(
+			10, false, string(colors.BgBlack)+string(colors.BrightGreen),
+		)
+		executor.AddNamedJobCmd("monospace", getStatusCommand("", args))
 		for _, p := range projects {
 			project := p
 			if p.Kind == utils.Internal {
-				executor.AddNamedJobFn(fmt.Sprintf("'%s' is internal project -> skipped", project.Name), func() (string, error) {
-					return "", nil
-				})
+				if !isShort {
+					internals = append(internals, p.Name)
+				}
 				continue
 			}
-			executor.AddNamedJobCmd(fmt.Sprintf("'%s' git status", project.Name), getStatusCommand(project.Name))
+			executor.AddNamedJobCmd(project.Name, getStatusCommand(project.Name, args))
 		}
+
 		executor.OnJobsDone(func(jobs jobExecutor.JobList) {
 			output := []string{}
-			for _, job := range jobs {
-				if job.Res != "" {
-					output = append(output, fmt.Sprintf("%s:\n%s", job.Name(), job.Res))
-				} else {
-					output = append(output, fmt.Sprintf("%s\n", job.Name()))
-				}
+			if len(internals) > 0 && !isShort {
+				fmt.Print(nameStyle("Skipped internal projects:"), "\n - ", strings.Join(internals, "\n - "), "\n\n")
 			}
-			fmt.Print(strings.Join(output, "\n"))
+			for _, job := range jobs {
+				output = append(output, fmt.Sprintf("%s:\n%s", nameStyle(job.Name()), utils.Indent(job.Res, "  ")))
+			}
+			fmt.Print(strings.Join(output, ""))
 		})
 		executor.Execute()
 	},
@@ -69,8 +86,8 @@ func init() {
 	// statusCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func getStatusCommand(path string) *exec.Cmd {
-	args := []string{"status", "--short"}
+func getStatusCommand(path string, args []string) *exec.Cmd {
+	args = append([]string{"status"}, args...)
 	if colors.ColorEnabled() {
 		args = append([]string{"-c", "color.ui=always"}, args...)
 	}
