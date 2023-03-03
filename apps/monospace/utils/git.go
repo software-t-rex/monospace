@@ -71,19 +71,18 @@ func GitInit(directory string, addIgnoreFile bool) (err error) {
 
 // print the last git commit for given directory
 func GitHistoryLastCommit(directory string) (res string, err error) {
-	var cParam string
+	var args []string
 	if colors.ColorEnabled() {
-		cParam = "--c color.ui=always"
+		args = append(args, "-c", "color.ui=always")
 	}
-	/* #nosec G204 - cParam is not a user input */
-	cmd := exec.Command(
-		"git",
+	args = append(args,
 		"log",
-		cParam,
 		"--pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'",
 		"--abbrev-commit",
 		"HEAD^..HEAD",
 	)
+	/* #nosec G204 - cParam is not a user input */
+	cmd := exec.Command("git", args...)
 	cmd.Dir = directory
 	var resBytes []byte
 	resBytes, err = cmd.CombinedOutput()
