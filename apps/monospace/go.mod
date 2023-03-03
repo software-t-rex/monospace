@@ -5,15 +5,19 @@ go 1.20
 // modules from the monospace
 require github.com/software-t-rex/monospace/colors v0.0.0
 
+require github.com/software-t-rex/monospace/scaffolders v0.0.0
+
 require (
+	github.com/software-t-rex/go-jobExecutor/v2 v2.0.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
-	github.com/software-t-rex/go-jobExecutor v0.0.0
 )
 
 replace github.com/software-t-rex/monospace/colors => ../../gomodules/colors
 
-replace github.com/software-t-rex/go-jobExecutor => ../../gomodules/go-jobexecutor
+replace github.com/software-t-rex/monospace/scaffolders => ../../gomodules/scaffolders
+
+replace github.com/software-t-rex/go-jobExecutor/v2 => ../../gomodules/go-jobexecutor
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

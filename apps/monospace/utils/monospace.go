@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/software-t-rex/go-jobExecutor"
+	"github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/spf13/viper"
 )
 

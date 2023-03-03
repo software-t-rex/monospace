@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/software-t-rex/go-jobExecutor"
+	"github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/colors"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
