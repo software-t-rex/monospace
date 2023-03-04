@@ -110,7 +110,7 @@ func Style(styles ...style) func(s ...string) string {
 		styleString = styleString + string(style)
 	}
 	return func(s ...string) string {
-		if enabled {
+		if ColorEnabled() {
 			return styleString + strings.Join(s, " ") + string(Reset)
 		}
 		return strings.Join(s, " ")
