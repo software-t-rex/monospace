@@ -54,7 +54,7 @@ monospace ls [options] path/to/a/monospace
 }
 
 func init() {
-	rootCmd.AddCommand(lsCmd)
+	RootCmd.AddCommand(lsCmd)
 
 	// Here you will define your flags and configuration settings.
 

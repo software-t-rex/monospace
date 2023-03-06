@@ -58,7 +58,7 @@ will update the monospace gitignore and .monospaced.yml files accordingly.
 }
 
 func init() {
-	rootCmd.AddCommand(renameCmd)
+	RootCmd.AddCommand(renameCmd)
 
 	// Here you will define your flags and configuration settings.
 

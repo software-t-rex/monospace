@@ -72,7 +72,7 @@ you should look at the ` + italic("monospace import") + ` command instead
 }
 
 func init() {
-	rootCmd.AddCommand(createCmd)
+	RootCmd.AddCommand(createCmd)
 	createCmd.Flags().StringVarP(&flagCreatePType, "type", "t", "", "type of project to create for now only 'go' and 'js' are supported")
 	err := createCmd.RegisterFlagCompletionFunc("type", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"go", "js"}, cobra.ShellCompDirectiveNoFileComp

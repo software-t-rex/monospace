@@ -70,7 +70,7 @@ monospace run -p modules/mymodule -p modules/myothermodule -- ls -la
 }
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	RootCmd.AddCommand(runCmd)
 	runCmd.Flags().StringArrayP("project-filter", "p", []string{}, "Filter projects by name")
 	runCmd.RegisterFlagCompletionFunc("project-filter", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveDefault

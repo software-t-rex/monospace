@@ -73,7 +73,7 @@ flags to the underlying git status command.
 }
 
 func init() {
-	rootCmd.AddCommand(statusCmd)
+	RootCmd.AddCommand(statusCmd)
 
 	// Here you will define your flags and configuration settings.
 

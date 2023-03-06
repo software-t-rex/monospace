@@ -24,7 +24,7 @@ var initCmd = &cobra.Command{
 It will perform the following steps:
 - create some files if they are not present in the directory
 	(.monospace.yml, .npmrc, .gitignore, go.work if go installed detected)
-- init a git repository
+- init a git repository if not already initialized
 each of these steps won't overwrite existing files if any
 ` + utils.Underline("usage:") + `
 monospace init
@@ -69,7 +69,7 @@ monospace init path/to/new-monospace
 
 func init() {
 	// @todo add prompt for prefered js package manager and go.mod default prefix
-	rootCmd.AddCommand(initCmd)
+	RootCmd.AddCommand(initCmd)
 
 	// Here you will define your flags and configuration settings.
 

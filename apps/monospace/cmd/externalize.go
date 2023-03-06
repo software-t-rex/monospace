@@ -79,7 +79,7 @@ You should check that there's no untracked files before proceeding as they will 
 }
 
 func init() {
-	rootCmd.AddCommand(externalizeCmd)
+	RootCmd.AddCommand(externalizeCmd)
 	externalizeCmd.Flags().StringP("initial-branch", "b", "", "set the default branch name (default to your git default setting)")
 	externalizeCmd.Flags().BoolP("push", "p", false, "push initial branch and set upstream to origin")
 	externalizeCmd.Flags().BoolP("no-interactive", "y", false, "Prevent any interactive prompts")

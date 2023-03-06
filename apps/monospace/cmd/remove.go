@@ -39,7 +39,7 @@ ProjectName is relative path of project from the root of the monospace.
 }
 
 func init() {
-	rootCmd.AddCommand(removeCmd)
+	RootCmd.AddCommand(removeCmd)
 	removeCmd.Flags().BoolVarP(&flagRemoveRmDir, "rmdir", "r", false, "Remove the project directory without confirm")
 	// Here you will define your flags and configuration settings.
 

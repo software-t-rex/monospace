@@ -48,7 +48,7 @@ example: monospace import packages/fancylib git@github.com:username/fancylib.git
 }
 
 func init() {
-	rootCmd.AddCommand(importCmd)
+	RootCmd.AddCommand(importCmd)
 
 	// Here you will define your flags and configuration settings.
 
