@@ -49,17 +49,12 @@ func (p Project) StyledString() string {
 	return styles[p.Kind](p.Name)
 }
 
-var projectsMapCache map[string]string
-
-func refreshProjectsMap() map[string]string {
-	projectsMapCache = viper.GetViper().GetStringMapString("projects")
-	return projectsMapCache
-}
-func getCachedProjectsMap() map[string]string {
-	if len(projectsMapCache) == 0 {
-		refreshProjectsMap()
+func getProjectsMap() (map[string]string, error) {
+	config, err := AppConfigGet()
+	if err != nil {
+		return nil, err
 	}
-	return projectsMapCache
+	return config.Projects, nil
 }
 
 /* check project name is valid */
@@ -71,16 +66,20 @@ func ProjectIsValidName(name string) bool {
 
 /* check project is a monospace passenger */
 func ProjectExists(name string) (exists bool) {
-	projects := getCachedProjectsMap()
-	_, exists = projects[name]
+	projects, _ := getProjectsMap()
+	if projects != nil {
+		_, exists = projects[name]
+	}
 	return exists
 }
 
 /* return all project names declared in the .monospace.yml */
 func ProjectsGetAllNameOnly() (res []string) {
-	projectsMap := getCachedProjectsMap()
-	res = MapGetKeys(projectsMap)
-	sort.Strings(res)
+	projectsMap, _ := getProjectsMap()
+	if projectsMap != nil {
+		res = MapGetKeys(projectsMap)
+		sort.Strings(res)
+	}
 	return
 }
 
@@ -96,7 +95,8 @@ func ProjectsAsStructs(projectsMap map[string]string) []Project {
 }
 
 func ProjectsGetAll() []Project {
-	return ProjectsAsStructs(getCachedProjectsMap())
+	projectsMap, _ := getProjectsMap()
+	return ProjectsAsStructs(projectsMap)
 }
 
 /* return all project names declared in the .monospace.yml that match the given prefix */
@@ -145,9 +145,21 @@ func ProjectDetectMainLang(name string) string {
 }
 
 func ProjectGetByName(name string) (Project, error) {
-	projects := getCachedProjectsMap()
+	config, err := AppConfigGet()
+	var p Project
+	if err != nil {
+		return p, err
+	}
+
+	// check alias first
+	if !strings.Contains(name, "/") && config.Aliases != nil && config.Aliases[name] != "" {
+		name = config.Aliases[name]
+	}
+	projects := config.Projects
+	if err != nil {
+		return Project{}, err
+	}
 	repoUrl, exists := projects[name]
-	var err error
 	if !exists {
 		err = errors.New("Unknown project '" + name + "'")
 	}
@@ -203,9 +215,9 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 
 	// add to .monopace.yml
 	if project.Kind == External {
-		CheckErr(MonospaceAddProject(project.Name, project.RepoUrl))
+		CheckErr(AppConfigAddProject(project.Name, project.RepoUrl, true))
 	} else {
-		CheckErr(MonospaceAddProject(project.Name, project.Kind.String()))
+		CheckErr(AppConfigAddProject(project.Name, project.Kind.String(), true))
 	}
 
 	// move to new package directory
@@ -251,16 +263,6 @@ func ProjectCloneRepo(projectName string, repoUrl string) (err error) {
 	return
 }
 
-func ProjectRemoveFromConfig(project Project, silent bool) error {
-	if !silent {
-		fmt.Println("Remove from monospace.yml")
-	}
-	projects := viper.GetStringMap("projects")
-	projects[project.Name] = nil
-	viper.Set("projects", projects)
-	return viper.WriteConfig()
-}
-
 func ProjectRemoveFromGitignore(project Project, silent bool) (err error) {
 	if project.Kind != Internal {
 		if !silent {
@@ -274,7 +276,7 @@ func ProjectRemoveFromGitignore(project Project, silent bool) (err error) {
 /* exit on error */
 func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 	project := CheckErrOrReturn(ProjectGetByName(projectName))
-	CheckErr(ProjectRemoveFromConfig(project, false))
+	CheckErr(AppConfigRemoveProject(project.Name, true))
 
 	rootDir := MonospaceGetRoot()
 	printSuccess := func() { fmt.Println(Success("Project " + projectName + " successfully removed")) }

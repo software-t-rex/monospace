@@ -43,8 +43,8 @@ will update the monospace gitignore and .monospaced.yml files accordingly.
 
 		project := utils.CheckErrOrReturn(utils.ProjectGetByName(oldName))
 
-		utils.CheckErr(utils.ProjectRemoveFromConfig(project, true))
-		utils.CheckErr(utils.MonospaceAddProject(newName, project.RepoUrl))
+		utils.CheckErr(utils.AppConfigRemoveProject(project.Name, false))
+		utils.CheckErr(utils.AppConfigAddProject(newName, project.RepoUrl, true))
 
 		if project.Kind != utils.Internal {
 			utils.CheckErr(utils.ProjectRemoveFromGitignore(project, true))

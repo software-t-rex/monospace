@@ -59,17 +59,16 @@ func MonospaceGetConfigPath() string {
 	return filepath.Join(MonospaceGetRoot(), "/", DfltcfgFileName)
 }
 
-func MonospaceHasProject(projectName string) (ok bool) {
-	projects := viper.GetStringMap("projects")
-	_, ok = projects[projectName]
-	return
-}
-
-func MonospaceAddProject(projectName string, repoUrl string) error {
-	projects := viper.GetStringMap("projects")
-	projects[projectName] = repoUrl
-	viper.Set("projects", projects)
-	return viper.WriteConfig()
+func MonospaceHasProject(projectName string) bool {
+	config, _ := AppConfigGet()
+	if config != nil {
+		projects := config.Projects
+		repo, ok := projects[projectName]
+		if ok && repo != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func MonospaceAddProjectToGitignore(projectName string) error {

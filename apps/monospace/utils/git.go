@@ -220,9 +220,9 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 		return err
 	}
 	if subRepoUrl != "" {
-		err = MonospaceAddProject(subDir, subRepoUrl)
+		err = AppConfigAddProject(subDir, subRepoUrl, true)
 	} else {
-		err = MonospaceAddProject(subDir, "local")
+		err = AppConfigAddProject(subDir, "local", true)
 	}
 	if err != nil {
 		return err

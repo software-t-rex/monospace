@@ -11,7 +11,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/software-t-rex/monospace/colors"
 	"github.com/software-t-rex/monospace/utils"
@@ -25,11 +24,9 @@ var flagRemoveRmDir bool
 var flagLsLongFormat bool
 var flagCreatePType string
 
-var configFound bool
-
 // command that require the config must call this method before continuing execution
 func CheckConfigFound(exitOnError bool) bool {
-	if !configFound {
+	if !utils.AppConfigIsLoaded() {
 		if exitOnError {
 			utils.CheckErr(errors.New("not inside a monospace"))
 		}
@@ -77,6 +74,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	initConfig()
 	RootCmd.PersistentFlags().BoolVarP(&flagRootDisableColorOutput, "no-color", "C", false, "Disable color output mode (you can also use env var NO_COLOR)")
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -91,13 +89,6 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	viper.SetConfigFile(utils.MonospaceGetConfigPath())
-	viper.SetDefault("js_package_manager", "^pnpm@7.27.0")
-	// viper.AutomaticEnv() // read in environment variables that match
-	// If a config file is found, read it in.
-	err := viper.ReadInConfig()
-	if err == nil {
-		configFound = true
-	}
 	colors.Toggle(!flagRootDisableColorOutput)
+	utils.AppConfigInit(utils.MonospaceGetConfigPath())
 }
