@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -44,8 +45,8 @@ will update the monospace gitignore and .monospaced.yml files accordingly.
 
 		project := utils.CheckErrOrReturn(utils.ProjectGetByName(oldName))
 
-		utils.CheckErr(utils.AppConfigRemoveProject(project.Name, false))
-		utils.CheckErr(utils.AppConfigAddProject(newName, project.RepoUrl, true))
+		utils.CheckErr(app.ConfigRemoveProject(project.Name, false))
+		utils.CheckErr(app.ConfigAddProject(newName, project.RepoUrl, true))
 
 		if project.Kind != utils.Internal {
 			utils.CheckErr(utils.ProjectRemoveFromGitignore(project, true))

@@ -1,7 +1,8 @@
-package utils
+package app
 
 import (
 	"errors"
+	"os"
 	"reflect"
 	"strings"
 
@@ -21,7 +22,7 @@ type MonospaceConfig struct {
 	GoModPrefix string                             `mapstructure:"go_mod_prefix,omitempty"`
 	JSPM        string                             `mapstructure:"js_package_manager,omitempty"`
 	Projects    map[string]string                  `mapstructure:"projects, omitempty"`
-	Aliases     map[string]string                  `mapstructure:"project_aliases,omitempty"`
+	Aliases     map[string]string                  `mapstructure:"projects_aliases,omitempty"`
 	Pipeline    map[string]MonospaceConfigPipeline `mapstructure:"pipeline, omitempty"`
 }
 
@@ -30,7 +31,17 @@ var dfltGoModPrfx string = "example.com"
 
 var appConfig *MonospaceConfig
 
-func AppConfigSet(config *MonospaceConfig) {
+func fileExists(filePath string) (bool, error) {
+	_, err := os.Stat(filePath)
+	if err == nil {
+		return true, err
+	} else if os.IsNotExist(err) { // not exists is not an error in this context
+		return false, nil
+	}
+	return false, err
+}
+
+func ConfigSet(config *MonospaceConfig) {
 	c := config
 	if c.GoModPrefix == "" {
 		c.GoModPrefix = dfltGoModPrfx
@@ -38,25 +49,34 @@ func AppConfigSet(config *MonospaceConfig) {
 	if c.JSPM == "" {
 		c.JSPM = dfltJSPM
 	}
+	if c.Aliases == nil {
+		c.Aliases = make(map[string]string)
+	}
+	if c.Projects == nil {
+		c.Projects = make(map[string]string)
+	}
+	if c.Pipeline == nil {
+		c.Pipeline = map[string]MonospaceConfigPipeline{}
+	}
 	appConfig = config
 }
 
-func AppConfigIsLoaded() bool {
+func ConfigIsLoaded() bool {
 	return appConfig != nil
 }
 
-func AppConfigGet() (*MonospaceConfig, error) {
-	if !AppConfigIsLoaded() {
+func ConfigGet() (*MonospaceConfig, error) {
+	if !ConfigIsLoaded() {
 		return nil, errors.New("app config not loaded")
 	}
 	return appConfig, nil
 }
 
-func AppConfigInit(configPath string) (*MonospaceConfig, error) {
-	if AppConfigIsLoaded() {
+func ConfigInit(configPath string) (*MonospaceConfig, error) {
+	if ConfigIsLoaded() {
 		return nil, errors.New("config already loaded")
 	}
-	_, err := FileExists(configPath)
+	_, err := fileExists(configPath)
 	if err != nil {
 		return nil, err
 	}
@@ -70,13 +90,13 @@ func AppConfigInit(configPath string) (*MonospaceConfig, error) {
 	var config *MonospaceConfig
 	err = viper.Unmarshal(&config)
 	if err == nil {
-		AppConfigSet(config)
+		ConfigSet(config)
 	}
 	return config, err
 }
 
-func AppConfigSave() error {
-	config, err := AppConfigGet()
+func ConfigSave() error {
+	config, err := ConfigGet()
 	if err != nil {
 		return err
 	}
@@ -85,14 +105,14 @@ func AppConfigSave() error {
 	for i := 0; i < r.NumField(); i++ {
 		f := r.Field(i)
 		fName := strings.Split(rType.Field(i).Tag.Get("mapstructure"), ",")[0]
-		viper.Set(fName, f.Interface())
+		val := f.Interface()
+		viper.Set(fName, val)
 	}
 	return viper.WriteConfig()
 }
 
-// ///////////////////////////////
-func AppConfigAddProjectAlias(projectName string, alias string, save bool) error {
-	config, err := AppConfigGet()
+func ConfigAddProjectAlias(projectName string, alias string, save bool) error {
+	config, err := ConfigGet()
 	if err != nil {
 		return err
 	}
@@ -101,13 +121,13 @@ func AppConfigAddProjectAlias(projectName string, alias string, save bool) error
 	}
 	config.Aliases[alias] = projectName
 	if save {
-		return AppConfigSave()
+		return ConfigSave()
 	}
 	return err
 }
 
-func AppConfigRemoveProjectAlias(alias string, save bool) error {
-	config, err := AppConfigGet()
+func ConfigRemoveProjectAlias(alias string, save bool) error {
+	config, err := ConfigGet()
 	if err != nil {
 		return err
 	}
@@ -115,13 +135,13 @@ func AppConfigRemoveProjectAlias(alias string, save bool) error {
 		delete(config.Aliases, alias)
 	}
 	if save {
-		return AppConfigSave()
+		return ConfigSave()
 	}
 	return nil
 }
 
-func AppConfigAddProject(projectName string, repoUrl string, save bool) error {
-	config, err := AppConfigGet()
+func ConfigAddProject(projectName string, repoUrl string, save bool) error {
+	config, err := ConfigGet()
 	if err != nil {
 		return err
 	}
@@ -131,13 +151,13 @@ func AppConfigAddProject(projectName string, repoUrl string, save bool) error {
 	}
 	config.Projects[projectName] = repoUrl
 	if save {
-		return AppConfigSave()
+		return ConfigSave()
 	}
 	return err
 }
 
-func AppConfigRemoveProject(projectName string, save bool) error {
-	config, err := AppConfigGet()
+func ConfigRemoveProject(projectName string, save bool) error {
+	config, err := ConfigGet()
 	if err != nil {
 		return err
 	}
@@ -150,7 +170,7 @@ func AppConfigRemoveProject(projectName string, save bool) error {
 		}
 	}
 	if save {
-		return AppConfigSave()
+		return ConfigSave()
 	}
 	return err
 }

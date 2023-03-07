@@ -9,9 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/scaffolders"
-
-	"github.com/spf13/viper"
 )
 
 type ProjectKind int
@@ -50,7 +49,7 @@ func (p Project) StyledString() string {
 }
 
 func getProjectsMap() (map[string]string, error) {
-	config, err := AppConfigGet()
+	config, err := app.ConfigGet()
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +144,7 @@ func ProjectDetectMainLang(name string) string {
 }
 
 func ProjectGetByName(name string) (Project, error) {
-	config, err := AppConfigGet()
+	config, err := app.ConfigGet()
 	var p Project
 	if err != nil {
 		return p, err
@@ -215,7 +214,7 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 
 	// add to .monopace.yml
 	if project.Kind == External {
-		CheckErr(AppConfigAddProject(project.Name, project.RepoUrl, true))
+		CheckErr(app.ConfigAddProject(project.Name, project.RepoUrl, true))
 	} else {
 		CheckErr(AppConfigAddProject(project.Name, project.Kind.String(), true))
 	}
@@ -276,7 +275,7 @@ func ProjectRemoveFromGitignore(project Project, silent bool) (err error) {
 /* exit on error */
 func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 	project := CheckErrOrReturn(ProjectGetByName(projectName))
-	CheckErr(AppConfigRemoveProject(project.Name, true))
+	CheckErr(app.ConfigRemoveProject(project.Name, true))
 
 	rootDir := MonospaceGetRoot()
 	printSuccess := func() { fmt.Println(Success("Project " + projectName + " successfully removed")) }

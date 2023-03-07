@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/software-t-rex/go-jobExecutor/v2"
+	"github.com/software-t-rex/monospace/app"
 	"github.com/spf13/viper"
 )
 
@@ -60,7 +61,7 @@ func MonospaceGetConfigPath() string {
 }
 
 func MonospaceHasProject(projectName string) bool {
-	config, _ := AppConfigGet()
+	config, _ := app.ConfigGet()
 	if config != nil {
 		projects := config.Projects
 		repo, ok := projects[projectName]

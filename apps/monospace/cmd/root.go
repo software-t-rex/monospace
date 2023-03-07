@@ -13,21 +13,19 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/colors"
 	"github.com/software-t-rex/monospace/utils"
 )
 
-var AppVersion = "0.0.5"
-
 // flags for the application
 var flagRootDisableColorOutput bool
 var flagRemoveRmDir bool
-var flagLsLongFormat bool
 var flagCreatePType string
 
 // command that require the config must call this method before continuing execution
 func CheckConfigFound(exitOnError bool) bool {
-	if !utils.AppConfigIsLoaded() {
+	if !app.ConfigIsLoaded() {
 		if exitOnError {
 			utils.CheckErr(errors.New("not inside a monospace"))
 		}
@@ -38,7 +36,7 @@ func CheckConfigFound(exitOnError bool) bool {
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Version: AppVersion,
+	Version: app.Version,
 	Use:     "monospace",
 	Short:   "monospace is not monorepo",
 	Long: utils.BrightBlue(`
@@ -47,7 +45,7 @@ var RootCmd = &cobra.Command{
 `) + utils.Yellow(`  | | | | | || (_) || | | || (_) |\__ \| |_) || (_| || (__|  __/
 `) + utils.Red(`  |_| |_| |_| \___/ |_| |_| \___/ |___/| .__/  \__,_| \___|\___|
                                        | |
-                                       |_| v`+AppVersion+`
+                                       |_| v`+app.Version+`
 `) + `
 Monospace try to bring you best of monorepo and poly-repo paradigms
 You'll enjoy work in a monorepo fashion while keeping advantages of polyrepo.
@@ -91,5 +89,5 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	colors.Toggle(!flagRootDisableColorOutput)
-	utils.AppConfigInit(utils.MonospaceGetConfigPath())
+	app.ConfigInit(utils.MonospaceGetConfigPath())
 }

@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/colors"
 )
 
@@ -220,9 +221,9 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 		return err
 	}
 	if subRepoUrl != "" {
-		err = AppConfigAddProject(subDir, subRepoUrl, true)
+		err = app.ConfigAddProject(subDir, subRepoUrl, true)
 	} else {
-		err = AppConfigAddProject(subDir, "local", true)
+		err = app.ConfigAddProject(subDir, "local", true)
 	}
 	if err != nil {
 		return err
