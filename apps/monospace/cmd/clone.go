@@ -4,6 +4,7 @@ SPDX-FileType: SOURCE
 SPDX-License-Identifier: MIT
 SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 */
+
 package cmd
 
 import (
