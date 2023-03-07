@@ -96,7 +96,7 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 		configParser.SetConfigFile(DfltcfgFileName)
 		CheckErr(configParser.ReadInConfig())
 		projects := ProjectsAsStructs(configParser.GetStringMapString("projects"))
-		externals := Filter(projects, func(p Project) bool { return p.Kind == External })
+		externals := SliceFilter(projects, func(p Project) bool { return p.Kind == External })
 		if len(externals) == 0 {
 			fmt.Println(Success("Terminated with success"))
 			return

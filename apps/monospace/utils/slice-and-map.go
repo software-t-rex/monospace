@@ -6,15 +6,13 @@ import (
 
 func MapGetKeys[T any](m map[string]T) []string {
 	keys := make([]string, 0, len(m))
-	i := 0
 	for k := range m {
 		keys = append(keys, k)
-		i++
 	}
 	return keys
 }
 
-func Filter[T any](slice []T, predicate func(T) bool) (res []T) {
+func SliceFilter[T any](slice []T, predicate func(T) bool) (res []T) {
 	for _, val := range slice {
 		if predicate(val) {
 			res = append(res, val)
@@ -23,7 +21,17 @@ func Filter[T any](slice []T, predicate func(T) bool) (res []T) {
 	return
 }
 
-func Map[T any, V any, Mapper func(T) V](slice []T, mapper Mapper) []V {
+func MapFilter[K string | int, T any](m map[K]T, predicate func(T) bool) map[K]T {
+	res := make(map[K]T, len(m))
+	for k, val := range m {
+		if predicate(val) {
+			res[k] = val
+		}
+	}
+	return res
+}
+
+func SliceMap[T any, V any, Mapper func(T) V](slice []T, mapper Mapper) []V {
 	res := make([]V, len(slice))
 	for key, val := range slice {
 		res[key] = mapper(val)
@@ -31,7 +39,7 @@ func Map[T any, V any, Mapper func(T) V](slice []T, mapper Mapper) []V {
 	return res
 }
 
-func MapAndFilter[T any, V any, Mapper func(T) (V, bool)](slice []T, mapper Mapper) (res []V) {
+func SliceMapAndFilter[T any, V any, Mapper func(T) (V, bool)](slice []T, mapper Mapper) (res []V) {
 	for _, val := range slice {
 		newVal, keep := mapper(val)
 		if keep {
@@ -41,7 +49,27 @@ func MapAndFilter[T any, V any, Mapper func(T) (V, bool)](slice []T, mapper Mapp
 	return
 }
 
-func Contains[T string | int](slice []T, search T) bool {
+// return "" if not found
+func StringMapFind[V string | int](m map[string]V, val V) string {
+	for k, v := range m {
+		if v == val {
+			return k
+		}
+	}
+	return ""
+}
+
+// returns -1 if not found
+func IntMapFind[V string | int](m map[int]V, val V) int {
+	for k, v := range m {
+		if v == val {
+			return k
+		}
+	}
+	return -1
+}
+
+func SliceContains[T string | int](slice []T, search T) bool {
 	for _, val := range slice {
 		if val == search {
 			return true

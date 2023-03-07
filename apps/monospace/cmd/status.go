@@ -40,7 +40,7 @@ flags to the underlying git status command.
 			args = append(args, "--short", "--branch")
 		}
 
-		isShort := utils.Contains(args, "--short") || utils.Contains(args, "--porcelain")
+		isShort := utils.SliceContains(args, "--short") || utils.SliceContains(args, "--porcelain")
 		nameStyle := colors.Style(colors.Bold)
 		projects := utils.ProjectsGetAll()
 		internals := []string{}

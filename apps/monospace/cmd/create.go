@@ -65,7 +65,7 @@ you should look at the ` + italic("monospace import") + ` command instead
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
-		if !utils.Contains([]string{"", "go", "js"}, flagCreatePType) {
+		if !utils.SliceContains([]string{"", "go", "js"}, flagCreatePType) {
 			utils.Exit("Unknown project type '" + flagCreatePType + "'")
 		}
 		utils.ProjectCreate(args[1], args[0], flagCreatePType)

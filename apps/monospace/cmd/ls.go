@@ -39,12 +39,13 @@ monospace ls [options] path/to/a/monospace
 		if len(projects) < 1 {
 			fmt.Println("No projects found start by adding one to your monospace.")
 		} else {
-			out := utils.Map(projects, func(p utils.Project) string {
-				if flagLsLongFormat {
+			isLong, _ := cmd.Flags().GetBool("long")
+			out := utils.SliceMap(projects, func(p utils.Project) string {
+				if isLong {
 					if p.RepoUrl == "" {
-						return fmt.Sprintf("%s\t(%s)", p.StyledString(), p.Kind.String())
+						return fmt.Sprintf("%s (%s)", p.StyledString(), p.Kind.String())
 					}
-					return fmt.Sprintf("%s\t(%s)", p.StyledString(), p.RepoUrl)
+					return fmt.Sprintf("%s (%s)", p.StyledString(), p.RepoUrl)
 				} else {
 					return p.StyledString()
 				}
@@ -66,6 +67,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// lsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	lsCmd.Flags().BoolVarP(&flagLsLongFormat, "longFormat", "l", false, "add information about projects repositories")
+	lsCmd.Flags().BoolP("longFormat", "l", false, "add information about projects repositories")
 
 }

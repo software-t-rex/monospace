@@ -106,9 +106,9 @@ func ProjectsGetByPrefix(prefix string, noPrefix bool) (res []string) {
 	projects := ProjectsGetAllNameOnly()
 	hasPrefix := PrefixPredicate(prefix)
 	if !noPrefix {
-		res = Filter(projects, hasPrefix)
+		res = SliceFilter(projects, hasPrefix)
 	} else {
-		res = MapAndFilter(projects, func(p string) (string, bool) {
+		res = SliceMapAndFilter(projects, func(p string) (string, bool) {
 			if hasPrefix(p) {
 				p, _ = strings.CutPrefix(p, prefix)
 				return p, true
