@@ -72,6 +72,15 @@ func ProjectExists(name string) (exists bool) {
 	return exists
 }
 
+// return project aliases
+func ProjectsGetAliasesNameOnly() (res []string) {
+	config, _ := app.ConfigGet()
+	if config.Aliases != nil {
+		return MapGetKeys(config.Aliases)
+	}
+	return []string{}
+}
+
 /* return all project names declared in the .monospace.yml */
 func ProjectsGetAllNameOnly() (res []string) {
 	projectsMap, _ := getProjectsMap()
@@ -143,6 +152,17 @@ func ProjectDetectMainLang(name string) string {
 	return "unknown"
 }
 
+func ProjectGetByAlias(alias string) (Project, error) {
+	config, err := app.ConfigGet()
+	if err != nil {
+		return Project{}, err
+	}
+	if config.Aliases == nil || config.Aliases[alias] == "" {
+		return Project{}, errors.New("alias not found: " + alias)
+	}
+	return ProjectGetByName(config.Aliases[alias])
+}
+
 func ProjectGetByName(name string) (Project, error) {
 	config, err := app.ConfigGet()
 	var p Project
@@ -171,10 +191,6 @@ func ProjectGetPath(projectName string) string {
 
 func ProjectCreateDirectory(projectName string) error {
 	return os.MkdirAll(ProjectGetPath(projectName), 0750)
-}
-
-func ProjectChdir(projectName string) error {
-	return os.Chdir(ProjectGetPath(projectName))
 }
 
 /* exit on error */
@@ -216,11 +232,17 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 	if project.Kind == External {
 		CheckErr(app.ConfigAddProject(project.Name, project.RepoUrl, true))
 	} else {
-		CheckErr(AppConfigAddProject(project.Name, project.Kind.String(), true))
+		CheckErr(app.ConfigAddProject(project.Name, project.Kind.String(), true))
 	}
 
+	// set some env variables
+	os.Setenv("MONOSPACE_VERSION", app.Version)
+	os.Setenv("MONOSPACE_ROOT", MonospaceGetRoot())
+	os.Setenv("MONOSPACE_PROJECT_PATH", projectPath)
+	os.Setenv("MONOSPACE_PROJECT_NAME", projectName)
+
 	// move to new package directory
-	CheckErr(ProjectChdir(project.Name))
+	CheckErr(os.Chdir(projectPath))
 
 	// strategy for different kind of projects
 	switch project.Kind {
