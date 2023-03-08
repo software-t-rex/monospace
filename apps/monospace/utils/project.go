@@ -220,6 +220,9 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 		project.Kind = External
 	}
 
+	// set some env variables
+	CheckErr(app.PopulateEnv(map[string]string{"PROJECT_PATH": projectName}))
+
 	// set cwd to monospace directory
 	CheckErr(MonospaceChdir())
 
@@ -234,12 +237,6 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 	} else {
 		CheckErr(app.ConfigAddProject(project.Name, project.Kind.String(), true))
 	}
-
-	// set some env variables
-	os.Setenv("MONOSPACE_VERSION", app.Version)
-	os.Setenv("MONOSPACE_ROOT", MonospaceGetRoot())
-	os.Setenv("MONOSPACE_PROJECT_PATH", projectPath)
-	os.Setenv("MONOSPACE_PROJECT_NAME", projectName)
 
 	// move to new package directory
 	CheckErr(os.Chdir(projectPath))

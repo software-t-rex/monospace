@@ -6,5 +6,7 @@ use ./gomodules/colors
 
 use (
 	./gomodules/go-jobexecutor
+	./gomodules/js-packagemanager
+	./gomodules/packageJson
 	./gomodules/scaffolders
 )

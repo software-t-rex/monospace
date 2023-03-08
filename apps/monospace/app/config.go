@@ -3,33 +3,37 @@ package app
 import (
 	"errors"
 	"os"
-	"reflect"
-	"strings"
+	"path/filepath"
 
-	"github.com/spf13/viper"
+	"sigs.k8s.io/yaml"
 )
 
 type MonospaceConfigPipeline struct {
-	DependsOn  []string `mapstructure:"name,omitempty"`
-	Env        []string `mapstructure:"env,omitempty"`
-	Outputs    []string `mapstructure:"outputs,omitempty"`
-	Inputs     []string `mapstructure:"inputs,omitempty"`
-	Cache      bool     `mapstructure:"cache,omitempty"`
-	OutputMode string   `mapstructure:",omitempty"`
-	Persistent bool     `mapstructure:"peristent,omitempty"`
+	DependsOn  []string `json:"name,omitempty"`
+	Env        []string `json:"env,omitempty"`
+	Outputs    []string `json:"outputs,omitempty"`
+	Inputs     []string `json:"inputs,omitempty"`
+	Cache      bool     `json:"cache,omitempty"`
+	OutputMode string   `json:"outputMode,omitempty"`
+	Persistent bool     `json:"peristent,omitempty"`
+	Cmd        []string `json:"cmd,omitempty"`
 }
 type MonospaceConfig struct {
-	GoModPrefix string                             `mapstructure:"go_mod_prefix,omitempty"`
-	JSPM        string                             `mapstructure:"js_package_manager,omitempty"`
-	Projects    map[string]string                  `mapstructure:"projects, omitempty"`
-	Aliases     map[string]string                  `mapstructure:"projects_aliases,omitempty"`
-	Pipeline    map[string]MonospaceConfigPipeline `mapstructure:"pipeline, omitempty"`
+	GoModPrefix string                             `json:"go_mod_prefix,omitempty"`
+	JSPM        string                             `json:"js_package_manager,omitempty"`
+	Projects    map[string]string                  `json:"projects,omitempty"`
+	Aliases     map[string]string                  `json:"projects_aliases,omitempty"`
+	Pipeline    map[string]MonospaceConfigPipeline `json:"pipeline,omitempty"`
+	configPath  string
+	root        string
 }
 
 var dfltJSPM string = "^pnpm@7.27.0"
 var dfltGoModPrfx string = "example.com"
 
 var appConfig *MonospaceConfig
+
+var ErrNotLoadedConfig = errors.New("config not loaded")
 
 func fileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
@@ -40,23 +44,17 @@ func fileExists(filePath string) (bool, error) {
 	}
 	return false, err
 }
+func writeFile(filePath string, body []byte) error {
+	return os.WriteFile(filePath, body, 0640)
+}
 
-func ConfigSet(config *MonospaceConfig) {
+func configSet(config *MonospaceConfig) {
 	c := config
 	if c.GoModPrefix == "" {
 		c.GoModPrefix = dfltGoModPrfx
 	}
 	if c.JSPM == "" {
 		c.JSPM = dfltJSPM
-	}
-	if c.Aliases == nil {
-		c.Aliases = make(map[string]string)
-	}
-	if c.Projects == nil {
-		c.Projects = make(map[string]string)
-	}
-	if c.Pipeline == nil {
-		c.Pipeline = map[string]MonospaceConfigPipeline{}
 	}
 	appConfig = config
 }
@@ -67,32 +65,37 @@ func ConfigIsLoaded() bool {
 
 func ConfigGet() (*MonospaceConfig, error) {
 	if !ConfigIsLoaded() {
-		return nil, errors.New("app config not loaded")
+		return nil, ErrNotLoadedConfig
 	}
 	return appConfig, nil
 }
 
-func ConfigInit(configPath string) (*MonospaceConfig, error) {
-	if ConfigIsLoaded() {
-		return nil, errors.New("config already loaded")
-	}
+func ConfigRead(configPath string) (*MonospaceConfig, error) {
 	_, err := fileExists(configPath)
 	if err != nil {
 		return nil, err
 	}
-	viper.SetConfigFile(configPath)
-	viper.SetDefault("js_package_manager", dfltJSPM)
-	viper.SetDefault("go_mod_prefix", dfltGoModPrfx)
-	err = viper.ReadInConfig()
+	var raw []byte
+	var config *MonospaceConfig
+	raw, err = os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
-	var config *MonospaceConfig
-	err = viper.Unmarshal(&config)
-	if err == nil {
-		ConfigSet(config)
-	}
+	err = yaml.Unmarshal(raw, &config)
+	config.configPath = configPath
+	config.root = filepath.Dir(configPath)
 	return config, err
+}
+
+func ConfigInit(configPath string) error {
+	if ConfigIsLoaded() {
+		return errors.New("config already loaded")
+	}
+	config, err := ConfigRead(configPath)
+	if err == nil {
+		configSet(config)
+	}
+	return err
 }
 
 func ConfigSave() error {
@@ -100,15 +103,18 @@ func ConfigSave() error {
 	if err != nil {
 		return err
 	}
-	r := reflect.ValueOf(config).Elem()
-	rType := r.Type()
-	for i := 0; i < r.NumField(); i++ {
-		f := r.Field(i)
-		fName := strings.Split(rType.Field(i).Tag.Get("mapstructure"), ",")[0]
-		val := f.Interface()
-		viper.Set(fName, val)
+	if config.configPath == "" {
+		return errors.New("missing a configPath to save to")
 	}
-	return viper.WriteConfig()
+	var raw []byte
+
+	raw, err = yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+	raw = append([]byte("# yaml-language-server: $schema=./apps/monospace/schemas/monospace.schema.json\n"), raw...)
+
+	return writeFile(config.configPath, raw)
 }
 
 func ConfigAddProjectAlias(projectName string, alias string, save bool) error {
@@ -150,6 +156,7 @@ func ConfigAddProject(projectName string, repoUrl string, save bool) error {
 		return errors.New("project " + projectName + " already exists")
 	}
 	config.Projects[projectName] = repoUrl
+
 	if save {
 		return ConfigSave()
 	}
@@ -173,4 +180,21 @@ func ConfigRemoveProject(projectName string, save bool) error {
 		return ConfigSave()
 	}
 	return err
+}
+
+func PopulateEnv(env map[string]string) error {
+	if !ConfigIsLoaded() {
+		return ErrNotLoadedConfig
+	}
+	env["ROOT"] = appConfig.root
+	env["VERSION"] = Version
+	env["JSPM"] = appConfig.JSPM
+	env["GOPREFIX"] = appConfig.GoModPrefix
+
+	for k, v := range env {
+		if err := os.Setenv("MONOSPACE_"+k, v); err != nil {
+			return err
+		}
+	}
+	return nil
 }

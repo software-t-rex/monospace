@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
-
-	"github.com/spf13/viper"
 )
 
 func Golang() error {
@@ -35,7 +33,7 @@ func Golang() error {
 	}
 
 	pName := filepath.Base(pwd)
-	goModPrefix := viper.GetString("go_mod_prefix")
+	goModPrefix := os.Getenv("MONOSPACE_GOPREFIX")
 	if goModPrefix == "" {
 		currentUser, err := user.Current()
 		var username string

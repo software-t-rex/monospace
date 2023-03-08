@@ -92,6 +92,7 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 	// read the config file
 	if CheckErrOrReturn(FileExists(DfltcfgFileName)) {
 		// proceed to clone external projects
+		// @TODO remove dependency on viper
 		configParser := viper.New()
 		configParser.SetConfigFile(DfltcfgFileName)
 		CheckErr(configParser.ReadInConfig())

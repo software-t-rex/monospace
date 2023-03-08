@@ -5,8 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/spf13/viper"
 )
 
 var pmInitArgs = map[string][]string{
@@ -16,7 +14,7 @@ var pmInitArgs = map[string][]string{
 }
 
 func getPMcmd() string {
-	pmCfg := viper.GetString("js_package_manager")
+	pmCfg := os.Getenv("MONOSPACE_JSPM")
 	if pmCfg == "" {
 		return "pnpm"
 	} else if strings.Contains(pmCfg, "pnpm") {

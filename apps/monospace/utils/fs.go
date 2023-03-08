@@ -38,7 +38,7 @@ func FileExistsNoErr(filePath string) bool {
 
 func WriteFile(filePath string, body string) error {
 	bbody := []byte(body)
-	// #nosec G306 - this is the purpose of this function to read a file
+	// #nosec G306 - this is the purpose of this function to write a file
 	return os.WriteFile(filePath, bbody, 0640)
 }
 
