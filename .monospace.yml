@@ -1,8 +1,36 @@
+# yaml-language-server: $schema=./apps/monospace/schemas/monospace.schema.json
 go_mod_prefix: github.com/software-t-rex/monospace
 js_package_manager: ^pnpm@7.27.0
+pipeline:
+  executor#test:
+    outputMode: full
+  monospace#builddev:
+    cmd:
+    - go
+    - build
+    - -race
+    - main.go
+    - '&&'
+    - mv
+    - monospace
+    - ~/bin/monospace
+    env:
+    - GOOS
+    - GOARCH
+    - CGO_ENABLED
+  monospace#test:
+    cmd:
+    - ./test.sh
+    outputMode: full
 projects:
-    apps/monospace: internal
-    apps/test-go: local
-    gomodules/colors: internal
-    gomodules/go-jobexecutor: git@github.com:software-t-rex/go-jobExecutor.git
-    gomodules/scaffolders: internal
+  apps/monospace: internal
+  apps/test-go: local
+  gomodules/colors: internal
+  gomodules/go-jobexecutor: git@github.com:software-t-rex/go-jobExecutor.git
+  gomodules/js-packagemanager: git@github.com:software-t-rex/js-packagemanager.git
+  gomodules/packageJson: internal
+  gomodules/scaffolders: internal
+projects_aliases:
+  executor: gomodules/go-jobexecutor
+  monospace: apps/monospace
+  packagejson: gomodules/packageJson

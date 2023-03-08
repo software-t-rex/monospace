@@ -42,12 +42,15 @@ func fileExistsNoErr(filePath string) bool {
 	return res
 }
 
-func writeTemplateFile(src string, dest string) error {
+func writeTemplateFile(src string, dest string, replacer *strings.Replacer) error {
 	templateStr, err := templateFS.ReadFile("templates/" + src + ".tpl")
 	if err != nil {
 		return err
 	}
+	if replacer != nil {
+		templateStr = []byte(replacer.Replace(string(templateStr)))
+	}
 	// #nosec G306 - we want the group access
-	err = os.WriteFile(dest, []byte(templateStr), 0640)
+	err = os.WriteFile(dest, templateStr, 0640)
 	return err
 }

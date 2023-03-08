@@ -36,7 +36,7 @@ func Javascript() (err error) {
 	hasIndexJs := fileExistsNoErr("index.js")
 	if !hasIndexJs {
 		fmt.Printf("init index.js file\n")
-		err = writeTemplateFile("index.js", "./index.js")
+		err = writeTemplateFile("index.js", "./index.js", nil)
 		if err != nil {
 			printWarning("Error writing index.js")
 			err = nil
