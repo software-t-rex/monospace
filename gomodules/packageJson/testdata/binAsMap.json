@@ -1,0 +1,8 @@
+{
+  "name": "my-program",
+  "version": "1.2.5",
+  "bin": {
+    "my-program": "./path/to/program",
+		"my-other-program": "./path/to/other/program"
+  }
+}
