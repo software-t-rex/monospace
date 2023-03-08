@@ -39,7 +39,7 @@ monospace ls [options] path/to/a/monospace
 		if len(projects) < 1 {
 			fmt.Println("No projects found start by adding one to your monospace.")
 		} else {
-			isLong, _ := cmd.Flags().GetBool("long")
+			isLong, _ := cmd.Flags().GetBool("longFormat")
 			out := utils.SliceMap(projects, func(p utils.Project) string {
 				if isLong {
 					if p.RepoUrl == "" {
