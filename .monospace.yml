@@ -28,7 +28,7 @@ projects:
   gomodules/colors: internal
   gomodules/go-jobexecutor: git@github.com:software-t-rex/go-jobExecutor.git
   gomodules/js-packagemanager: git@github.com:software-t-rex/js-packagemanager.git
-  gomodules/packageJson: internal
+  gomodules/packageJson: git@github.com:software-t-rex/packageJson.git
   gomodules/scaffolders: internal
 projects_aliases:
   executor: gomodules/go-jobexecutor

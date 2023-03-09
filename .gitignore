@@ -5,3 +5,4 @@ coverage
 apps/test-go
 gomodules/go-jobexecutor
 gomodules/js-packagemanager
+gomodules/packageJson
