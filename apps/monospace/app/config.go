@@ -49,6 +49,9 @@ func writeFile(filePath string, body []byte) error {
 }
 
 func configSet(config *MonospaceConfig) {
+	if config == nil {
+		panic("configSet called with nil config")
+	}
 	c := config
 	if c.GoModPrefix == "" {
 		c.GoModPrefix = dfltGoModPrfx

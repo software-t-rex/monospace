@@ -3,7 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -50,9 +50,10 @@ func TestConfig(t *testing.T) {
 func TestConfigInitAndSave(t *testing.T) {
 	//reset config
 	appConfig = nil
-	var configPath = filepath.Join(t.TempDir(), "config.yml")
 	var testConfig = *sampleConfig
+	configPath := filepath.Join(t.TempDir(), "config.yml")
 	testConfig.configPath = configPath
+	testConfig.root = filepath.Dir(configPath)
 
 	err := ConfigInit(configPath)
 	if err == nil {
@@ -70,11 +71,22 @@ func TestConfigInitAndSave(t *testing.T) {
 	if err != nil {
 		t.Errorf("ConfigSave(): should save the config without error, %v", err)
 	}
-	res, err := exec.Command("cat", configPath).CombinedOutput()
+	res, err := os.ReadFile(configPath)
 	if err != nil {
 		t.Fatalf(err.Error())
+	} else {
+		expected := `# yaml-language-server: $schema=./apps/monospace/schemas/monospace.schema.json
+go_mod_prefix: test.com
+js_package_manager: yarn@xxx
+projects:
+  packages/test: internal
+projects_aliases:
+  test: packages/test
+`
+		if expected != string(res) {
+			t.Fatalf("Saved Config mismatch got '%s', expected '%s'", string(res), expected)
+		}
 	}
-	fmt.Println(string(res))
 
 	//reset config
 	appConfig = nil
@@ -93,8 +105,7 @@ func TestConfigInitAndSave(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(got, &testConfig) {
-		Dump(got, testConfig)
-		t.Fatalf("ConfigGet(): return different config than expected: %v, want: %v, err: %v", got, testConfig, err)
+		t.Fatalf("ConfigGet(): return different config than expected: %v, want: %v, err: %v", got, &testConfig, err)
 	}
 }
 
@@ -160,6 +171,7 @@ func TestConfigRemoveProject(t *testing.T) {
 }
 
 func TestConfigRemoveProjectAlias(t *testing.T) {
+	appConfig = sampleConfig
 
 	appConfig.Aliases["myalias"] = "packages/test"
 	err := ConfigRemoveProjectAlias("myalias", false)
