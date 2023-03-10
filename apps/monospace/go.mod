@@ -7,7 +7,7 @@ require github.com/software-t-rex/monospace/colors v0.0.0
 
 require github.com/software-t-rex/monospace/scaffolders v0.0.0
 
-require github.com/software-t-rex/monospace/packageJson v0.0.0
+require github.com/software-t-rex/packageJson v0.0.2
 
 require (
 	github.com/software-t-rex/go-jobExecutor/v2 v2.0.0
@@ -20,7 +20,7 @@ replace github.com/software-t-rex/monospace/colors => ../../gomodules/colors
 
 replace github.com/software-t-rex/monospace/scaffolders => ../../gomodules/scaffolders
 
-replace github.com/software-t-rex/monospace/packageJson => ../../gomodules/packageJson
+replace github.com/software-t-rex/packageJson => ../../gomodules/packageJson
 
 replace github.com/software-t-rex/go-jobExecutor/v2 => ../../gomodules/go-jobexecutor
 

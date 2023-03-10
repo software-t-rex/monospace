@@ -73,7 +73,7 @@ You should check that there's no untracked files before proceeding as they will 
 				}
 			}
 		}
-		cobra.CheckErr(utils.GitExternalize(monoRoot, projectName, opts))
+		utils.CheckErr(utils.GitExternalize(monoRoot, projectName, opts))
 
 		fmt.Println(utils.Success("Externalization done"))
 	},

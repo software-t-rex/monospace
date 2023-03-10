@@ -146,6 +146,17 @@ func ConfigRemoveProjectAlias(alias string, save bool) error {
 	return nil
 }
 
+func ConfigAddOrUpdateProject(projectName string, repoUrl string, save bool) error {
+	config, err := ConfigGet()
+	if err != nil {
+		return err
+	}
+	config.Projects[projectName] = repoUrl
+	if save {
+		return ConfigSave()
+	}
+	return err
+}
 func ConfigAddProject(projectName string, repoUrl string, save bool) error {
 	config, err := ConfigGet()
 	if err != nil {
