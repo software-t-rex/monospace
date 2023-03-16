@@ -25,7 +25,7 @@ var execCmd = &cobra.Command{
 	Use:   "exec [options] -- cmd [args...]",
 	Short: "execute given command in each project directory",
 	Long: `execute given command in each project directory concurrently.
-execute options and the command must be separated by '--'
+execute options and command options must be separated by '--'
 
 You can restrict the command to one or more projects using the --project-filter
 flag.

@@ -9,6 +9,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/utils"
@@ -69,6 +70,10 @@ monospace aliase remove myalias
 				utils.Exit("Bad number of arguments, try: monospace remove alias")
 			}
 			utils.CheckErr(app.ConfigRemoveProjectAlias(args[1], true))
+		default:
+			utils.PrintError(fmt.Errorf("unknown command aliases %s", args[0]))
+			cmd.Help()
+			os.Exit(1)
 		}
 
 	},
