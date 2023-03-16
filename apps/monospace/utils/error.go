@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 )
 
 func PrintError(err error) {
@@ -44,11 +46,43 @@ func CheckErrWithMsg(err error, msg string) {
 	}
 }
 
-func Dump(o ...any) {
-	for _, val := range o {
-		fmt.Printf("%+v\n", val)
-		fmt.Printf("%#v\n", val)
-		out, _ := json.MarshalIndent(val, "", "  ")
-		fmt.Print(string(out) + "\n")
+func debug(outType string, withTrace bool, vals ...any) {
+	var printer func(any)
+	fName := func(pc uintptr) string {
+		fns := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+		return fns[len(fns)-1]
 	}
+	if outType == "json" {
+		printer = func(val any) {
+			out, _ := json.MarshalIndent(val, "", "  ")
+			fmt.Print(ErrorStyle(string(out)) + "\n")
+		}
+	} else if outType == "#v" {
+		printer = func(val any) { fmt.Printf(ErrorStyle("%#v\n"), val) }
+	} else {
+		printer = func(val any) { fmt.Printf(ErrorStyle("%+v\n"), val) }
+	}
+
+	pc, filename, line, _ := runtime.Caller(2)
+	fmt.Printf(EmphasedInfo("[Debug start]")+Info(" %s() %s:%d")+"\n", fName(pc), filename, line)
+	for _, val := range vals {
+		printer(val)
+	}
+	if withTrace {
+		fmt.Println(Info("Call Stack:"))
+		for i := 3; ; i++ {
+			pc, filename, line, ok := runtime.Caller(i)
+			if !ok {
+				break
+			}
+			fmt.Printf(Info("  - %s() %s:%d\n"), fName(pc), filename, line)
+		}
+	}
+	fmt.Println(EmphasedInfo("[End Debug]"))
 }
+func Debug(vals ...any)               { debug("+v", false, vals...) }
+func DebugWithStack(vals ...any)      { debug("+v", true, vals...) }
+func DebugSharp(vals ...any)          { debug("#v", false, vals...) }
+func DebugSharpWithStack(vals ...any) { debug("#v", true, vals...) }
+func DebugJson(vals ...any)           { debug("json", false, vals...) }
+func DebugJsonWithStack(vals ...any)  { debug("json", true, vals...) }
