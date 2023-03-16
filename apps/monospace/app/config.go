@@ -1,3 +1,10 @@
+/*
+Copyright © 2023 Jonathan Gotti <jgotti at jgotti dot org>
+SPDX-FileType: SOURCE
+SPDX-License-Identifier: MIT
+SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
+*/
+
 package app
 
 import (
@@ -9,7 +16,7 @@ import (
 )
 
 type MonospaceConfigPipeline struct {
-	DependsOn  []string `json:"name,omitempty"`
+	DependsOn  []string `json:"dependsOn,omitempty"`
 	Env        []string `json:"env,omitempty"`
 	Outputs    []string `json:"outputs,omitempty"`
 	Inputs     []string `json:"inputs,omitempty"`
@@ -46,6 +53,16 @@ func fileExists(filePath string) (bool, error) {
 }
 func writeFile(filePath string, body []byte) error {
 	return os.WriteFile(filePath, body, 0640)
+}
+
+func (c *MonospaceConfig) GetPath() string {
+	return c.configPath
+}
+func (c *MonospaceConfig) GetRoot() string {
+	return c.root
+}
+func (c *MonospaceConfig) Save() error {
+	return ConfigSave()
 }
 
 func configSet(config *MonospaceConfig) {
