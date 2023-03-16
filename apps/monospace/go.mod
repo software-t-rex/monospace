@@ -7,7 +7,9 @@ require github.com/software-t-rex/monospace/colors v0.0.0
 
 require github.com/software-t-rex/monospace/scaffolders v0.0.0
 
-require github.com/software-t-rex/packageJson v0.0.2
+require github.com/software-t-rex/js-packagemanager v0.0.0
+
+require github.com/software-t-rex/packageJson v0.0.3
 
 require (
 	github.com/software-t-rex/go-jobExecutor/v2 v2.0.0
@@ -23,6 +25,8 @@ replace github.com/software-t-rex/monospace/scaffolders => ../../gomodules/scaff
 replace github.com/software-t-rex/packageJson => ../../gomodules/packageJson
 
 replace github.com/software-t-rex/go-jobExecutor/v2 => ../../gomodules/go-jobexecutor
+
+replace github.com/software-t-rex/js-packagemanager => ../../gomodules/js-packagemanager
 
 require (
 	github.com/Masterminds/semver v1.5.0 // indirect
@@ -40,7 +44,6 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
