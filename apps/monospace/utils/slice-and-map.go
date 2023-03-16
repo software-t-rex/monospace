@@ -78,6 +78,16 @@ func SliceContains[T string | int](slice []T, search T) bool {
 	return false
 }
 
+func SliceReverse[T any](slice []T) []T {
+	a := make([]T, len(slice))
+	copy(a, slice)
+	for i := len(a)/2 - 1; i >= 0; i-- {
+		opp := len(a) - 1 - i
+		a[i], a[opp] = a[opp], a[i]
+	}
+	return a
+}
+
 func PrefixPredicate(prefix string) func(string) bool {
 	return func(s string) bool {
 		return strings.HasPrefix(s, prefix)
