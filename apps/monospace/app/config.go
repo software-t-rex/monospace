@@ -35,9 +35,6 @@ type MonospaceConfig struct {
 	root        string
 }
 
-var dfltJSPM string = "^pnpm@7.27.0"
-var dfltGoModPrfx string = "example.com"
-
 var appConfig *MonospaceConfig
 
 var ErrNotLoadedConfig = errors.New("config not loaded")

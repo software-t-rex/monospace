@@ -11,8 +11,6 @@ import (
 	"github.com/software-t-rex/monospace/app"
 )
 
-const DfltcfgFileName string = ".monospace.yml"
-
 var monospaceRoot string = ""
 
 func MonospaceGetRoot() string {
@@ -34,7 +32,7 @@ func MonospaceGetRootForPath(absPath string) string {
 
 	// @todo check this work on windows before release to public
 	for absPath != "" && absPath != "." {
-		if FileExistsNoErr(filepath.Join(absPath, "/", DfltcfgFileName)) {
+		if FileExistsNoErr(filepath.Join(absPath, "/", app.DfltcfgFilePath)) {
 			return absPath
 		}
 		// go up one dir
@@ -56,7 +54,7 @@ func MonospaceChdir() error {
 }
 
 func MonospaceGetConfigPath() string {
-	return filepath.Join(MonospaceGetRoot(), "/", DfltcfgFileName)
+	return filepath.Join(MonospaceGetRoot(), "/", app.DfltcfgFilePath)
 }
 
 func MonospaceHasProject(projectName string) bool {
@@ -88,14 +86,14 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 	// move to the monorepo root
 	monospaceRoot = destDirectory
 	CheckErr(os.Chdir(destDirectory))
-	if !FileExistsNoErr(DfltcfgFileName) {
+	if !FileExistsNoErr(app.DfltcfgFilePath) {
 		fmt.Println(`This doesn't seem to be a monospace project yet
 To turn the cloned repository into a monospace you can run this command:
 cd ` + destDirectory + ` && monospace init`)
 	}
 
 	// read the config file
-	config := CheckErrOrReturn(app.ConfigRead(DfltcfgFileName))
+	config := CheckErrOrReturn(app.ConfigRead(app.DfltcfgFilePath))
 	if config.Projects == nil || len(config.Projects) < 1 {
 		fmt.Println("No external projects found in the config file")
 		fmt.Println(Success("Terminated with success"))

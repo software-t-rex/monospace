@@ -1,9 +1,8 @@
-# yaml-language-server: $schema=./apps/monospace/schemas/monospace.schema.json
+# yaml-language-server: $schema=../apps/monospace/schemas/monospace.schema.json
 go_mod_prefix: github.com/software-t-rex/monospace
 js_package_manager: ^pnpm@7.27.0
 projects:
     apps/monospace: internal
-    apps/test-go: local
     gomodules/colors: internal
     gomodules/dag: local
     gomodules/go-jobexecutor: git@github.com:software-t-rex/go-jobExecutor.git
@@ -17,10 +16,10 @@ projects_aliases:
 pipeline:
     executor#test:
         cmd: [test.sh]
+    monospace#test:
+        dependsOn: [packageJson#test, executor#test]
+        cmd: [test.sh]
     monospace#tidy:
         cmd: [go, mod, tidy]
-    monospace#test:
-        cmd: [test.sh]
-        dependsOn: [packageJson#test, executor#test]
     packageJson#test:
         cmd: [test.sh]
