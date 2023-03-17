@@ -68,9 +68,9 @@ If you ran into issues with other platforms, please let us know, we will try our
 
 ## Documentation
 The monospace command line should be self explanatory by using the -h flag at the end of your command.
-A generated documentation of latest version available commands can be found in the [docs directory](./docs/monospace-cli/index.md)
+A generated documentation of latest version available commands can be found in the [docs directory](./docs/monospace/cli/md/monospace.md)
 
-concerning the configuration you can find the documentation here: [monospace.yml configuration](./docs/monospace-config/index.yml)
+concerning the configuration you can find the documentation here: [monospace.yml configuration](./docs/monospace/config/index.md)
 
 ## Some Default opinionated choices:
 When initializing a new monospace it will declare some workspaces to your package manager:
@@ -96,7 +96,7 @@ If you think that this is not a good default feel free to contact us and explain
 ## Contributing
 monospace is open source software under the MIT license, and by contributing to it you accepts to release your code under the same License. Contributions are always welcomed and will be reviewed in the shortest amount of time as possible. If you decide to contribute, please make small organized commits that address one thing at a time, it will make it easier for us to review and accept your contribution.
 
-## Funding
+## Funding / Sponsorship
 This project is free software, but to live it needs time, and to get time you needs money. So if this project is of any help to you or your company, and/or you want to make it evolve quicker, you can [become sponsors to the project](https://github.com/sponsors/malko).
 
 Donation over 1000€ will allow you or your company to appears on this page as sponsors of the project, in such case contact us at contact.trex.software@gmail.com with the receipt of your donation.

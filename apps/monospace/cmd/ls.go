@@ -20,7 +20,7 @@ import (
 // lsCmd represents the ls command
 var lsCmd = &cobra.Command{
 	Use:   "ls",
-	Short: "list knwon workspaces in this monospace",
+	Short: "list known workspaces in this monospace",
 	Long: `It will list workspaces in this monospace.
 
 usage:

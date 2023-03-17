@@ -28,7 +28,7 @@ var createCmd = &cobra.Command{
 	Long: `Create a 'local' or 'internal' project:
 
 ` + underline("First argument:") + bold(" MUST") + ` be 'internal' or 'local':
-- internal will embbed the project in the monospace repository.
+- internal will embed the project in the monospace repository.
 - local will init a new git repository within the monospace repository
   You will have to set a remote later to make it an external project instead
 

@@ -47,7 +47,7 @@ var RootCmd = &cobra.Command{
                                        | |
                                        |_| v`+app.Version+`
 `) + `
-Monospace try to bring you best of monorepo and poly-repo paradigms
+Monospace try to bring you best of monorepo and polyrepo paradigms
 You'll enjoy work in a monorepo fashion while keeping advantages of polyrepo.
 
 If not already done start by initializing a new monospace with:

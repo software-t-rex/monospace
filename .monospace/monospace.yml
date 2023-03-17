@@ -16,6 +16,8 @@ projects_aliases:
 pipeline:
     executor#test:
         cmd: [test.sh]
+    monospace#doc:
+        cmd: [./gendoc.sh, -md]
     monospace#test:
         dependsOn: [packageJson#test, executor#test]
         cmd: [test.sh]

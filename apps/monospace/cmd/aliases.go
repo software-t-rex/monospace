@@ -27,8 +27,8 @@ You can add aliases to a project by using the 'alias add' command
 without arguments this command will return the list of current aliases
 examples:
 monospace aliases
-monospace alias add packages/mypackage myalias
-monospace aliase remove myalias
+monospace aliases add packages/mypackage myalias
+monospace aliases remove myalias
 `,
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {

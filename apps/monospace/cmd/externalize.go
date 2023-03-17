@@ -25,10 +25,10 @@ Here what this command will really do:
 - Add the projectName to the monospace .gitignore
 - Init a new repository in the project directory
 - Add a default gitignore for that project if none exists
-- optionnaly set initial branch name (--initial-branch=name, default to 'master')
-- optionnaly copy history from monospace for commits related to files in that project (--history)
-- optionnaly create a new commit with all files in the directory (--commit)
-- optionnaly push -u to the new origin (--push)
+- optionally set initial branch name (--initial-branch=name, default to 'master')
+- optionally copy history from monospace for commits related to files in that project (--history)
+- optionally create a new commit with all files in the directory (--commit)
+- optionally push -u to the new origin (--push)
 
 ` + utils.Warning(`Beware that the operation will remove all files in the project directory before recreating them.
 You should check that there's no untracked files before proceeding as they will be lost.`) + `
