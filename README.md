@@ -1,4 +1,17 @@
 # monospace
+![monospace logo](./docs/assets/logo-darkbg.png)
+
+## Features
+- handle multiple repositories inside a mono-repo like file structure
+- can run tasks against multiple projects at once concurrently (must be defined in monospace.yml)
+- handle task dependencies (must be defined in monospace.yml)
+- execute arbitrary commands on multiple projects at once
+- display a graph representation of the task execution planning
+- clone all the repositories of a monospace with a single command
+- get status of all your projects with a single command
+- support alias name for your projects
+- Easily externalize an internal project to its own repository while preserving the same file structure
+- import existing repositories in your monospace without changing anything about them and start using them in your monospace right away
 
 ## monospace != monorepository
 Nowadays monorepositories are common in techs company to manage internal  dependencies through the dev team.
@@ -42,6 +55,23 @@ But in monospace terms there is three kind of projects:
 	(can be omit if you don't plan to work on javascript projects)
 - go should be available in your path if you intend to work on go projects
 
+## installation
+It's still early stage for monospace, so the installation process is not very fancy for now.
+Go to the [release page](https://github.com/software-t-rex/monospace/releases) and download the latest version for your system.
+Then make the binary accessible from your $PATH and it should be ok for you to start using it you can check this by typing:
+```monospace --version```
+
+Plans are to propose installation through npm module in the future (help is always welcome).
+
+At the moment monospace is only tested on linux platform, but it is compiled for other platforms too.
+If you ran into issues with other platforms, please let us know, we will try our best to make it work.
+
+## Documentation
+The monospace command line should be self explanatory by using the -h flag at the end of your command.
+A generated documentation of latest version available commands can be found in the [docs directory](./docs/monospace-cli/index.md)
+
+concerning the configuration you can find the documentation here: [monospace.yml configuration](./docs/monospace-config/index.yml)
+
 ## Some Default opinionated choices:
 When initializing a new monospace it will declare some workspaces to your package manager:
 - apps/* for applications
@@ -62,24 +92,13 @@ monospace .npmrc will contains the following default setttings
 
 If you think that this is not a good default feel free to contact me and explain why you think we should use other defaults. I'm always prone to change my mind about such decisisons when there's good reasons to do so.
 
+
 ## Contributing
 monospace is open source software under the MIT license, and by contributing to it you accepts to release your code under the same License. Contributions are always welcomed and will be reviewed in the shortest amount of time as possible. If you decide to contribute, please make small organized commits that adress one thing at a time, it will make it easier for me to review and accept your contribution.
 
 ## Funding
-This project is free software, but to live it needs time, and to get time you needs money. So if this project is of any help to you and/or you want to make it evolve quicker, you can make a donation or support the project through this button.
-<div id="donate-button-container">
-<div id="donate-button"></div>
-<script src="https://www.paypalobjects.com/donate/sdk/donate-sdk.js" charset="UTF-8"></script>
-<script>
-PayPal.Donation.Button({
-env:'production',
-hosted_button_id:'SRHXHER2G48CA',
-image: {
-src:'https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif',
-alt:'Donate with PayPal button',
-title:'PayPal - The safer, easier way to pay online!',
-}
-}).render('#donate-button');
-</script>
-</div>
-Donation over 1000€ will allow you to appears on this page as sponsors of the project, in such case contact us at contact.trex.software@gmail.com with the receipt of your donation.
+This project is free software, but to live it needs time, and to get time you needs money. So if this project is of any help to you or your company, and/or you want to make it evolve quicker, you can [become sponsors to the project](https://github.com/sponsors/malko).
+
+<iframe src="https://github.com/sponsors/malko/button" title="Sponsor malko" height="32" width="114" style="border: 0; border-radius: 6px;"></iframe>
+
+Donation over 1000€ will allow you or your company to appears on this page as sponsors of the project, in such case contact us at contact.trex.software@gmail.com with the receipt of your donation.
