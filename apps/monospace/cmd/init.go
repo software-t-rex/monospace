@@ -39,6 +39,10 @@ monospace init path/to/new-monospace
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		noInteractive := utils.CheckErrOrReturn(cmd.Flags().GetBool("no-interactive"))
+		if noInteractive {
+			utils.CheckErr(os.Setenv("MONOSPACE_NO_INTERACTIVE", "1"))
+		}
 		var parentMonospace string
 		if len(args) == 1 {
 			wd, err := filepath.Abs(args[0])
@@ -71,6 +75,7 @@ monospace init path/to/new-monospace
 func init() {
 	// @todo add prompt for prefered js package manager and go.mod default prefix
 	RootCmd.AddCommand(initCmd)
+	initCmd.Flags().BoolP("no-interactive", "y", false, "Prevent any interactive prompts")
 
 	// Here you will define your flags and configuration settings.
 

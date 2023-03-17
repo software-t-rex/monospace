@@ -16,13 +16,24 @@ func Monospace() error {
 	}
 	monoName := filepath.Base(wd)
 	// @todo handle some configs like gomodule prefix, and prefered package manager
-	err = writeTemplateFile("monospace.yml", ".monospace.yml", nil)
+	if !IsDirNoErr(filepath.Join(wd, ".monospace")) {
+		if err := os.Mkdir(filepath.Join(wd, ".monospace"), 0750); err != nil {
+			return fmt.Errorf("%w: Can't create .monospace directory", err)
+		}
+	}
+	err = writeTemplateFile("monospace.yml", ".monospace/monospace.yml", nil)
 	if err != nil {
 		return err
 	}
 
-	// @TODO detect package manager and use either package.json or pnpm-workspace.yaml
-	if !fileExistsNoErr("package.json") {
+	if !fileExistsNoErr("pnpm-workspace.yaml") && Confirm("Do you want to create a pnpm-workspace.yaml file?", true) {
+		fmt.Println("create pnpm-workspace.yaml")
+		err = writeTemplateFile("pnpm-workspace.yaml", "pnpm-workspace.yaml", nil)
+		if err != nil {
+			return err
+		}
+	}
+	if !fileExistsNoErr("package.json") && Confirm("Do you want to create a package.json file?", true) {
 		fmt.Printf("create package.json\n")
 		err = writeTemplateFile("monospace-package.json", "package.json", strings.NewReplacer(
 			"%MONOSPACE_NAME%", monoName,
@@ -42,7 +53,7 @@ func Monospace() error {
 	}
 
 	if !fileExistsNoErr("go.work") {
-		if cmdAvailable("go") {
+		if cmdAvailable("go") && Confirm("Would you like to create a go.work file ?", true) {
 			fmt.Printf("init go.work\n")
 			cmd := exec.Command("go", "work", "init")
 			cmd.Stdin = os.Stdin
