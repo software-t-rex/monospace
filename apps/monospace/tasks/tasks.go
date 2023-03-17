@@ -10,6 +10,7 @@ package tasks
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -140,18 +141,26 @@ func NewTask(fullName string, taskDef *app.MonospaceConfigPipeline) *Task {
 	}
 }
 
-func getJSPMTaskCmd(pm *packagemanager.PackageManager, task *Task) *exec.Cmd {
-	cmd := exec.Command(pm.Command, "run", task.Name.Task)
-	cmd.Dir = utils.ProjectGetPath(task.Name.Project)
+func (t *Task) preparedCmd(cmdAndArgs ...string) *exec.Cmd {
+	args := utils.SliceMap(cmdAndArgs, os.ExpandEnv)
+	if _, err := exec.LookPath(args[0]); err != nil {
+		// lookup for command in .monospace/bin
+		binPath := filepath.Join(utils.MonospaceGetRoot(), ".monospace", "bin", args[0])
+		if utils.FileExistsNoErr(filepath.Join(utils.MonospaceGetRoot(), ".monospace", "bin", args[0])) {
+			args[0] = binPath
+		}
+	}
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Path = os.ExpandEnv(cmd.Path)
+	cmd.Args = utils.SliceMap(cmd.Args, os.ExpandEnv)
+	cmd.Dir = utils.ProjectGetPath(t.Name.Project)
 	return cmd
 }
 
-func (t *Task) GetJobRunner() interface{} {
+func (t *Task) GetJobRunner() *exec.Cmd {
 	projectPath := utils.ProjectGetPath(t.Name.Project)
 	if len(t.TaskDef.Cmd) > 0 {
-		cmd := exec.Command(t.TaskDef.Cmd[0], t.TaskDef.Cmd[1:]...)
-		cmd.Dir = projectPath
-		return cmd
+		return t.preparedCmd(t.TaskDef.Cmd...)
 	}
 	// check for package json script
 	pjsonPath := filepath.Join(projectPath, "package.json")
@@ -165,7 +174,7 @@ func (t *Task) GetJobRunner() interface{} {
 			if pjsonPM == "" && configJSPM == "" { // no pm defined in pjson or config try detection
 				pm, err = packagemanager.GetPackageManager(projectPath, pjson)
 				if err == nil {
-					return getJSPMTaskCmd(pm, t)
+					return t.preparedCmd(pm.Command, "run", t.Name.Task)
 				}
 				utils.PrintWarning("Can't found a package manager to execute task " + t.Name.Task + " in project " + t.Name.Project + " => skip")
 				// no pm found, ignore pjson task
@@ -173,7 +182,7 @@ func (t *Task) GetJobRunner() interface{} {
 				if pjsonPM == configJSPM {
 					pm, err := packagemanager.GetPackageManagerFromString(configJSPM)
 					if err == nil {
-						return getJSPMTaskCmd(pm, t)
+						return t.preparedCmd(pm.Command, "run", t.Name.Task)
 					}
 					utils.PrintWarning("Can't found suitable package manager (" + configJSPM + ") to execute task " + t.Name.Task + " in project " + t.Name.Project + " => skip")
 				} else {
@@ -181,15 +190,15 @@ func (t *Task) GetJobRunner() interface{} {
 					configPM, configErr := packagemanager.GetPackageManagerFromString(configJSPM)
 					if projectErr == nil && configErr == nil {
 						if projectPM == configPM {
-							return getJSPMTaskCmd(configPM, t)
+							return t.preparedCmd(configPM.Command, "run", t.Name.Task)
 						} else {
 							utils.PrintWarning("Package manager in package.json (" + pjsonPM + ") and monospace config (" + configJSPM + ") are not compatible")
 							return nil
 						}
 					} else if projectErr != nil && configErr == nil {
-						return getJSPMTaskCmd(configPM, t)
+						return t.preparedCmd(configPM.Command, "run", t.Name.Task)
 					} else if projectErr == nil && configErr != nil {
-						return getJSPMTaskCmd(projectPM, t)
+						return t.preparedCmd(projectPM.Command, "run", t.Name.Task)
 					} else if projectErr != nil && configErr != nil {
 						utils.PrintWarning("Can't found a package manager to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip\n", projectErr.Error(), "\n", configErr.Error())
 						return nil
@@ -266,6 +275,8 @@ func prepareTaskList(tasks []string, filters []string) TaskList {
 	if config.Pipeline == nil || len(config.Pipeline) == 0 {
 		exit("no readable pipeline in .monospace.yml")
 	}
+	app.PopulateEnv(nil)
+
 	projects := config.Projects
 	aliases := config.Aliases
 	pipeline := getStandardizedPipeline()

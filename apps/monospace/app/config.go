@@ -12,25 +12,25 @@ import (
 	"os"
 	"path/filepath"
 
-	"sigs.k8s.io/yaml"
+	"gopkg.in/yaml.v3"
 )
 
 type MonospaceConfigPipeline struct {
-	DependsOn  []string `json:"dependsOn,omitempty"`
-	Env        []string `json:"env,omitempty"`
-	Outputs    []string `json:"outputs,omitempty"`
-	Inputs     []string `json:"inputs,omitempty"`
-	Cache      bool     `json:"cache,omitempty"`
-	OutputMode string   `json:"outputMode,omitempty"`
-	Persistent bool     `json:"peristent,omitempty"`
-	Cmd        []string `json:"cmd,omitempty"`
+	DependsOn  []string `yaml:"dependsOn,omitempty,flow"`
+	Env        []string `yaml:"env,omitempty,flow"`
+	Outputs    []string `yaml:"outputs,omitempty"`
+	Inputs     []string `yaml:"inputs,omitempty"`
+	Cache      bool     `yaml:"cache,omitempty"`
+	OutputMode string   `yaml:"outputMode,omitempty"`
+	Persistent bool     `yaml:"peristent,omitempty"`
+	Cmd        []string `yaml:"cmd,omitempty,flow"`
 }
 type MonospaceConfig struct {
-	GoModPrefix string                             `json:"go_mod_prefix,omitempty"`
-	JSPM        string                             `json:"js_package_manager,omitempty"`
-	Projects    map[string]string                  `json:"projects,omitempty"`
-	Aliases     map[string]string                  `json:"projects_aliases,omitempty"`
-	Pipeline    map[string]MonospaceConfigPipeline `json:"pipeline,omitempty"`
+	GoModPrefix string                             `yaml:"go_mod_prefix,omitempty"`
+	JSPM        string                             `yaml:"js_package_manager,omitempty"`
+	Projects    map[string]string                  `yaml:"projects,omitempty"`
+	Aliases     map[string]string                  `yaml:"projects_aliases,omitempty"`
+	Pipeline    map[string]MonospaceConfigPipeline `yaml:"pipeline,omitempty"`
 	configPath  string
 	root        string
 }
@@ -216,6 +216,9 @@ func ConfigRemoveProject(projectName string, save bool) error {
 func PopulateEnv(env map[string]string) error {
 	if !ConfigIsLoaded() {
 		return ErrNotLoadedConfig
+	}
+	if env == nil {
+		env = make(map[string]string)
 	}
 	env["ROOT"] = appConfig.root
 	env["VERSION"] = Version
