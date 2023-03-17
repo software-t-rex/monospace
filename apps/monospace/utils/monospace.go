@@ -9,7 +9,6 @@ import (
 
 	"github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/app"
-	"github.com/spf13/viper"
 )
 
 const DfltcfgFileName string = ".monospace.yml"
@@ -89,31 +88,37 @@ func MonospaceClone(destDirectory string, repoUrl string) {
 	// move to the monorepo root
 	monospaceRoot = destDirectory
 	CheckErr(os.Chdir(destDirectory))
+	if !FileExistsNoErr(DfltcfgFileName) {
+		fmt.Println(`This doesn't seem to be a monospace project yet
+To turn the cloned repository into a monospace you can run this command:
+cd ` + destDirectory + ` && monospace init`)
+	}
+
 	// read the config file
-	if CheckErrOrReturn(FileExists(DfltcfgFileName)) {
-		// proceed to clone external projects
-		// @TODO remove dependency on viper
-		configParser := viper.New()
-		configParser.SetConfigFile(DfltcfgFileName)
-		CheckErr(configParser.ReadInConfig())
-		projects := ProjectsAsStructs(configParser.GetStringMapString("projects"))
-		externals := SliceFilter(projects, func(p Project) bool { return p.Kind == External })
-		if len(externals) == 0 {
-			fmt.Println(Success("Terminated with success"))
-			return
-		}
-		fmt.Println(Info("Cloning externals projects..."))
-		jobExecutor := jobExecutor.NewExecutor().WithOngoingStatusOutput()
-		for _, project := range externals {
-			jobExecutor.AddJobCmds(exec.Command("git", "clone", project.RepoUrl, project.Name))
-		}
-		errs := jobExecutor.Execute()
-		fmt.Println(Success("Cloning done."))
-		if len(errs) > 0 {
-			fmt.Println(ErrorStyle("Terminated with errors" + errs.String()))
-		} else {
-			fmt.Println(Success("Terminated with success"))
-		}
+	config := CheckErrOrReturn(app.ConfigRead(DfltcfgFileName))
+	if config.Projects == nil || len(config.Projects) < 1 {
+		fmt.Println("No external projects found in the config file")
+		fmt.Println(Success("Terminated with success"))
+		return
+	}
+	// proceed to clone external projects
+	projects := ProjectsAsStructs(config.Projects)
+	externals := SliceFilter(projects, func(p Project) bool { return p.Kind == External })
+	if len(externals) == 0 {
+		fmt.Println(Success("Terminated with success"))
+		return
+	}
+	fmt.Println(Info("Cloning externals projects..."))
+	jobExecutor := jobExecutor.NewExecutor().WithOngoingStatusOutput()
+	for _, project := range externals {
+		jobExecutor.AddNamedJobCmd("clone "+project.Name, exec.Command("git", "clone", project.RepoUrl, project.Name))
+	}
+	errs := jobExecutor.Execute()
+	fmt.Println(Success("Cloning done"))
+	if len(errs) > 0 {
+		fmt.Println(ErrorStyle("Terminated with errors" + errs.String()))
+	} else {
+		fmt.Println(Success("Terminated with success"))
 	}
 }
 
