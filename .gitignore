@@ -2,7 +2,7 @@ node_modules
 .vscode
 dist
 coverage
-apps/test-go
 gomodules/go-jobexecutor
 gomodules/js-packagemanager
 gomodules/packageJson
+gomodules/dag
