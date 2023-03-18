@@ -1,0 +1,104 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://github.com/software-t-rex/monospace/apps/monospace/schemas/monospace.schema.json",
+	"title": "monospace.yml",
+	"$ref": "#/definitions/RootSchema",
+	"definitions": {
+		"RootSchema": {
+			"type": "object",
+			"properties": {
+				"$schema": {
+					"type": "string",
+					"default": "https://github.com/software-t-rex/monospace/apps/monospace/schemas/monospace.schema.json"
+				},
+				"js_package_manager": {
+					"title": "monospace.yml: js_package_manager",
+					"description": "specify the package manager to use in js/ts projects. It use the same syntax as package.json package_manager",
+					"type":"string",
+					"default": "^pnpm@7.27.0"
+				},
+				"go_mod_prefix": {
+					"title": "monospace.yml: go_mod_prefix",
+					"description": "Default namespace to use for your go modules",
+					"type":"string",
+					"default": "example.com"
+				},
+				"projects": {
+					"title": "monospace.yml: projects",
+					"description": "Key value pair where keys are path to the project in the monospace and values are either: 'internal', 'local', or a git repo url",
+					"type": "object",
+					"$ref": "#/definitions/ProjectSchema"
+				},
+				"projects_aliases": {
+					"title": "monospace.yml: projects_aliases",
+					"description": "Aliases for projects, it allows you to define shorter names to use in commands that point to projects.",
+					"type": "object",
+					"propertyNames": {
+						"pattern": "^[A-Za-z0-9_-]+$"
+					},
+					"patternProperties": {
+						"^[A-Za-z0-9_-]+$": {
+							"description": "This must be the name of a project defined in projects",
+							"type":"string",
+							"pattern": "^[A-Za-z0-9./_-]+$"
+						}
+					}
+				},
+				"pipeline": {
+					"title": "monospace.yml: pipeline",
+					"description": "An object representing the task dependency graph of your monospace.",
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/definitions/PipelineSchema",
+						"description": "Name of a task that can be executed by monospace run.\nIt can be prefixed by a project name or alias and a '#' to make the task specific for that project, ie: myproject#taskToRun"
+					},
+					"default": {}
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"projects"
+			]
+		},
+
+		"ProjectSchema": {
+			"title": "monospace.yml: projects",
+			"type": "object",
+			"propertyNames": {
+				"pattern": "^[A-Za-z0-9./_-]+$"
+			 },
+			 "patternProperties": {
+				"^[A-Za-z0-9./_-]+$": {
+					"type":"string",
+					"default": "internal",
+					"description": "Keys are path to the project in the monospace.\nValues are either:'internal', 'local' or a git repository url ending with .git",
+					"pattern": "^internal|^local|.git$"
+				}
+			 }
+		},
+
+		"PipelineSchema": {
+			"title": "monospace.yml: pipeline[task]",
+			"type": "object",
+			"properties": {
+				"cmd" :{
+					"title": "monospace.yml: pipeline[task].cmd",
+					"description": "By default task will be looked up in the package.json script properties.\nYou can override this behavior by providing the command to execute. It must be an array of string ie: [\"ls\", \"-l\"].\nThis can also be useful for projects that don't have a package.json at all",
+					"type": "array",
+					"items": {"type":"string"},
+					"default":[]
+				},
+				"dependsOn": {
+					"title": "monospace.yml: pipeline[task].dependsOn",
+					"description": "The list of tasks that this task depends on.\nIt can be the name of a task for the same project (ie: myOtherTask)\nor you can also point to other projects tasks like this 'packages/projectName#taskName'",
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": []
+				}
+			},
+			"additionalProperties": false
+		}
+	}
+}
