@@ -57,13 +57,20 @@ But in monospace terms there is three kind of projects:
 
 ## installation
 It's still early stage for monospace, so the installation process is not very fancy for now.
+
+### download prebuilt binaries
 Go to the [release page](https://github.com/software-t-rex/monospace/releases) and download the latest version for your system.
 Then make the binary accessible from your $PATH and it should be ok for you to start using it you can check this by typing:
 ```monospace --version```
+### install from source
+To install from source, if you already have a version of monospace installed you can ```monospace clone git@github.com:software-t-rex/monospace.git```
+and then build the binary by issuing a ```go build main.go``` in the apps/monospace folder. Finally make the binary accessible from your $PATH.
 
-Plans are to propose installation through npm module in the future (help is always welcome).
+If you don't have monospace installed, you have to first clone this repository and manually cloning all external repositories defined in .monospace/monospace.yml
 
-At the moment monospace is only tested on linux platform, but it is compiled for other platforms too.
+> Plans are to propose installation through npm module in the future (help is always welcome).
+
+>At the moment monospace is only tested on linux platform, but it is compiled for other platforms too.
 If you ran into issues with other platforms, please let us know, we will try our best to make it work.
 
 ## Documentation
@@ -92,6 +99,8 @@ monospace .npmrc will contains the following default settings
 
 If you think that this is not a good default feel free to contact us and explain why you think we should use other defaults. I'm always prone to change my mind about such decisions when there's good reasons to do so.
 
+## Contact us
+Have questions? Want to talk about monospace? Want announcements for new versions, You can join our discord server at https://discord.gg/WHdZkqh7gA
 
 ## Contributing
 monospace is open source software under the MIT license, and by contributing to it you accepts to release your code under the same License. Contributions are always welcomed and will be reviewed in the shortest amount of time as possible. If you decide to contribute, please make small organized commits that address one thing at a time, it will make it easier for us to review and accept your contribution.
