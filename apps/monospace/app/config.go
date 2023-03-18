@@ -129,7 +129,7 @@ func ConfigSave() error {
 	if err != nil {
 		return err
 	}
-	raw = append([]byte("# yaml-language-server: $schema=./apps/monospace/schemas/monospace.schema.json\n"), raw...)
+	raw = append([]byte("# yaml-language-server: $schema=https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json\n"), raw...)
 
 	return writeFile(config.configPath, raw)
 }

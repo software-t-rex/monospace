@@ -75,13 +75,13 @@ func TestConfigInitAndSave(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	} else {
-		expected := `# yaml-language-server: $schema=./apps/monospace/schemas/monospace.schema.json
+		expected := `# yaml-language-server: $schema=https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json
 go_mod_prefix: test.com
 js_package_manager: yarn@xxx
 projects:
-  packages/test: internal
+    packages/test: internal
 projects_aliases:
-  test: packages/test
+    test: packages/test
 `
 		if expected != string(res) {
 			t.Fatalf("Saved Config mismatch got '%s', expected '%s'", string(res), expected)
