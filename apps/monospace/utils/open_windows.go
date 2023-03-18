@@ -13,6 +13,6 @@ import (
 	"os/exec"
 )
 
-func Open(file string) *exec.Cmd {
+func Open(file string) error {
 	return exec.Command("rundll32", "url.dll", "FileProtocolHandler", file).Start()
 }

@@ -12,5 +12,5 @@ package utils
 import "os/exec"
 
 func Open(file string) error {
-	return exec.Command("xdg-open", file).Run()
+	return exec.Command("xdg-open", file).Start()
 }
