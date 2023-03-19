@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
-	"github.com/software-t-rex/monospace/scaffolders"
+	"github.com/software-t-rex/monospace/gomodules/scaffolders"
 )
 
 type ProjectKind int

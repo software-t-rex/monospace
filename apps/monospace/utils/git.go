@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
-	"github.com/software-t-rex/monospace/colors"
+	"github.com/software-t-rex/monospace/gomodules/colors"
 )
 
 // execute a git command in current directory redirecting stdin/out/err to main process

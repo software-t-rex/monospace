@@ -10,7 +10,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/software-t-rex/monospace/colors"
+	"github.com/software-t-rex/monospace/gomodules/colors"
 	"github.com/software-t-rex/monospace/utils"
 
 	"github.com/spf13/cobra"

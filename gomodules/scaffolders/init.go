@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/software-t-rex/monospace/colors"
+	"github.com/software-t-rex/monospace/gomodules/colors"
 )
 
 //go:embed templates/*

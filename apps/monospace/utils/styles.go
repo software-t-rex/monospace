@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/software-t-rex/monospace/colors"
+	"github.com/software-t-rex/monospace/gomodules/colors"
 )
 
 var ErrorStyle = colors.Error

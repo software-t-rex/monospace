@@ -4,9 +4,9 @@ go 1.20
 
 replace github.com/software-t-rex/monospace => ../
 
-replace github.com/software-t-rex/monospace/colors => ../../../gomodules/colors
+replace github.com/software-t-rex/monospace/gomodules/colors => ../../../gomodules/colors
 
-replace github.com/software-t-rex/monospace/scaffolders => ../../../gomodules/scaffolders
+replace github.com/software-t-rex/monospace/gomodules/scaffolders => ../../../gomodules/scaffolders
 
 require (
 	github.com/software-t-rex/monospace v0.0.0-00010101000000-000000000000
@@ -22,9 +22,9 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/software-t-rex/go-jobExecutor/v2 v2.0.0 // indirect
-	github.com/software-t-rex/monospace/colors v0.0.0 // indirect
-	github.com/software-t-rex/monospace/scaffolders v0.0.0 // indirect
+	github.com/software-t-rex/go-jobExecutor/v2 v2.1.1 // indirect
+	github.com/software-t-rex/monospace/gomodules/colors v0.0.0 // indirect
+	github.com/software-t-rex/monospace/gomodules/scaffolders v0.0.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

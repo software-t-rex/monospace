@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/software-t-rex/go-jobExecutor/v2"
-	"github.com/software-t-rex/monospace/colors"
+	"github.com/software-t-rex/monospace/gomodules/colors"
 )
 
 func NewTaskExecutor() *jobExecutor.JobExecutor {

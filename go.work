@@ -1,10 +1,9 @@
 go 1.20
 
-use ./apps/monospace
-
-use ./gomodules/colors
-
 use (
+	./apps/monospace
+	./gomodules/colors
+	./gomodules/dag
 	./gomodules/go-jobexecutor
 	./gomodules/js-packagemanager
 	./gomodules/packageJson

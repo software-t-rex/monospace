@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/software-t-rex/monospace/scaffolders"
+	"github.com/software-t-rex/monospace/gomodules/scaffolders"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
