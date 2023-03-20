@@ -49,55 +49,8 @@ But in monospace terms there is three kind of projects:
 - external: are projects that has their own repositories inside the monospace repository. They are gitignored by the monospace repository, and so they manage their own history.
 - local: this is exactly the same as external projects but without a configured remote repository, and so they are not published anywhere, but their name is reserved in the global monospace so the name won't be taken by another developer accidentally. This case can be used by a new library project you have not shared yet with the rest of the organization.
 
-## requirements
-- git command should be available in your Path
-- js package manager defined in your config should also be available in your path
-	(can be omit if you don't plan to work on javascript projects)
-- go should be available in your path if you intend to work on go projects
-
-## installation
-It's still early stage for monospace, so the installation process is not very fancy for now.
-
-### download prebuilt binaries
-Go to the [release page](https://github.com/software-t-rex/monospace/releases) and download the latest version for your system.
-Then make the binary accessible from your $PATH and it should be ok for you to start using it you can check this by typing:
-```monospace --version```
-### install from source
-To install from source, if you already have a version of monospace installed you can ```monospace clone git@github.com:software-t-rex/monospace.git```
-and then build the binary by issuing a ```go build main.go``` in the apps/monospace folder. Finally make the binary accessible from your $PATH.
-
-If you don't have monospace installed, you have to first clone this repository and manually cloning all external repositories defined in .monospace/monospace.yml
-
-> Plans are to propose installation through npm module in the future (help is always welcome).
-
->At the moment monospace is only tested on linux platform, but it is compiled for other platforms too.
-If you ran into issues with other platforms, please let us know, we will try our best to make it work.
-
-## Documentation
-The monospace command line should be self explanatory by using the -h flag at the end of your command.
-A generated documentation of latest version available commands can be found in the [docs directory](./docs/monospace/cli/md/monospace.md)
-
-concerning the configuration you can find the documentation here: [monospace.yml configuration](./docs/monospace/config/index.md)
-
-## Some Default opinionated choices:
-When initializing a new monospace it will declare some workspaces to your package manager:
-- apps/* for applications
-- packages/* for libraries
-
-Default to add the following to monospace gitignore file (this will also be applied to local project created with monospace):
-- node_modules
-- .vscode
-- .env
-- dist
-- coverage
-
-Default package manager is pnpm 7, for now this is the only one tested but it should work correctly with yarn or npm, don't hesitate to report any issues with this package managers, they should be first citizen too.
-
-monospace .npmrc will contains the following default settings
-- auto-install-peers=true
-- resolve-peers-from-workspace-root=true
-
-If you think that this is not a good default feel free to contact us and explain why you think we should use other defaults. I'm always prone to change my mind about such decisions when there's good reasons to do so.
+## How to get started / Documentation
+Go to the [documentation directory](./docs/monospace/index.md) and follow instructions there.
 
 ## Contact us
 Have questions? Want to talk about monospace? Want announcements for new versions, You can join our discord server at https://discord.gg/WHdZkqh7gA
