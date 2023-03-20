@@ -38,7 +38,7 @@ monospace aim to provide you with the best possible subset of this too worlds:
 Nothing really fancy here, but a monorepository is compound of workspaces, so contracting this led to monospace, which is the word in french for family minivan vehicles. I found it being sufficiently expressive about the nature of the project and funny enough for us to like it, so yeah "monospace" :)
 
 ## How does it work ?
-The idea, while not new is inspired by meta-repository which is a javascript project, monospace main difference is it's written in go and should work with different package managers out of the box. By speaking of package manager, you will understand that monospace as many monorepository tools is mainly targeted for javascript/typescript projects. But there's no restriction on using it for other kind of projects, as monospace is a go project that is developed under a monospace.
+The main idea, while not new is inspired by [meta](https://github.com/mateodelnorte/meta)-repository a javascript project which concept is explained [here](https://patrickleet.medium.com/mono-repo-or-multi-repo-why-choose-one-when-you-can-have-both-e9c77bd0c668). Monospace main difference is it's written in go and should work with different package managers out of the box. By speaking of package manager, you will understand that monospace as many monorepository tools is mainly targeted for javascript/typescript projects. But there's no restriction on using it for other kind of projects, as monospace is a go project that is developed under a monospace.
 Only some commands maybe specifically made for js ecosystem.
 
 So how does it work ?
