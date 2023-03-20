@@ -11,17 +11,28 @@ projects:
     gomodules/scaffolders: internal
 projects_aliases:
     executor: gomodules/go-jobexecutor
+    jspm: gomodules/js-packagemanager
     monospace: apps/monospace
     packageJson: gomodules/packageJson
 pipeline:
+    tidy:
+        cmd: [go, mod, tidy]
     executor#test:
         cmd: [test.sh]
     monospace#doc:
         cmd: [./gendoc.sh, -md]
+    monospace#build:
+        cmd: [goreleaser, build]
     monospace#test:
         dependsOn: [packageJson#test, executor#test]
         cmd: [test.sh]
-    monospace#tidy:
-        cmd: [go, mod, tidy]
     packageJson#test:
         cmd: [test.sh]
+    monospace#diforigins:
+        cmd: [git, diff, --name-only, origin/main]
+    executor#diforigins:
+        cmd: [git, diff, --name-only, origin/main]
+    jspm#diforigins:
+        cmd: [git, diff, --name-only, origin/main]
+    packageJson#diforigins:
+        cmd: [git, diff, --name-only, origin/main]
