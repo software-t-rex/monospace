@@ -9,7 +9,7 @@ Remove the given project from the monospace:
 ProjectName is relative path of project from the root of the monospace.
 
 	It will:
-- remove the project from the .monospace.yml config
+- remove the project from the .monospace/monospace.yml config
 - remove the project from the monospace .gitignore for non 'internal' projects
 - delete the corresponding directory if --rmdir or -r flag is set
 

@@ -9,13 +9,13 @@ import (
 )
 
 func Monospace() error {
-	fmt.Printf("create .monospace.yml\n")
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 	monoName := filepath.Base(wd)
 	// @todo handle some configs like gomodule prefix, and prefered package manager
+	fmt.Printf("create .monospace/monospace.yml\n")
 	if !IsDirNoErr(filepath.Join(wd, ".monospace")) {
 		if err := os.Mkdir(filepath.Join(wd, ".monospace"), 0750); err != nil {
 			return fmt.Errorf("%w: Can't create .monospace directory", err)

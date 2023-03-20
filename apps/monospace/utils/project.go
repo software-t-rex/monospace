@@ -81,7 +81,7 @@ func ProjectsGetAliasesNameOnly() (res []string) {
 	return []string{}
 }
 
-/* return all project names declared in the .monospace.yml */
+/* return all project names declared in the monospace.yml */
 func ProjectsGetAllNameOnly() (res []string) {
 	projectsMap, _ := getProjectsMap()
 	if projectsMap != nil {
@@ -107,7 +107,7 @@ func ProjectsGetAll() []Project {
 	return ProjectsAsStructs(projectsMap)
 }
 
-/* return all project names declared in the .monospace.yml that match the given prefix */
+/* return all project names declared in the monospace.yml that match the given prefix */
 func ProjectsGetByPrefix(prefix string, noPrefix bool) (res []string) {
 	if !strings.HasSuffix(prefix, "/") {
 		prefix = prefix + "/"

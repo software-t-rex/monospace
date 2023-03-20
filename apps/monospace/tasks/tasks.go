@@ -273,7 +273,7 @@ func prepareTaskList(tasks []string, filters []string) TaskList {
 		exit("can't get config")
 	}
 	if config.Pipeline == nil || len(config.Pipeline) == 0 {
-		exit("no readable pipeline in .monospace.yml")
+		exit("no readable pipeline in monospace.yml")
 	}
 	app.PopulateEnv(nil)
 

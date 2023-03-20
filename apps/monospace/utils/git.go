@@ -232,7 +232,7 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 
 	// stage modified files
 	fmt.Println(Bold("Stage changed files"))
-	err = gitExec("add", ".gitignore", ".monospace.yml")
+	err = gitExec("add", ".gitignore", app.DfltcfgFilePath)
 	if err == nil {
 		fmt.Println("You can review the changes before committing")
 	}

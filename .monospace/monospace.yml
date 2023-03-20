@@ -22,7 +22,7 @@ pipeline:
     monospace#doc:
         cmd: [./gendoc.sh, -md]
     monospace#build:
-        cmd: [goreleaser, build]
+        cmd: [goreleaser, build, --clean]
     monospace#test:
         dependsOn: [packageJson#test, executor#test]
         cmd: [test.sh]
