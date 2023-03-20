@@ -1,6 +1,8 @@
-MIT License
+# MIT License
 
-Copyright (c) <2023> Jonathan Gotti <jgotti at jgotti dot org >
+Copyright (c) 2019 Neoreason d/b/a Repl.it
+Copyright (c) 2022-2023 vercel turbo repo team: Nathan Hammond, Thomas Knickman, Chris Olszewski, Greg Soltis, Nicholas Yang
+Copyright (c) 2023 Jonathan Gotti
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +21,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-You can find additional information about our dependencies licenses in the
-licenses folder.
