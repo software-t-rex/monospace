@@ -8,6 +8,8 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package cmd
 
 import (
+	"strings"
+
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/tasks"
 	"github.com/software-t-rex/monospace/utils"
@@ -30,9 +32,22 @@ monospace run -p modules/mymodule,modules/myothermodule test
 
 
 `,
-	// ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	// 	return nil, cobra.ShellCompDirectiveNoFileComp
-	// },
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		config, err := app.ConfigGet()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveDefault
+		}
+		taskNames := []string{}
+		for task := range config.Pipeline {
+			if !strings.ContainsRune(task, '#') {
+				taskNames = append(taskNames, task)
+			} else {
+				projectTask := strings.Split(task, "#")
+				taskNames = append(taskNames, projectTask[1])
+			}
+		}
+		return taskNames, cobra.ShellCompDirectiveDefault
+	},
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
