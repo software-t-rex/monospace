@@ -22,10 +22,10 @@ pipeline:
     monospace#doc:
         cmd: [./gendoc.sh, -md]
     monospace#build:
-        cmd: [goreleaser, build, --clean]
+        cmd: [goreleaser, release, --clean, --skip-publish]
         dependsOn: ["test"]
     monospace#buildnext:
-        cmd: [goreleaser, build, --id, monospace-next, --snapshot, --clean, --single-target]
+        cmd: [goreleaser, build, --config, ./.goreleaser-next.yaml, --id, monospace-next, --snapshot, --clean, --single-target]
     monospace#test:
         dependsOn: [packageJson#test, executor#test]
         cmd: [test.sh]
