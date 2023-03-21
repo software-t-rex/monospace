@@ -25,6 +25,18 @@ builds:
         goarch: arm64
     ldflags: -s -w -X github.com/software-t-rex/monospace/app.Version={{.Version}}
     mod_timestamp: '{{ .CommitTimestamp }}'
+  - id: monospace-next
+    binary: monospace-next
+    env:
+      - CGO_ENABLED=1
+    ldflags: -s -w -X github.com/software-t-rex/monospace/app.Version="{{.Version}}"
+    flags: [-race, -tags=dev, -v]
+    no_unique_dist_dir: true
+    hooks:
+      post:
+        - dir: "../../dist/monospace"
+          cmd: mv monospace-next {{index .Env "HOME"}}/bin/monospace-next
+          output: true
 
 archives:
   - format: tar.gz
@@ -52,6 +64,7 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+      - '^(🚧|📝|💚|👷|🙈|🤡|⚗️|🍻|💡|🔀|⏪️|💩|✏️|🚨)'
 
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
