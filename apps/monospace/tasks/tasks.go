@@ -17,12 +17,13 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/go-jobExecutor/v2"
-	packagemanager "github.com/software-t-rex/js-packagemanager"
+	jspm "github.com/software-t-rex/js-packagemanager"
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/software-t-rex/packageJson"
 )
 
+// use local function to mock them in tests
 var exit func(msg string)
 var configGet func() (*app.MonospaceConfig, error)
 
@@ -170,9 +171,9 @@ func (t *Task) GetJobRunner() *exec.Cmd {
 		if err == nil && pjson.HasTask(t.Name.Task) { // we need to get the packageManager in use
 			configJSPM := getConfig().JSPM
 			pjsonPM := pjson.PackageManager
-			var pm *packagemanager.PackageManager
+			var pm *jspm.PackageManager
 			if pjsonPM == "" && configJSPM == "" { // no pm defined in pjson or config try detection
-				pm, err = packagemanager.GetPackageManager(projectPath, pjson)
+				pm, err = jspm.GetPackageManager(projectPath, pjson)
 				if err == nil {
 					return t.preparedCmd(pm.Command, "run", t.Name.Task)
 				}
@@ -180,14 +181,14 @@ func (t *Task) GetJobRunner() *exec.Cmd {
 				// no pm found, ignore pjson task
 			} else if pjsonPM != "" && configJSPM != "" { // both config and pjson set a pm compare them for compatibility
 				if pjsonPM == configJSPM {
-					pm, err := packagemanager.GetPackageManagerFromString(configJSPM)
+					pm, err := jspm.GetPackageManagerFromString(configJSPM)
 					if err == nil {
 						return t.preparedCmd(pm.Command, "run", t.Name.Task)
 					}
 					utils.PrintWarning("Can't found suitable package manager (" + configJSPM + ") to execute task " + t.Name.Task + " in project " + t.Name.Project + " => skip")
 				} else {
-					projectPM, projectErr := packagemanager.GetPackageManagerFromString(pjsonPM)
-					configPM, configErr := packagemanager.GetPackageManagerFromString(configJSPM)
+					projectPM, projectErr := jspm.GetPackageManagerFromString(pjsonPM)
+					configPM, configErr := jspm.GetPackageManagerFromString(configJSPM)
 					if projectErr == nil && configErr == nil {
 						if projectPM == configPM {
 							return t.preparedCmd(configPM.Command, "run", t.Name.Task)
@@ -251,7 +252,7 @@ func (t TaskList) GetExecutor() *jobExecutor.JobExecutor {
 			taskIds[taskId] = job.Id()
 			jobs[job.Id()] = job
 		} else {
-			utils.Exit("Don't know what to do for task " + task.Name.String())
+			exit("Don't know what to do for task " + task.Name.String())
 			fmt.Printf("no task %s for project %s\n", task.Name.Task, task.Name.Project)
 		}
 	}
@@ -259,7 +260,7 @@ func (t TaskList) GetExecutor() *jobExecutor.JobExecutor {
 	for taskId, task := range t.List {
 		for _, depTask := range task.TaskDef.DependsOn {
 			if _, ok := taskIds[depTask]; !ok {
-				utils.Exit(taskId + ": missing dependency task " + depTask)
+				exit(taskId + ": missing dependency task " + depTask)
 			}
 			e.AddJobDependency(jobs[taskIds[taskId]], jobs[taskIds[depTask]])
 		}
@@ -312,8 +313,7 @@ func prepareTaskList(tasks []string, filters []string) TaskList {
 }
 func OpenGraphviz(tasks []string, filters []string) {
 	taskList := prepareTaskList(tasks, filters)
-	executor := taskList.GetExecutor()
-	dot := executor.GetDot()
+	dot := taskList.GetDot()
 	// print the dot graph
 	fmt.Println(dot)
 	utils.Open("https://dreampuf.github.io/GraphvizOnline/#" + url.PathEscape(dot))
@@ -322,8 +322,32 @@ func OpenGraphviz(tasks []string, filters []string) {
 func Run(tasks []string, filters []string) {
 	taskList := prepareTaskList(tasks, filters)
 	if taskList.Len() == 0 {
-		utils.Exit("no tasks found")
+		exit("no tasks found")
 	}
 	executor := taskList.GetExecutor()
 	executor.DagExecute()
+}
+
+func OpenGraphvizFull() {
+	config, _ := configGet()
+	pipeline := getStandardizedPipeline()
+	taskList := pipeline.NewTaskList()
+	taskNames := []string{}
+	for taskName := range pipeline {
+		if !utils.SliceContains(taskNames, taskName) {
+			taskNames = append(taskNames, parseTaskName(taskName).Task)
+		}
+	}
+	for project := range config.Projects {
+		// first check for specific task for the project
+		for _, taskName := range taskNames {
+			task := pipeline.TaskLookup(taskName, project)
+			if task != nil {
+				taskList.AddTask(task, true)
+			}
+		}
+	}
+	dot := taskList.GetDot()
+	fmt.Println(dot)
+	utils.Open("https://dreampuf.github.io/GraphvizOnline/#" + url.PathEscape(dot))
 }

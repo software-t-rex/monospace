@@ -8,6 +8,8 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package cmd
 
 import (
+	"errors"
+	"os"
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
@@ -53,26 +55,41 @@ or for the entire pipeline
 		}
 		return taskNames, cobra.ShellCompDirectiveDefault
 	},
-	Args: cobra.MinimumNArgs(1),
+	Args: cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		graphviz := utils.CheckErrOrReturn(cmd.Flags().GetBool("graphviz"))
+		filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
+
+		if len(args) == 0 && !graphviz {
+			utils.PrintError(errors.New("missing task to run"))
+			cmd.Help()
+			os.Exit(1)
+		}
+
 		CheckConfigFound(true)
 		config := utils.CheckErrOrReturn(app.ConfigGet())
 
+		if graphviz && len(args) == 0 {
+			tasks.OpenGraphvizFull()
+			return
+		}
+
 		// handle project aliases in filters
-		filter := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
 		if len(config.Aliases) > 0 {
-			for i, f := range filter {
+			for i, f := range filters {
 				alias := config.Aliases[f]
 				if alias != "" {
-					filter[i] = alias
+					filters[i] = alias
 				}
 			}
 		}
-		if graphviz, _ := cmd.Flags().GetBool("graphviz"); graphviz {
-			tasks.OpenGraphviz(args, filter)
+
+		if graphviz {
+			tasks.OpenGraphviz(args, filters)
 			return
 		}
-		tasks.Run(args, filter)
+
+		tasks.Run(args, filters)
 	},
 }
 
