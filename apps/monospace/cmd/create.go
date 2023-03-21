@@ -17,10 +17,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var bold = colors.Style(colors.Bold)
-var underline = colors.Style(colors.Underline)
-var italic = colors.Style(colors.Italic)
-
 // createCmd represents the create command
 var createCmd = &cobra.Command{
 	Use:   "create internal|local projectName",
@@ -36,13 +32,12 @@ var createCmd = &cobra.Command{
 of the monospace repository. Example for a new application: apps/my-new-app
 
 ` + underline("Example:") + `
-` + italic(" monospace create local apps/my-new-app") + `
-` + italic(" monospace create local apps/my-new-js-app --type=js") + `
-` + italic(" monospace create local gomodules/my-go-module -t go") + `
+` + italic(`  monospace create local apps/my-new-app
+  monospace create local apps/my-new-js-app --type=js
+  monospace create local gomodules/my-go-module -t go`) + `
 
 If you want to ` + bold(`import`) + ` an existing ` + bold("'external'") + ` git repository into the monospace
-you should look at the ` + italic("monospace import") + ` command instead
-`,
+you should look at the ` + italic("monospace import") + ` command instead`,
 
 	Args: func(cmd *cobra.Command, args []string) error {
 		// Optionally run one of the validators provided by cobra

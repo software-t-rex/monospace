@@ -58,7 +58,7 @@ func getProjectsMap() (map[string]string, error) {
 
 /* check project name is valid */
 func ProjectIsValidName(name string) bool {
-	// check if the project name is containing only letters, numbers, and underscores, slashes and hyphens
+	// check if the project name is containing only letters, numbers, underscores, slashes and hyphens
 	match, _ := regexp.MatchString("^[a-zA-Z_][a-zA-Z0-9_-]*(\\/[a-zA-Z_][a-zA-Z0-9_-]*)*$", name)
 	return match
 }

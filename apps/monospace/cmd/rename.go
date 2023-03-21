@@ -21,8 +21,7 @@ var renameCmd = &cobra.Command{
 	Use:   "rename projectName newProjectName",
 	Short: "Rename a project",
 	Long: `This will rename a project inside the monospace:
-will update the monospace gitignore and .monospaced.yml files accordingly.
-`,
+will update the monospace gitignore and .monospaced.yml files accordingly.`,
 	Args: cobra.ExactArgs(2),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {

@@ -30,9 +30,8 @@ Here what this command will really do:
 - optionally create a new commit with all files in the directory (--commit)
 - optionally push -u to the new origin (--push)
 
-` + utils.Warning(`Beware that the operation will remove all files in the project directory before recreating them.
-You should check that there's no untracked files before proceeding as they will be lost.`) + `
-`,
+` + utils.Warning(`Beware that the operation will remove all files in the project directory before re-creating them.
+You should check that there's no untracked files before proceeding as they will be lost.`),
 	Args: cobra.RangeArgs(1, 2),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {

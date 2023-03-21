@@ -27,13 +27,12 @@ var execCmd = &cobra.Command{
 	Long: `execute given command in each project directory concurrently.
 execute options and command options must be separated by '--'
 
-You can restrict the command to one or more projects using the --project-filter
-flag.
-Example:
-monospace exec --project-filter modules/mymodule --project-filter modules/myothermodule -- ls -la
+You can restrict the command to one or more projects using flag --project-filter.
+
+` + underline("Example:") + `
+` + italic(`  monospace exec --project-filter modules/mymodule --project-filter modules/myothermodule -- ls -la`) + `
 or more concise
-monospace exec -p modules/mymodule,modules/myothermodule -- ls -la
-`,
+` + italic(`  monospace exec -p modules/mymodule,modules/myothermodule -- ls -la`),
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)

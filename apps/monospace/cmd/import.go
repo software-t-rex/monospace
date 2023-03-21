@@ -25,14 +25,15 @@ var importCmd = &cobra.Command{
 Import behave like the create command but instead of creating a new project,
 it will clone a remote 'external' repository into the current monospace.
 
-example: monospace import packages/fancylib git@github.com:username/fancylib.git`,
+` + underline("Example:") + `
+` + italic(`  monospace import packages/fancylib git@github.com:username/fancylib.git`),
 	Args: func(cmd *cobra.Command, args []string) error {
 		// Optionally run one of the validators provided by cobra
 		if err := cobra.ExactArgs(2)(cmd, args); err != nil {
 			return err
 		}
 		if !utils.ProjectIsValidName(args[0]) {
-			return fmt.Errorf(colors.Error("'%s'")+" is not a valid project name", args[1])
+			return fmt.Errorf(colors.Error("'%s'")+" is not a valid project name", args[0])
 		}
 		return nil
 	},

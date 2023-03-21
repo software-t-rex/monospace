@@ -23,6 +23,10 @@ var flagRootDisableColorOutput bool
 var flagRemoveRmDir bool
 var flagCreatePType string
 
+var bold = utils.Bold
+var underline = utils.Underline
+var italic = utils.Italic
+
 // command that require the config must call this method before continuing execution
 func CheckConfigFound(exitOnError bool) bool {
 	if !app.ConfigIsLoaded() {

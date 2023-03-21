@@ -25,11 +25,10 @@ Filtering on projects by their full project path can sometimes be a bit cumberso
 You can add aliases to a project by using the 'alias add' command
 
 without arguments this command will return the list of current aliases
-examples:
-monospace aliases
-monospace aliases add packages/mypackage myalias
-monospace aliases remove myalias
-`,
+` + underline("Examples:") + `
+` + italic(`  monospace aliases
+  monospace aliases add packages/mypackage myalias
+  monospace aliases remove myalias`),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return []string{"add", "remove", "list"}, cobra.ShellCompDirectiveDefault

@@ -25,13 +25,18 @@ var runCmd = &cobra.Command{
 You can restrict the tasks execution to one or more projects
 using the --project-filter flag.
 
-Example:
-monospace run --project-filter modules/mymodule --project-filter modules/myothermodule test
+` + underline("Example:") + `
+` + italic(`  monospace run --project-filter modules/mymodule --project-filter modules/myothermodule test`) + `
 or more concise
-monospace run -p modules/mymodule,modules/myothermodule test
+` + italic(`  monospace run -p modules/mymodule,modules/myothermodule test`) + `
 
+you can get a dependency graph of tasks to run by using the --graphviz flag.
+It will output the dot representation in your terminal and open your browser
+for visual online rendering.
 
-`,
+` + italic(`  monospace run task --graphviz`) + `
+or for the entire pipeline
+` + italic(`  monospace run --graphviz`),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := app.ConfigGet()
 		if err != nil {

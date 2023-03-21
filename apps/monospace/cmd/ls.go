@@ -23,10 +23,9 @@ var lsCmd = &cobra.Command{
 	Short: "list known workspaces in this monospace",
 	Long: `It will list workspaces in this monospace.
 
-usage:
-monospace ls [options]
-monospace ls [options] path/to/a/monospace
-`,
+` + underline("Example:") + `
+` + italic(`  monospace ls -l
+  monospace ls path/to/a/monospace`),
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 1 {

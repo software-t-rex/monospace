@@ -22,15 +22,16 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new monospace",
 	Long: `Initialize a new monospace
+
 It will perform the following steps:
 - create some files if they are not present in the directory
 	(.monospace/monospace.yml, .npmrc, .gitignore, go.work if go installed detected)
 - init a git repository if not already initialized
 each of these steps won't overwrite existing files if any
-` + utils.Underline("usage:") + `
-monospace init
-monospace init path/to/new-monospace
-`,
+
+` + utils.Underline("Example:") + `
+` + italic(`  monospace init
+  monospace init path/to/new-monospace`),
 	Args: func(cmd *cobra.Command, args []string) error {
 		// no more than one argument which shoult be path to the new monospace
 		if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
