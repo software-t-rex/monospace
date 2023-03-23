@@ -4,7 +4,7 @@ go 1.20
 
 // modules from the monospace
 require (
-	github.com/software-t-rex/go-jobExecutor/v2 v2.1.1
+	github.com/software-t-rex/go-jobExecutor/v2 v2.1.2
 	github.com/software-t-rex/js-packagemanager v0.0.4
 	github.com/software-t-rex/monospace/gomodules/colors v0.0.0
 	github.com/software-t-rex/monospace/gomodules/scaffolders v0.0.0
@@ -12,6 +12,7 @@ require (
 )
 
 replace (
+	// github.com/software-t-rex/go-jobExecutor/v2 => ../../gomodules/go-jobexecutor
 	github.com/software-t-rex/monospace/gomodules/colors => ../../gomodules/colors
 	github.com/software-t-rex/monospace/gomodules/scaffolders => ../../gomodules/scaffolders
 )
