@@ -57,6 +57,7 @@ or for the entire pipeline
 	},
 	Args: cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		outputMode := ValidateFlagOutputMode(cmd)
 		graphviz := utils.CheckErrOrReturn(cmd.Flags().GetBool("graphviz"))
 		filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
 
@@ -89,23 +90,13 @@ or for the entire pipeline
 			return
 		}
 
-		tasks.Run(args, filters)
+		tasks.Run(args, filters, outputMode)
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(runCmd)
-	runCmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name")
+	AddFlagProjectFilter(runCmd)
+	AddFlagOutputMode(runCmd)
 	runCmd.Flags().BoolP("graphviz", "g", false, "Open a graph visualisation of the task execution plan instead of executing it")
-	runCmd.RegisterFlagCompletionFunc("project-filter", utils.CompleteProjectFilter)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// runCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

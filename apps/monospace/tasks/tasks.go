@@ -240,8 +240,8 @@ func (t TaskList) Len() int {
 	return len(t.List)
 }
 
-func (t TaskList) GetExecutor() *jobExecutor.JobExecutor {
-	e := utils.NewTaskExecutor()
+func (t TaskList) GetExecutor(outputMode string) *jobExecutor.JobExecutor {
+	e := utils.NewTaskExecutor(outputMode)
 	taskIds := make(map[string]int, t.Len())
 
 	jobs := make(map[int]jobExecutor.Job, t.Len())
@@ -319,12 +319,12 @@ func OpenGraphviz(tasks []string, filters []string) {
 	utils.Open("https://dreampuf.github.io/GraphvizOnline/#" + url.PathEscape(dot))
 }
 
-func Run(tasks []string, filters []string) {
+func Run(tasks []string, filters []string, outputMode string) {
 	taskList := prepareTaskList(tasks, filters)
 	if taskList.Len() == 0 {
 		exit("no tasks found")
 	}
-	executor := taskList.GetExecutor()
+	executor := taskList.GetExecutor(outputMode)
 	executor.DagExecute()
 }
 

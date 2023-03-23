@@ -11,7 +11,7 @@ import (
 
 // constants for flag enumValue, first item in the list is default value
 const projectTypes = ",go,js"
-const outputModes = "grouped,interleaved,none"
+const outputModes = "grouped,interleaved,status-only,errors-only,none"
 
 func exitAndHelp(cmd *cobra.Command, err error) {
 	utils.PrintError(err)
@@ -34,7 +34,7 @@ func AddFlagOutputMode(cmd *cobra.Command) {
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", CompleteOutputMode))
 }
 func CompleteOutputMode(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	return []string{"none", "grouped", "interleaved"}, cobra.ShellCompDirectiveDefault
+	return strings.Split(outputModes, ","), cobra.ShellCompDirectiveDefault
 }
 
 func ValidateFlagOutputMode(cmd *cobra.Command) string {

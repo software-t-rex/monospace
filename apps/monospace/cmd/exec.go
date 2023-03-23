@@ -40,6 +40,7 @@ or more concise
 		config := utils.CheckErrOrReturn(app.ConfigGet())
 		cmdBin := args[0]
 		cmdArgs := args[1:]
+		outputMode := ValidateFlagOutputMode(cmd)
 		if cmdBin != "" && cmdBin[0] == '.' {
 			cmdBin = filepath.Join(utils.CheckErrOrReturn(os.Getwd()), cmdBin)
 		}
@@ -58,18 +59,20 @@ or more concise
 				}
 			}
 		}
-		executor := utils.NewTaskExecutor()
+		executor := utils.NewTaskExecutor(outputMode)
 		for _, p := range projects {
 			project := p
 			if len(filter) > 0 && !utils.SliceContains(filter, project.Name) {
 				continue
 			}
-			executor.AddNamedJobFn(fmt.Sprintf("%s: %s", utils.Bold(project.Name), strings.Join(args, " ")), func() (string, error) {
-				cmd := exec.Command(cmdBin, cmdArgs...)
-				cmd.Dir = filepath.Join(monoRoot, project.Name)
-				resBytes, err := cmd.CombinedOutput()
-				return string(resBytes), err
-			})
+			cmd := exec.Command(cmdBin, cmdArgs...)
+			cmd.Dir = filepath.Join(monoRoot, project.Name)
+			switch outputMode {
+			case "interleaved":
+				executor.AddNamedJobCmd(project.Name, cmd)
+			default:
+				executor.AddNamedJobCmd(fmt.Sprintf("%s: %s", utils.Bold(project.Name), strings.Join(args, " ")), cmd)
+			}
 		}
 		executor.Execute()
 	},
@@ -78,5 +81,6 @@ or more concise
 func init() {
 	RootCmd.AddCommand(execCmd)
 	AddFlagProjectFilter(execCmd)
+	AddFlagOutputMode(execCmd)
 
 }
