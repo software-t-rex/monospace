@@ -27,10 +27,13 @@ pipeline:
     monospace#buildnext:
         cmd: [goreleaser, build, --config, ./.goreleaser-next.yaml, --id, monospace-next, --snapshot, --clean, --single-target]
     monospace#test:
-        dependsOn: [packageJson#test, executor#test]
+        dependsOn: [packageJson#test, executor#test, jspm#test]
         cmd: [test.sh]
     packageJson#test:
         cmd: [test.sh]
+    jspm#test:
+        cmd: [test.sh]
+        dependsOn: [packageJson#test]
     monospace#diforigins:
         cmd: [git, diff, --name-only, origin/main]
     executor#diforigins:

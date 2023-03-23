@@ -6,3 +6,4 @@ gomodules/go-jobexecutor
 gomodules/js-packagemanager
 gomodules/packageJson
 gomodules/dag
+.monospace/bin/gotest
