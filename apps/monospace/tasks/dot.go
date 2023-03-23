@@ -51,7 +51,7 @@ func (t *TaskList) GetDot() string {
 		}
 	}
 	out := []string{`digraph G{
-	graph [bgcolor="#121212" fontcolor="black" rankdir="BT"]
+	graph [bgcolor="#121212" fontcolor="black" rankdir="RL"]
 	node [colorscheme="set312" style="filled,rounded" shape="box"]
 	edge [color="#f0f0f0"]`}
 	// append in color order
