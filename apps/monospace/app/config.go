@@ -26,13 +26,14 @@ type MonospaceConfigPipeline struct {
 	Cmd        []string `yaml:"cmd,omitempty,flow"`
 }
 type MonospaceConfig struct {
-	GoModPrefix string                             `yaml:"go_mod_prefix,omitempty"`
-	JSPM        string                             `yaml:"js_package_manager,omitempty"`
-	Projects    map[string]string                  `yaml:"projects,omitempty"`
-	Aliases     map[string]string                  `yaml:"projects_aliases,omitempty"`
-	Pipeline    map[string]MonospaceConfigPipeline `yaml:"pipeline,omitempty"`
-	configPath  string
-	root        string
+	GoModPrefix        string                             `yaml:"go_mod_prefix,omitempty"`
+	JSPM               string                             `yaml:"js_package_manager,omitempty"`
+	PreferedOutputMode string                             `yaml:"prefered_output_mode,omitempty"`
+	Projects           map[string]string                  `yaml:"projects,omitempty"`
+	Aliases            map[string]string                  `yaml:"projects_aliases,omitempty"`
+	Pipeline           map[string]MonospaceConfigPipeline `yaml:"pipeline,omitempty"`
+	configPath         string
+	root               string
 }
 
 var appConfig *MonospaceConfig
@@ -72,6 +73,9 @@ func configSet(config *MonospaceConfig) {
 	}
 	if c.JSPM == "" {
 		c.JSPM = dfltJSPM
+	}
+	if c.PreferedOutputMode == "" {
+		c.PreferedOutputMode = dfltPreferedOutputMode
 	}
 	appConfig = config
 }

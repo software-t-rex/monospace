@@ -23,6 +23,17 @@
 					"type":"string",
 					"default": "example.com"
 				},
+				"prefered_output_mode": {
+					"title": "monospace.yml: prefered_output_mode",
+					"description": "Default output mode to use for run and exec commands.\n\nnone: no output from tasks\ninterleaved: print prefixed output from tasks as they arrive\ngrouped: print combined output of tasks as they complete.\n\nDefault to grouped",
+					"type":"string",
+					"enum": [
+						"interleaved",
+						"grouped",
+						"none"
+					],
+					"default": "grouped"
+				},
 				"projects": {
 					"title": "monospace.yml: projects",
 					"description": "Key value pair where keys are path to the project in the monospace and values are either: 'internal', 'local', or a git repo url",

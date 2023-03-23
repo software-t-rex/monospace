@@ -10,10 +10,11 @@ import (
 )
 
 var sampleConfig = &MonospaceConfig{
-	GoModPrefix: "test.com",
-	JSPM:        "yarn@xxx",
-	Projects:    map[string]string{"packages/test": "internal"},
-	Aliases:     map[string]string{"test": "packages/test"},
+	GoModPrefix:        "test.com",
+	JSPM:               "yarn@xxx",
+	PreferedOutputMode: "grouped",
+	Projects:           map[string]string{"packages/test": "internal"},
+	Aliases:            map[string]string{"test": "packages/test"},
 }
 
 func TestConfig(t *testing.T) {
@@ -78,6 +79,7 @@ func TestConfigInitAndSave(t *testing.T) {
 		expected := `# yaml-language-server: $schema=https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json
 go_mod_prefix: test.com
 js_package_manager: yarn@xxx
+prefered_output_mode: grouped
 projects:
     packages/test: internal
 projects_aliases:
@@ -105,7 +107,7 @@ projects_aliases:
 	}
 
 	if !reflect.DeepEqual(got, &testConfig) {
-		t.Fatalf("ConfigGet(): return different config than expected: %v, want: %v, err: %v", got, &testConfig, err)
+		t.Fatalf("ConfigGet(): return different config than expected: %+v, want: %+v, err: %v", got, &testConfig, err)
 	}
 }
 
