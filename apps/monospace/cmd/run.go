@@ -69,6 +69,9 @@ or for the entire pipeline
 
 		CheckConfigFound(true)
 		config := utils.CheckErrOrReturn(app.ConfigGet())
+		if outputMode == "" && config.PreferedOutputMode != "" {
+			outputMode = config.PreferedOutputMode
+		}
 
 		if graphviz && len(args) == 0 {
 			tasks.OpenGraphvizFull()

@@ -41,7 +41,11 @@ or more concise
 		cmdBin := args[0]
 		cmdArgs := args[1:]
 		outputMode := ValidateFlagOutputMode(cmd)
-		if cmdBin != "" && cmdBin[0] == '.' {
+
+		if outputMode == "" && config.PreferedOutputMode != "" {
+			outputMode = config.PreferedOutputMode
+		}
+		if cmdBin != "" && cmdBin[0] == '.' { // make relative path relative to projects
 			cmdBin = filepath.Join(utils.CheckErrOrReturn(os.Getwd()), cmdBin)
 		}
 		if cmdBin == "git" && colors.ColorEnabled() { // add colors to git commands if color is enabled

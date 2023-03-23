@@ -25,11 +25,13 @@
 				},
 				"prefered_output_mode": {
 					"title": "monospace.yml: prefered_output_mode",
-					"description": "Default output mode to use for run and exec commands.\n\nnone: no output from tasks\ninterleaved: print prefixed output from tasks as they arrive\ngrouped: print combined output of tasks as they complete.\n\nDefault to grouped",
+					"description": "Default output mode to use for run and exec commands.\n\nnone: no output from tasks\ninterleaved: print prefixed output from tasks as they arrive\ngrouped: print combined output of tasks as they complete.\nstatus-only: display running status summary\nerrors-only: is like interleaved output but displaying only what comes on stderr\n\nDefault to grouped",
 					"type":"string",
 					"enum": [
-						"interleaved",
 						"grouped",
+						"interleaved",
+						"errors-only",
+						"status-only",
 						"none"
 					],
 					"default": "grouped"
