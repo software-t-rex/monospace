@@ -76,7 +76,7 @@ each of these steps won't overwrite existing files if any
 func init() {
 	// @todo add prompt for prefered js package manager and go.mod default prefix
 	RootCmd.AddCommand(initCmd)
-	initCmd.Flags().BoolP("no-interactive", "y", false, "Prevent any interactive prompts")
+	AddFlagNoInteractive(initCmd)
 
 	// Here you will define your flags and configuration settings.
 

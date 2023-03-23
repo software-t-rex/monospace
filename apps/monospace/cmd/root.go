@@ -20,8 +20,6 @@ import (
 
 // flags for the application
 var flagRootDisableColorOutput bool
-var flagRemoveRmDir bool
-var flagCreatePType string
 
 var bold = utils.Bold
 var underline = utils.Underline
@@ -79,15 +77,6 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	initConfig()
 	RootCmd.PersistentFlags().BoolVarP(&flagRootDisableColorOutput, "no-color", "C", false, "Disable color output mode (you can also use env var NO_COLOR)")
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.monospace)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	// RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.

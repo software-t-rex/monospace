@@ -77,7 +77,6 @@ or more concise
 
 func init() {
 	RootCmd.AddCommand(execCmd)
-	execCmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name")
-	execCmd.RegisterFlagCompletionFunc("project-filter", utils.CompleteProjectFilter)
+	AddFlagProjectFilter(execCmd)
 
 }

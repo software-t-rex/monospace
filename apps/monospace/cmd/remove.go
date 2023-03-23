@@ -34,22 +34,12 @@ It will:
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
-		utils.ProjectRemove(args[0], true, !flagRemoveRmDir)
+		rmDir := utils.CheckErrOrReturn(cmd.Flags().GetBool("rmdir"))
+		utils.ProjectRemove(args[0], true, !rmDir)
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(removeCmd)
-	removeCmd.Flags().BoolVarP(&flagRemoveRmDir, "rmdir", "r", false, "Remove the project directory without confirm")
-	// Here you will define your flags and configuration settings.
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// removeCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// removeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	removeCmd.Flags().BoolP("rmdir", "r", false, "Remove the project directory without confirm")
 }
