@@ -3,6 +3,8 @@
 set -e
 #cd $(dirname "$0")
 
+# ensure coverage dir exists, we also create E2E for the binary test coverage
+mkdir -p coverage/E2E
 echo "" > coverage/coverage.out
 
 go test -race -coverprofile=coverage/coverage.out -covermode=atomic ./...
