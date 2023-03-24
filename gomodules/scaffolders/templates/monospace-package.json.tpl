@@ -5,6 +5,6 @@
 	"workspaces": [
 		"packages/*",
 		"apps/*"
-	]
-  "private": true,
+	],
+  "private": true
 }
