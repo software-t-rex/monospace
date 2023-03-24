@@ -29,7 +29,9 @@ var createCmd = &cobra.Command{
   You will have to set a remote later to make it an external project instead
 
 ` + underline("Second argument:") + ` 'ProjectName' is the relative path to the project from the root
-of the monospace repository. Example for a new application: apps/my-new-app
+of the monospace repository. Example for a new application: apps/my-new-app.
+It should only contain letters, numbers, underscores, slashes and hyphens
+and each path part must start with a letter or an underscore.
 
 ` + underline("Example:") + `
 ` + italic(`  monospace create local apps/my-new-app

@@ -56,7 +56,7 @@ flags to the underlying git status command.`,
 				}
 				continue
 			}
-			executor.AddNamedJobCmd(project.Name, getStatusCommand(project.Name, args))
+			executor.AddNamedJobCmd(project.Name, getStatusCommand(project.Path(), args))
 		}
 
 		executor.OnJobsDone(func(jobs jobExecutor.JobList) {

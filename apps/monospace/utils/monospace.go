@@ -76,11 +76,14 @@ func MonospaceAddProjectToGitignore(projectName string) error {
 /* exit on error */
 func MonospaceClone(destDirectory string, repoUrl string) {
 	if CheckErrOrReturn(FileExists(destDirectory)) {
-		PrintError(errors.New("path already exists"))
-		os.Exit(1)
+		Exit("path already exists")
+	}
+	destDirectory, err := filepath.Abs(destDirectory)
+	if err != nil {
+		Exit(err.Error())
 	}
 	fmt.Println(Info("Cloning root repository..."))
-	err := GitClone(repoUrl, destDirectory)
+	err = GitClone(repoUrl, destDirectory)
 	CheckErr(err)
 	fmt.Println(Success("Cloning done."))
 	// move to the monorepo root
@@ -109,7 +112,7 @@ cd ` + destDirectory + ` && monospace init`)
 	fmt.Println(Info("Cloning externals projects..."))
 	jobExecutor := jobExecutor.NewExecutor().WithOngoingStatusOutput()
 	for _, project := range externals {
-		jobExecutor.AddNamedJobCmd("clone "+project.Name, exec.Command("git", "clone", project.RepoUrl, project.Name))
+		jobExecutor.AddNamedJobCmd("clone "+project.Name, exec.Command("git", "clone", project.RepoUrl, project.Path()))
 	}
 	errs := jobExecutor.Execute()
 	fmt.Println(Success("Cloning done"))
@@ -123,7 +126,7 @@ cd ` + destDirectory + ` && monospace init`)
 func MonospaceInitRepo(projectName string) (err error) {
 	err = MonospaceAddProjectToGitignore(projectName)
 	if err == nil {
-		projectPath := filepath.Join(MonospaceGetRoot(), "/", projectName)
+		projectPath := ProjectGetPath(projectName)
 		hasGitIgnore := FileExistsNoErr(filepath.Join(projectPath, ".gitignore"))
 		err = GitInit(projectPath, !hasGitIgnore)
 	}

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -93,9 +94,14 @@ func GitHistoryLastCommit(directory string) (res string, err error) {
 
 func GitGetOrigin(directory string) (string, error) {
 	cmd := exec.Command("git", "-C", directory, "remote", "get-url", "origin")
+	var errMsg bytes.Buffer
+	cmd.Stderr = &errMsg
 	origin, err := cmd.Output()
 	if err == nil {
 		return strings.TrimSpace(string(origin)), nil
+	}
+	if errMsg.Len() > 0 {
+		return "", fmt.Errorf(strings.TrimSpace(errMsg.String()))
 	}
 	return "", err
 }

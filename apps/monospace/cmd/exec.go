@@ -36,7 +36,6 @@ or more concise
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
-		monoRoot := utils.MonospaceGetRoot()
 		config := utils.CheckErrOrReturn(app.ConfigGet())
 		cmdBin := args[0]
 		cmdArgs := args[1:]
@@ -70,7 +69,7 @@ or more concise
 				continue
 			}
 			cmd := exec.Command(cmdBin, cmdArgs...)
-			cmd.Dir = filepath.Join(monoRoot, project.Name)
+			cmd.Dir = project.Path()
 			switch outputMode {
 			case "interleaved":
 				executor.AddNamedJobCmd(project.Name, cmd)

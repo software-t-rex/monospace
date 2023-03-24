@@ -16,7 +16,8 @@ import (
 type ProjectKind int
 
 const (
-	Local ProjectKind = iota
+	Root ProjectKind = iota - 1
+	Local
 	Internal
 	External
 )
@@ -45,7 +46,15 @@ var styles = map[ProjectKind](func(s ...string) string){
 }
 
 func (p Project) StyledString() string {
-	return styles[p.Kind](p.Name)
+	kind := p.Kind
+	if kind == Root {
+		kind = 0
+	}
+	return styles[kind](p.Name)
+}
+
+func (p Project) Path() string {
+	return ProjectGetPath(p.Name)
 }
 
 func getProjectsMap() (map[string]string, error) {
@@ -58,6 +67,9 @@ func getProjectsMap() (map[string]string, error) {
 
 /* check project name is valid */
 func ProjectIsValidName(name string) bool {
+	if name == "root" { // reserved name
+		return false
+	}
 	// check if the project name is containing only letters, numbers, underscores, slashes and hyphens
 	match, _ := regexp.MatchString("^[a-zA-Z_][a-zA-Z0-9_-]*(\\/[a-zA-Z_][a-zA-Z0-9_-]*)*$", name)
 	return match
@@ -186,11 +198,10 @@ func ProjectGetByName(name string) (Project, error) {
 }
 
 func ProjectGetPath(projectName string) string {
+	if projectName == "root" {
+		return MonospaceGetRoot()
+	}
 	return filepath.Join(MonospaceGetRoot(), filepath.Clean(projectName))
-}
-
-func ProjectCreateDirectory(projectName string) error {
-	return os.MkdirAll(ProjectGetPath(projectName), 0750)
 }
 
 /* exit on error */
@@ -228,7 +239,7 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 
 	// create dir if not exists
 	if !dirExists {
-		CheckErrWithMsg(ProjectCreateDirectory(project.Name), "Error while creating package")
+		CheckErrWithMsg(os.MkdirAll(project.Path(), 0750), "Error while creating package")
 	}
 
 	// add to .monopace.yml
@@ -250,7 +261,7 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 		CheckErr(GitAddGitIgnoreFile())
 	case External:
 		fmt.Println("Clone repository")
-		CheckErr(ProjectCloneRepo(project.Name, project.RepoUrl))
+		CheckErr(ProjectCloneRepo(project))
 	default:
 		Exit("unknown project kind must be local, internal or external")
 	}
@@ -272,11 +283,10 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 	fmt.Println(Success("project successfully added to your monospace"))
 }
 
-func ProjectCloneRepo(projectName string, repoUrl string) (err error) {
-	err = MonospaceAddProjectToGitignore(projectName)
+func ProjectCloneRepo(project Project) (err error) {
+	err = MonospaceAddProjectToGitignore(project.Name)
 	if err == nil {
-		projectPath := filepath.Join(MonospaceGetRoot(), "/", projectName)
-		err = GitClone(repoUrl, projectPath)
+		err = GitClone(project.RepoUrl, project.Path())
 	}
 	return
 }
@@ -296,7 +306,6 @@ func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 	project := CheckErrOrReturn(ProjectGetByName(projectName))
 	CheckErr(app.ConfigRemoveProject(project.Name, true))
 
-	rootDir := MonospaceGetRoot()
 	printSuccess := func() { fmt.Println(Success("Project " + projectName + " successfully removed")) }
 
 	CheckErr(ProjectRemoveFromGitignore(project, false))
@@ -306,7 +315,7 @@ func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 		fmt.Println("You should now delete the project directory.")
 	} else {
 		if !withConfirm || Confirm("Do you want to delete "+project.Name, false) {
-			CheckErr(RmDir(filepath.Join(rootDir, project.Name)))
+			CheckErr(RmDir(project.Path()))
 		}
 		printSuccess()
 	}
