@@ -43,15 +43,35 @@ func NewTaskExecutor(outputMode string) *exctr.JobExecutor {
 	})
 	switch outputMode { //grouped,interleaved,status-only,errors-only,none
 	case "none": // do nothing
-	case "interleaved":
-		e.OnJobsStart(setInterleavedOutputDisplayNames)
-		e.WithInterleavedOutput()
 	case "errors-only":
-		e.OnJobsStart(setInterleavedOutputDisplayNames)
+		fallthrough
+	case "interleaved":
+		withStdout := true
+		if outputMode == "errors-only" {
+			withStdout = false
+		}
 		e.OnJobsStart(func(jobs exctr.JobList) {
 			setInterleavedOutputDisplayNames(jobs)
 			for _, job := range jobs {
-				job.Cmd.Stderr = exctr.NewPrefixedWriter(os.Stdout, job.Name()+": ")
+				pw := exctr.NewPrefixedWriter(os.Stdout, job.Name()+": ")
+				if job.Cmd != nil {
+					if withStdout {
+						job.Cmd.Stdout = pw
+					}
+					job.Cmd.Stderr = pw
+				} else if job.Fn != nil {
+					fn := job.Fn
+					job.Fn = func() (string, error) {
+						res, err := fn()
+						if withStdout && res != "" {
+							pw.Write([]byte(res))
+						}
+						if err != nil {
+							pw.Write([]byte(ErrorStyle(err.Error())))
+						}
+						return res, err
+					}
+				}
 			}
 		})
 	case "status-only":
@@ -89,7 +109,16 @@ func NewTaskExecutor(outputMode string) *exctr.JobExecutor {
 				verb = "succeed"
 				indicator = successIndicator
 			}
-			fmt.Printf("%s %s %s in %v\n%s", indicator, bold+job.Name()+reset, verb, job.Duration, Indent(job.Res, "  "))
+			statusLine := fmt.Sprintf("%s %s %s in %v\n", indicator, bold+job.Name()+reset, verb, job.Duration)
+			err := ""
+			res := ""
+			if job.Err != nil {
+				err = Indent(ErrorStyle(job.Err.Error()), "  ")
+			}
+			if job.Res != "" {
+				res = Indent(job.Res, "  ")
+			}
+			fmt.Print(statusLine, err, res)
 		})
 	}
 	e.OnJobsDone(func(jobs exctr.JobList) {
