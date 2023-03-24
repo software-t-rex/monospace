@@ -9,8 +9,10 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"gopkg.in/yaml.v3"
 )
@@ -142,6 +144,12 @@ func ConfigAddProjectAlias(projectName string, alias string, save bool) error {
 	config, err := ConfigGet()
 	if err != nil {
 		return err
+	}
+	aliasOk, err := regexp.MatchString("^[a-zA-Z_][a-zA-Z0-9_-]*(\\/[a-zA-Z_][a-zA-Z0-9_-]*)*$", alias)
+	if !aliasOk {
+		return fmt.Errorf("invalid alias name %s", alias)
+	} else if config.Projects == nil || config.Projects[projectName] == "" {
+		return fmt.Errorf("unknown project %s", projectName)
 	}
 	if config.Aliases == nil {
 		config.Aliases = make(map[string]string)

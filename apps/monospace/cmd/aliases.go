@@ -24,9 +24,12 @@ var aliasesCmd = &cobra.Command{
 Filtering on projects by their full project path can sometimes be a bit cumbersome.
 You can add aliases to a project by using the 'alias add' command
 
+Aliases should only contain letters, numbers, underscores and hyphens and start
+with a letter or an underscore.
+
 without arguments this command will return the list of current aliases
 ` + underline("Examples:") + `
-` + italic(`  monospace aliases
+` + italic(`  monospace aliases list
   monospace aliases add packages/mypackage myalias
   monospace aliases remove myalias`),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -54,8 +57,14 @@ without arguments this command will return the list of current aliases
 			args = append(args, "list")
 		}
 		switch args[0] {
+		case "ls":
+			fallthrough
 		case "list":
 			config := utils.CheckErrOrReturn(app.ConfigGet())
+			if len(config.Aliases) == 0 {
+				fmt.Println("No aliases defined")
+				os.Exit(0)
+			}
 			for alias, projectName := range config.Aliases {
 				fmt.Printf("%s: %s\n", alias, projectName)
 			}
