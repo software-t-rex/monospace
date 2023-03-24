@@ -91,6 +91,15 @@ func GitHistoryLastCommit(directory string) (res string, err error) {
 	return res, err
 }
 
+func GitGetOrigin(directory string) (string, error) {
+	cmd := exec.Command("git", "-C", directory, "remote", "get-url", "origin")
+	origin, err := cmd.Output()
+	if err == nil {
+		return strings.TrimSpace(string(origin)), nil
+	}
+	return "", err
+}
+
 type GitExternalizeOptions struct {
 	InitialBranch string
 	Origin        string
