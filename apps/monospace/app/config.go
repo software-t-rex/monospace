@@ -143,6 +143,9 @@ func ConfigAddProjectAlias(projectName string, alias string, save bool) error {
 	if err != nil {
 		return err
 	}
+	if config.Aliases == nil {
+		config.Aliases = make(map[string]string)
+	}
 	if config.Aliases[alias] != "" {
 		return errors.New("alias " + alias + " already exists")
 	}
@@ -182,6 +185,9 @@ func ConfigAddProject(projectName string, repoUrl string, save bool) error {
 	config, err := ConfigGet()
 	if err != nil {
 		return err
+	}
+	if config.Projects == nil {
+		config.Projects = make(map[string]string)
 	}
 	_, ok := config.Projects[projectName]
 	if ok {
