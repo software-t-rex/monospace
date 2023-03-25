@@ -40,7 +40,7 @@ each of these steps won't overwrite existing files if any
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		noInteractive := utils.CheckErrOrReturn(cmd.Flags().GetBool("no-interactive"))
+		noInteractive := FlagGetNoInteractive(cmd)
 		if noInteractive {
 			utils.CheckErr(os.Setenv("MONOSPACE_NO_INTERACTIVE", "1"))
 		}
@@ -76,15 +76,5 @@ each of these steps won't overwrite existing files if any
 func init() {
 	// @todo add prompt for prefered js package manager and go.mod default prefix
 	RootCmd.AddCommand(initCmd)
-	AddFlagNoInteractive(initCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	FlagAddNoInteractive(initCmd)
 }

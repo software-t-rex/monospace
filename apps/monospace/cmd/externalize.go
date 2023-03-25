@@ -47,7 +47,7 @@ You should check that there's no untracked files before proceeding as they will 
 		projectName := args[0]
 		flagPush := utils.CheckErrOrReturn(cmd.Flags().GetBool("push"))
 		initBranch := utils.CheckErrOrReturn(cmd.Flags().GetString("initial-branch"))
-		noConfirm := utils.CheckErrOrReturn(cmd.Flags().GetBool("no-interactive"))
+		noConfirm := FlagGetNoInteractive(cmd)
 		opts := utils.GitExternalizeOptions{
 			PushOrigin: flagPush,
 		}
@@ -82,7 +82,7 @@ func init() {
 	RootCmd.AddCommand(externalizeCmd)
 	externalizeCmd.Flags().StringP("initial-branch", "b", "", "set the default branch name (default to your git default setting)")
 	externalizeCmd.Flags().BoolP("push", "p", false, "push initial branch and set upstream to origin")
-	AddFlagNoInteractive(externalizeCmd)
+	FlagAddNoInteractive(externalizeCmd)
 
 	// Here you will define your flags and configuration settings.
 

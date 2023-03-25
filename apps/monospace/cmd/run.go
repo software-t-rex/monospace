@@ -57,7 +57,7 @@ or for the entire pipeline
 	},
 	Args: cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		outputMode := ValidateFlagOutputMode(cmd)
+		outputMode := FlagGetOutputMode(cmd)
 		graphviz := utils.CheckErrOrReturn(cmd.Flags().GetBool("graphviz"))
 		filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
 
@@ -99,7 +99,7 @@ or for the entire pipeline
 
 func init() {
 	RootCmd.AddCommand(runCmd)
-	AddFlagProjectFilter(runCmd)
-	AddFlagOutputMode(runCmd)
+	FlagAddProjectFilter(runCmd)
+	FlagAddOutputMode(runCmd)
 	runCmd.Flags().BoolP("graphviz", "g", false, "Open a graph visualisation of the task execution plan instead of executing it")
 }

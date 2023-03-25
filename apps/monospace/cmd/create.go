@@ -62,14 +62,14 @@ you should look at the ` + italic("monospace import") + ` command instead`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
-		pType := ValidateFlagProjectType(cmd)
+		pType := GetFlagProjectType(cmd)
 		utils.ProjectCreate(args[1], args[0], pType)
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(createCmd)
-	AddFlagProjectType(createCmd)
+	FlagAddProjectType(createCmd)
 	//flagCreateSkipPM
 	// Here you will define your flags and configuration settings.
 

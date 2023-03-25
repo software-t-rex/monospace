@@ -39,7 +39,7 @@ or more concise
 		config := utils.CheckErrOrReturn(app.ConfigGet())
 		cmdBin := args[0]
 		cmdArgs := args[1:]
-		outputMode := ValidateFlagOutputMode(cmd)
+		outputMode := FlagGetOutputMode(cmd)
 
 		if outputMode == "" && config.PreferedOutputMode != "" {
 			outputMode = config.PreferedOutputMode
@@ -83,7 +83,7 @@ or more concise
 
 func init() {
 	RootCmd.AddCommand(execCmd)
-	AddFlagProjectFilter(execCmd)
-	AddFlagOutputMode(execCmd)
+	FlagAddProjectFilter(execCmd)
+	FlagAddOutputMode(execCmd)
 
 }

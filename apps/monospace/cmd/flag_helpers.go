@@ -20,11 +20,11 @@ func exitAndHelp(cmd *cobra.Command, err error) {
 	os.Exit(1)
 }
 
-func AddFlagProjectFilter(cmd *cobra.Command) {
+func FlagAddProjectFilter(cmd *cobra.Command) {
 	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
 }
-func AddPersistentFlagProjectFilter(cmd *cobra.Command) {
+func FlagAddPersistentProjectFilter(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
 }
@@ -32,7 +32,7 @@ func completeProjectFilter(cmd *cobra.Command, args []string, toComplete string)
 	suggestions := append(utils.ProjectsGetAllNameOnly(), utils.ProjectsGetAliasesNameOnly()...)
 	return suggestions, cobra.ShellCompDirectiveDefault
 }
-func GetFilterProjects(cmd *cobra.Command, repoOnly bool) []utils.Project {
+func FlagGetFilteredProjects(cmd *cobra.Command, repoOnly bool) []utils.Project {
 	config := utils.CheckErrOrReturn(app.ConfigGet())
 	projects := utils.ProjectsGetAll()
 	filter := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
@@ -61,21 +61,21 @@ func GetFilterProjects(cmd *cobra.Command, repoOnly bool) []utils.Project {
 	return filteredProjects
 }
 
-// you should call ValidateFlagOutputMode in the Run of the associated command
-func AddFlagOutputMode(cmd *cobra.Command) {
+// you should call GEtFlagOutputMode in the Run of the associated command
+func FlagAddOutputMode(cmd *cobra.Command) {
 	cmd.Flags().StringP("output-mode", "O", "grouped", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n")
-	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", CompleteOutputMode))
+	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", completeOutputMode))
 }
 
-// you should call ValidateFlagOutputMode in the Run of the associated command
-func AddPersistentFlagOutputMode(cmd *cobra.Command) {
+// you should call GetFlagOutputMode in the Run of the associated command
+func FlagAddPersistentOutputMode(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP("output-mode", "O", "grouped", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n")
-	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", CompleteOutputMode))
+	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", completeOutputMode))
 }
-func CompleteOutputMode(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func completeOutputMode(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return strings.Split(outputModes, ","), cobra.ShellCompDirectiveDefault
 }
-func ValidateFlagOutputMode(cmd *cobra.Command) string {
+func FlagGetOutputMode(cmd *cobra.Command) string {
 	outputMode := utils.CheckErrOrReturn(cmd.Flags().GetString("output-mode"))
 	modes := strings.Split(outputModes, ",")
 	if outputMode == "" {
@@ -87,18 +87,21 @@ func ValidateFlagOutputMode(cmd *cobra.Command) string {
 	return "" // will never get called
 }
 
-func AddFlagNoInteractive(cmd *cobra.Command) {
-	cmd.Flags().BoolP("no-interactive", "y", false, "Prevent any interactive prompts")
+func FlagAddNoInteractive(cmd *cobra.Command) {
+	cmd.Flags().BoolP("no-interactive", "y", false, "Prevent any interactive prompts by choosing default values (not always yes)")
+}
+func FlagGetNoInteractive(cmd *cobra.Command) bool {
+	return utils.CheckErrOrReturn(cmd.Flags().GetBool("no-interactive"))
 }
 
-// should use ValidateFlagProjectType in Run
-func AddFlagProjectType(cmd *cobra.Command) {
+// should use GetFlagProjectType in Run
+func FlagAddProjectType(cmd *cobra.Command) {
 	cmd.Flags().StringP("type", "t", "", "type of project to create for now only 'go' and 'js' are supported")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("type", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return strings.Split(projectTypes, ",")[1:], cobra.ShellCompDirectiveNoFileComp
 	}))
 }
-func ValidateFlagProjectType(cmd *cobra.Command) string {
+func GetFlagProjectType(cmd *cobra.Command) string {
 	pType := utils.CheckErrOrReturn(cmd.Flags().GetString("type"))
 	if !utils.SliceContains(strings.Split(projectTypes, ","), pType) {
 		exitAndHelp(cmd, fmt.Errorf("invalid project type '%s'", pType))
