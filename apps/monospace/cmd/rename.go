@@ -40,6 +40,8 @@ will update the monospace gitignore and .monospace.yml files accordingly.`,
 			utils.Exit(fmt.Sprintf("Unkwown project %s", oldName))
 		} else if utils.FileExistsNoErr(newName) {
 			utils.Exit(fmt.Sprintf("%s already exists", oldName))
+		} else if !utils.ProjectIsValidName(newName) {
+			utils.Exit(fmt.Sprintf("%s is not a valid project name", newName))
 		}
 
 		project := utils.CheckErrOrReturn(utils.ProjectGetByName(oldName))
