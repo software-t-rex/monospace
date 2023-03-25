@@ -258,9 +258,9 @@ func TestCmd_Suite(t *testing.T) {
 
 	runStep(t, "ls", func(t *testing.T) {
 		// t.Skip()
-		longOutput := "apps/myapp (local)\npackages/jslib (internal)"
+		longOutput := "apps/myapp (local)\nmodules/renamed (file:///home/malko/git/T-REx/monospace/gomodules/js-packagemanager)\npackages/jslib (internal)"
 		tests := []testCase{
-			{"should return the list of projects", []string{"ls", "-C"}, icmd.Expected{ExitCode: 0, Out: "apps/myapp\npackages/jslib"}, nil, ""},
+			{"should return the list of projects", []string{"ls", "-C"}, icmd.Expected{ExitCode: 0, Out: "apps/myapp\nmodules/renamed\npackages/jslib"}, nil, ""},
 			{"should add detail with -long flag", []string{"ls", "-C", "--long"}, icmd.Expected{ExitCode: 0, Out: longOutput}, nil, ""},
 			{"should support list alias", []string{"list", "-C", "-l"}, icmd.Expected{ExitCode: 0, Out: longOutput}, nil, ""},
 		}
