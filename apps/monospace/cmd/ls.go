@@ -19,8 +19,9 @@ import (
 
 // lsCmd represents the ls command
 var lsCmd = &cobra.Command{
-	Use:   "ls",
-	Short: "list known workspaces in this monospace",
+	Aliases: []string{"list"},
+	Use:     "ls",
+	Short:   "list known workspaces in this monospace",
 	Long: `It will list workspaces in this monospace.
 
 ` + underline("Example:") + `
@@ -38,7 +39,7 @@ var lsCmd = &cobra.Command{
 		if len(projects) < 1 {
 			fmt.Println("No projects found start by adding one to your monospace.")
 		} else {
-			isLong, _ := cmd.Flags().GetBool("longFormat")
+			isLong, _ := cmd.Flags().GetBool("long")
 			out := utils.SliceMap(projects, func(p utils.Project) string {
 				if isLong {
 					if p.RepoUrl == "" {
@@ -56,5 +57,5 @@ var lsCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(lsCmd)
-	lsCmd.Flags().BoolP("longFormat", "l", false, "add information about projects repositories")
+	lsCmd.Flags().BoolP("long", "l", false, "add information about projects repositories")
 }
