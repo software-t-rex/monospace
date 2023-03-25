@@ -34,12 +34,14 @@ It will:
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
+		noInteractive := FlagGetNoInteractive(cmd)
 		rmDir := utils.CheckErrOrReturn(cmd.Flags().GetBool("rmdir"))
-		utils.ProjectRemove(args[0], true, !rmDir)
+		utils.ProjectRemove(args[0], !noInteractive || rmDir, !noInteractive && !rmDir)
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(removeCmd)
 	removeCmd.Flags().BoolP("rmdir", "r", false, "Remove the project directory without confirm")
+	FlagAddNoInteractive(removeCmd)
 }
