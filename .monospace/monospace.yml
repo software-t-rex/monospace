@@ -9,6 +9,7 @@ projects:
     gomodules/js-packagemanager: git@github.com:software-t-rex/js-packagemanager.git
     gomodules/packageJson: git@github.com:software-t-rex/packageJson.git
     gomodules/scaffolders: internal
+    packages/monospace: internal
 projects_aliases:
     executor: gomodules/go-jobexecutor
     jspm: gomodules/js-packagemanager

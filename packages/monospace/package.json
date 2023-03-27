@@ -1,0 +1,51 @@
+{
+  "name": "@t-rex.software/monospace",
+  "version": "0.0.16",
+  "description": "monospace kinda like monorepo but different",
+  "bin": {
+    "monospace-installer": "./bin/index.js"
+  },
+  "files": ["./bin/index.js"],
+  "scripts": {
+    "build": "rm -rf ./bin && esbuild --bundle index.js --outfile=\"./bin/index.js\" --platform=node --target=es6 --minify-whitespace"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/software-t-rex/monospace.git",
+    "directory": "packages/monospace"
+  },
+  "homepage": "https://github.com/software-t-rex/monospace",
+  "bugs": {
+    "url": "https://github.com/software-t-rex/monospace/issues"
+  },
+  "funding": "https://github.com/sponsors/malko",
+  "keywords": [
+    "monospace",
+    "monorepo",
+    "mono-repository",
+    "polyrepo",
+    "poly-repository",
+    "git",
+    "workspace"
+  ],
+  "author": "Jonathan Gotti <jgotti at jgotti dot org>",
+  "license": "MIT",
+  "os": [
+    "darwin",
+    "linux",
+    "freebsd",
+    "openbsd",
+    "win32"
+  ],
+  "cpu": [
+    "arm",
+    "arm64",
+    "ia32",
+    "x64"
+  ],
+  "devDependencies": {
+    "esbuild": "0.17.14",
+    "jszip": "^3.10.1",
+    "tar": "^6.1.13"
+  }
+}
