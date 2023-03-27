@@ -13,7 +13,15 @@
 It's still early stage for monospace, so the installation process is not very fancy for now.
 
 ### download prebuilt binaries
+If you have npm/pnpm/yarn installed the easiest way to install is to use that package manager to install latest pre-compiled binaries.
+```bash
+pnpm add -g @t-rex.software/monospace
+# replace pnpm with your favorite package manager
+```
+
+If you prefer, or don't have a node package manager installed, you can install from the release page.
 Go to the [release page](https://github.com/software-t-rex/monospace/releases) and download the latest version for your platform, decompress the archive and make the monospace binary available from your $PATH.
+
 
 ### install from source
 To install from source, if you already have a version of monospace installed you can ```monospace clone git@github.com:software-t-rex/monospace.git```
