@@ -1,5 +1,8 @@
-const path = require('path')
-const https = require('https')
+// @ts-nocheck
+const fs = require("node:fs")
+const path = require("node:path")
+const https = require("node:https")
+const url = require("node:url")
 const architectures = { // only support go first class for now
 	arm: "arm",
 	arm64: "arm64",
@@ -37,11 +40,27 @@ const supportedDist = [
 	"Windows_x86_64",
 ]
 
+const get = (options, callback, redirects = 0 ) => {
+	let req = https.get({
+		...options,
+    encoding: null
+	}, function (response) {
+		if (response.headers.location) {
+			if (redirects > 10) {
+				return new Error("too many redirects")
+			}
+			get(url.parse(response.headers.location), callback, redirects+1);
+		} else {
+			callback(response);
+		}
+	});
+}
+
 const exit = (...e) => {
 	console.error(...e)
 	process.exit(1)
 }
-const unarchiveError = (e) => exit("Error: error while unarchiving monospace binary: "+e)
+const unarchiveError = (e) => exit("Error: error while unarchiving monospace binary: " + e)
 const getPM = () => {
 	const ua = process.env.npm_config_user_agent
 	if (!ua) {
@@ -55,8 +74,7 @@ const getPM = () => {
 const pkg = require(path.join(__dirname, "./package.json"))
 const arch = architectures[process.arch]
 const platform = platforms[process.platform]
-const plaformArch = `${platform}_${arch}${arch == "arm" ? process.config.variables.arm_version : ""}`
-const binName = platform == "Windows" ? "monospace" : "monospace.exe"
+const plaformArch = `${platform}_${arch}${arch == "arm" ? process.config.variables?.arm_version : ""}`
 if (!supportedDist.includes(plaformArch)) {
 	throw new Error(`Unsupported platform or arch ${plaformArch}`)
 }
@@ -64,26 +82,28 @@ const archiveExt = platform == "Windows" ? "zip" : "tar.gz"
 const archive = `monospace_${plaformArch}.${archiveExt}`
 
 // recompose archive path
-const url = `https://github.com/software-t-rex/monospace/releases/download/v${pkg.version}/${archive}`
+const archiveUrl = url.parse(`https://github.com/software-t-rex/monospace/releases/download/v${pkg.version}/${archive}`)
 
 // check the script is launched from a package manager
-if (pm == null) {
+if (getPM() == null) {
 	exit(`This script is intended to be run by a node package manager, unable to detect the package manager`)
 }
-
 const env = process.env
-let installPath
-if (env && env.npm_config_prefix) {
-	installPath = path.join(env.npm_config_prefix, 'bin')
-} else {
-	exit("Can't find binary install path")
-}
+let installPath = "./bin"
+fs.mkdirSync(installPath, { recursive: true })
 
+// if (env && env.npm_config_prefix) {
+// 	installPath = path.join(env.npm_config_prefix, 'bin')
+// } else {
+// 	exit("Can't find binary install path")
+// }
+console.log("will install binary at ", installPath)
 // perform download, unpack and install binary
-console.log(`Download binary archive from ${url}`)
-https.get(url, function(res) {
+console.log(`Download binary archive from ${archiveUrl}`)
+get(archiveUrl, function (res) {
 	if (res.statusCode !== 200) {
-		exit("can't download binary: "+res.statusMessage)
+		console.log(res.statusCode, res.statusMessage)
+		exit("can't download binary: " + res.statusMessage)
 	}
 	const data = []
 	let dataLen = 0
@@ -91,14 +111,18 @@ https.get(url, function(res) {
 		data.push(chunk)
 		dataLen += chunk.length
 	})
+	console.log("Extracting archive", dataLen)
 	switch (archiveExt) {
 		case "tar.gz":
 			res.on("end", function () {
 				require("tar")
-					.x({unlink: true, cwd: installPath}, ["monospace"])
-					.on("error",unarchiveError)
+					.x({ unlink: true, cwd: installPath }, ["monospace"])
+					.on("error", unarchiveError)
 					.on("warn", unarchiveError)
-					.on("finish",(e) => console.log("monospace installed to ", installPath))
+					.on("finish", (e) => {
+						if (e) {exit(e)}
+						console.log("monospace installed to ", installPath)
+					})
 					.end(Buffer.concat(data), (e) => {
 						if (e) {
 							exit("Done extracting with error", e)
@@ -115,10 +139,14 @@ https.get(url, function(res) {
 				// here we go !
 				jszip.loadAsync(buf)
 					.then(function (zip) {
-						return zip.file("monospace.exe").async("binarystring")
+						return zip.file("monospace.exe")?.async("binarystring")
 					})
 					.then(function (binaryString) {
-						fs.writeFileSync(path.join(installPath, "monospace.exe"), binaryString, "binary")
+						if (!binaryString) {
+							exit("empty archive")
+						} else {
+							fs.writeFileSync(path.join(installPath, "monospace.exe"), binaryString, "binary")
+						}
 					})
 					.catch(unarchiveError)
 			})

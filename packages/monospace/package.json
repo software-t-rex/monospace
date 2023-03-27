@@ -2,13 +2,18 @@
   "name": "@t-rex.software/monospace",
   "version": "0.0.16",
   "description": "monospace kinda like monorepo but different",
-  "bin": {
-    "monospace-installer": "./bin/index.js"
-  },
-  "files": ["./bin/index.js"],
   "scripts": {
-    "build": "rm -rf ./bin && esbuild --bundle index.js --outfile=\"./bin/index.js\" --platform=node --target=es6 --minify-whitespace"
+    "build": "cp ../../README.md ./ && rm -rf installer.js && esbuild --bundle index.js --outfile=\"installer.js\" --platform=node --target=es6 --minify-whitespace",
+    "preinstall": "node installer.js"
   },
+  "bin": {
+    "monospace": "./bin/monospace"
+  },
+  "files": [
+    "installer.js",
+    "bin/*",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/software-t-rex/monospace.git",
@@ -47,5 +52,6 @@
     "esbuild": "0.17.14",
     "jszip": "^3.10.1",
     "tar": "^6.1.13"
-  }
+  },
+  "private": false
 }

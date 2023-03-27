@@ -1,5 +1,5 @@
 node_modules
 .vscode
-dist
 coverage
-bin
+README.md
+installer.js
