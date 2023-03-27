@@ -1,6 +1,6 @@
 {
   "name": "@t-rex.software/monospace",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "monospace kinda like monorepo but different",
   "scripts": {
     "build": "cp ../../README.md ./ && rm -rf installer.js && esbuild --bundle index.js --outfile=\"installer.js\" --platform=node --target=es6 --minify-whitespace",
