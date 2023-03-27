@@ -158,6 +158,16 @@ func (t *Task) preparedCmd(cmdAndArgs ...string) *exec.Cmd {
 	return cmd
 }
 
+func (t *Task) getJSPMCmdFromJSPMConfig(PMconfig string, printWarning bool) *exec.Cmd {
+	pm, err := jspm.GetPackageManagerFromString(PMconfig)
+	if err == nil {
+		return t.preparedCmd(pm.Command, "run", t.Name.Task)
+	} else if printWarning {
+		utils.PrintWarning("Can't find suitable package manager ("+PMconfig+") to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip", err.Error())
+	}
+	return nil
+}
+
 func (t *Task) GetJobRunner() *exec.Cmd {
 	projectPath := utils.ProjectGetPath(t.Name.Project)
 	if len(t.TaskDef.Cmd) > 0 {
@@ -177,34 +187,32 @@ func (t *Task) GetJobRunner() *exec.Cmd {
 				if err == nil {
 					return t.preparedCmd(pm.Command, "run", t.Name.Task)
 				}
-				utils.PrintWarning("Can't found a package manager to execute task " + t.Name.Task + " in project " + t.Name.Project + " => skip")
 				// no pm found, ignore pjson task
+				utils.PrintWarning("Can't find a package manager to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip", err.Error())
+			} else if pjsonPM == configJSPM { // both config set same pm
+				return t.getJSPMCmdFromJSPMConfig(configJSPM, true)
 			} else if pjsonPM != "" && configJSPM != "" { // both config and pjson set a pm compare them for compatibility
-				if pjsonPM == configJSPM {
-					pm, err := jspm.GetPackageManagerFromString(configJSPM)
-					if err == nil {
-						return t.preparedCmd(pm.Command, "run", t.Name.Task)
-					}
-					utils.PrintWarning("Can't found suitable package manager (" + configJSPM + ") to execute task " + t.Name.Task + " in project " + t.Name.Project + " => skip")
-				} else {
-					projectPM, projectErr := jspm.GetPackageManagerFromString(pjsonPM)
-					configPM, configErr := jspm.GetPackageManagerFromString(configJSPM)
-					if projectErr == nil && configErr == nil {
-						if projectPM == configPM {
-							return t.preparedCmd(configPM.Command, "run", t.Name.Task)
-						} else {
-							utils.PrintWarning("Package manager in package.json (" + pjsonPM + ") and monospace config (" + configJSPM + ") are not compatible")
-							return nil
-						}
-					} else if projectErr != nil && configErr == nil {
+				projectPM, projectErr := jspm.GetPackageManagerFromString(pjsonPM)
+				configPM, configErr := jspm.GetPackageManagerFromString(configJSPM)
+				if projectErr == nil && configErr == nil {
+					if projectPM == configPM {
 						return t.preparedCmd(configPM.Command, "run", t.Name.Task)
-					} else if projectErr == nil && configErr != nil {
-						return t.preparedCmd(projectPM.Command, "run", t.Name.Task)
-					} else if projectErr != nil && configErr != nil {
-						utils.PrintWarning("Can't found a package manager to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip\n", projectErr.Error(), "\n", configErr.Error())
+					} else {
+						utils.PrintWarning("Package manager in package.json (" + pjsonPM + ") and monospace config (" + configJSPM + ") are not compatible => skip until manual resolution")
 						return nil
 					}
+				} else if configErr == nil {
+					return t.preparedCmd(configPM.Command, "run", t.Name.Task)
+				} else if projectErr == nil {
+					return t.preparedCmd(projectPM.Command, "run", t.Name.Task)
+				} else if projectErr != nil && configErr != nil {
+					utils.PrintWarning("Can't find a package manager to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip\n", projectErr.Error(), "\n", configErr.Error())
+					return nil
 				}
+			} else if configJSPM != "" { // use PM from config
+				return t.getJSPMCmdFromJSPMConfig(configJSPM, true)
+			} else { // use PM from package.json
+				return t.getJSPMCmdFromJSPMConfig(pjsonPM, true)
 			}
 		}
 	}
@@ -252,8 +260,8 @@ func (t TaskList) GetExecutor(outputMode string) *jobExecutor.JobExecutor {
 			taskIds[taskId] = job.Id()
 			jobs[job.Id()] = job
 		} else {
-			exit("Don't know what to do for task " + task.Name.String())
-			fmt.Printf("no task %s for project %s\n", task.Name.Task, task.Name.Project)
+			// exit("Don't know what to do for task " + task.Name.String())
+			fmt.Printf(utils.Info("%s: no %s task\n"), task.Name.Project, task.Name.Task)
 		}
 	}
 	// add dependencies
