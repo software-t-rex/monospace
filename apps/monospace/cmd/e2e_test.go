@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/software-t-rex/monospace/app"
+	"gopkg.in/yaml.v3"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 	"gotest.tools/v3/icmd"
@@ -71,6 +73,7 @@ func TestCmd_Suite(t *testing.T) {
 			t.Helper()
 			for _, tc := range tests {
 				t.Run(tc.name, func(t *testing.T) {
+					t.Helper()
 					result := runMonospace(tc.args, dirOp)
 					result.Assert(t, tc.want)
 					if tc.pathOps != nil {
@@ -78,7 +81,7 @@ func TestCmd_Suite(t *testing.T) {
 					}
 					if tc.match != "" {
 						exp := regexp.MustCompile(tc.match)
-						assert.Assert(t, exp.MatchString(result.Combined()), "expected to match agains %s, got: %s", tc.match, result.Combined())
+						assert.Assert(t, exp.MatchString(result.Combined()), "expected to match against %s, got: %s", tc.match, result.Combined())
 					}
 				})
 			}
@@ -271,12 +274,159 @@ func TestCmd_Suite(t *testing.T) {
 	runStep(t, "externalize", func(t *testing.T) {
 
 	})
-	runStep(t, "exec", func(t *testing.T) {
 
-	})
 	runStep(t, "run", func(t *testing.T) {
+		// add some tasks to initial repo
+		confPath := cloneDir.Join("clonedRepo/.monospace/monospace.yml")
+		config, _ := app.ConfigRead(confPath)
+		saveConfig := func() {
+			rawConfig, _ := yaml.Marshal(config)
+			os.WriteFile(confPath, rawConfig, 0640)
+		}
+		sayOk := []string{"echo", "ok"}
+		sayHello := []string{"echo", "hello"}
+		// utils.Debug(config, err)
+		config.Pipeline = make(map[string]app.MonospaceConfigPipeline)
+		delete(config.Projects, "apps/myapp") // avoid error on local project
+		config.Aliases["golib"] = "packages/golib"
+		config.Aliases["mylib"] = "packages/mylib"
+		config.Pipeline["list"] = app.MonospaceConfigPipeline{Cmd: []string{"ls"}}
+		config.Pipeline["jslib#sayok"] = app.MonospaceConfigPipeline{Cmd: sayOk}
+		config.Pipeline["golib#sayok"] = app.MonospaceConfigPipeline{Cmd: sayOk}
+		config.Pipeline["mylib#sayhello"] = app.MonospaceConfigPipeline{Cmd: sayHello, DependsOn: []string{"golib#sayok"}}
+		config.Pipeline["unknown#sayok"] = app.MonospaceConfigPipeline{Cmd: sayOk}
+		config.Pipeline["sayhellofromroot"] = app.MonospaceConfigPipeline{Cmd: []string{"echo", "hello from root"}}
+		// os.Remove(initDir.Join(".monospace/monospace.yml"))
+		saveConfig()
 
+		runTCs := runTestCases(cloneDir.Join("clonedRepo"))
+		runTC := func(tc testCase) {
+			t.Helper()
+			runTCs(t, []testCase{tc})
+		}
+
+		runTC(testCase{
+			"should error if pipeline define a task for unknown project",
+			[]string{"run", "-C", "sayok"},
+			icmd.Expected{ExitCode: 1},
+			nil,
+			"unknown is neither a project name or an alias",
+		})
+		// remove erroneous task
+		delete(config.Pipeline, "unknown#sayok")
+		saveConfig()
+
+		runTC(testCase{
+			"shoud error on unknown task",
+			[]string{"run", "-C", "unknown"},
+			icmd.Expected{ExitCode: 1},
+			nil, "no tasks found",
+		})
+		runTC(testCase{
+			"when unfiltered shoud run top level task on all project",
+			[]string{"run", "-C", "sayhellofromroot"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`(?:(?:packages\/(?:mylib|golib|jslib)|modules\/external)#sayhellofromroot\s+succeed.*\s*hello from root[\s\S]*?){4}.*Tasks: ✔ 4 succeed / 4 total`,
+		})
+		runTC(testCase{
+			"when filtered shoud run top level task on selected project only",
+			[]string{"run", "-C", "sayhellofromroot", "-p", "jslib", "-p", "packages/mylib"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`(?:(?:packages\/(?:mylib|jslib))#sayhellofromroot\s+succeed.*\s*hello from root[\s\S]*?){2}.*Tasks: ✔ 2 succeed / 2 total`,
+		})
+		runTC(testCase{
+			"when unfiltered shoud run not top level tasks on all project that supports it",
+			[]string{"run", "-C", "sayok"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`(?:(?:packages\/(?:golib|jslib))#sayok\s+succeed.*\s*ok[\s\S]*?){2}.*Tasks: ✔ 2 succeed / 2 total`,
+		})
+		runTC(testCase{
+			"when filtered shoud run not top level tasks on filtered project that supports it only",
+			[]string{"run", "-C", "sayok", "-p", "jslib", "mylib"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`Tasks: ✔ 1 succeed / 1 total`,
+		})
+		runTC(testCase{
+			"shoud run dependency task first",
+			[]string{"run", "-C", "sayhello", "-p", "mylib"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`golib#sayok\s+succeed[\s\S]+mylib#sayhello\s+succeed`,
+		})
 	})
+
+	runStep(t, "run on root project", func(t *testing.T) {
+		runTCs := runTestCases(cloneDir.Join("clonedRepo"))
+		runTC := func(tc testCase) {
+			t.Helper()
+			runTCs(t, []testCase{tc})
+		}
+		// testing the interaction with root package
+		runTC(testCase{
+			"when filter root only shoud run top level task on root only",
+			[]string{"run", "-C", "list", "-p", "root"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`root#list succeed.*\n\s+go.work\n\s+modules\n\s+package.json\n\s+packages\n\s+pnpm-workspace.yaml\s+Tasks: ✔ 1 succeed / 1 total`,
+		})
+		runTC(testCase{
+			"when not only filter root shoud run top level task on root and others fitlered projects",
+			[]string{"run", "-C", "sayhellofromroot", "-p", "root,mylib"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`(?:(?:packages/mylib|root)#sayhellofromroot\s+succeed.*\s*hello from root[\s\S]*?){2}.*Tasks: ✔ 2 succeed / 2 total`,
+		})
+	})
+
+	runStep(t, "run with additional args", func(t *testing.T) {
+		runTCs := runTestCases(cloneDir.Join("clonedRepo"))
+		runTC := func(tc testCase) {
+			t.Helper()
+			runTCs(t, []testCase{tc})
+		}
+		// testing the interaction with root package
+		runTC(testCase{
+			"shoud pass additional args to task",
+			[]string{"run", "-C", "sayhellofromroot", "-p", "root", "--", "with additional arg"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`root#sayhellofromroot succeed.*\s*hello from root with additional arg`,
+		})
+	})
+
+	runStep(t, "exec", func(t *testing.T) {
+		runTCs := runTestCases(cloneDir.Join("clonedRepo"))
+		runTC := func(tc testCase) {
+			t.Helper()
+			runTCs(t, []testCase{tc})
+		}
+		runTC(testCase{
+			"shoud call command on all known projects but not on root",
+			[]string{"exec", "-C", "echo", "ok"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`(?:(?:packages\/(?:mylib|golib|jslib)|modules\/external): echo ok\s+succeed.*\s*ok[\s\S]*?){4}.*Tasks: ✔ 4 succeed / 4 total`,
+		})
+		runTC(testCase{
+			"with root filter only shoud call command on root only",
+			[]string{"exec", "-C", "ls", "-p", "root"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`root: ls succeed .*\s+go.work\s+modules\s+package.json\s+packages\s+pnpm-workspace.yaml\s+Tasks: ✔ 1 succeed / 1 total`,
+		})
+		runTC(testCase{
+			"shoud pass additional args to underlying command",
+			[]string{"exec", "-C", "echo", "ok", "-p", "root,mylib", "--", "with args"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			`(?:(?:packages/mylib|root): echo ok with args succeed.*\s+ok with args[\s\S]+){2}Tasks: ✔ 2 succeed / 2 total`,
+		})
+	})
+
 	runStep(t, "status", func(t *testing.T) {
 
 	})
