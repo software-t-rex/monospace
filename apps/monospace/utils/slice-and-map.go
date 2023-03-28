@@ -78,6 +78,16 @@ func SliceContains[T string | int](slice []T, search T) bool {
 	return false
 }
 
+// return -1 if not found
+func SliceFindIndex[T string | int](slice []T, search T) int {
+	for k, v := range slice {
+		if v == search {
+			return k
+		}
+	}
+	return -1
+}
+
 func SliceReverse[T any](slice []T) []T {
 	a := make([]T, len(slice))
 	copy(a, slice)
