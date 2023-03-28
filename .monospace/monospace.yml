@@ -43,6 +43,5 @@ pipeline:
         cmd: [git, diff, --name-only, origin/main]
     packageJson#diforigins:
         cmd: [git, diff, --name-only, origin/main]
-    packages/monospace#build:
-        dependsOn: [monospace#doc]
+    packages/monospace#build: {}
     packages/monospace#update-package-json: {}
