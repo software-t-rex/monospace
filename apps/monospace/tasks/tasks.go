@@ -61,7 +61,12 @@ func parseTaskName(name string) *TaskName {
 	if parsedName[1] == "" || parsedName[1] == "*" {
 		projectName = "*"
 	} else {
-		projectName = getStandardProjectName(parsedName[1]) // exit on invalid projtect name
+		var err error
+		projectName, err = getStandardProjectName(parsedName[1]) // exit on invalid projtect name
+		if err != nil {
+			exit(fmt.Errorf("parsing taskname %s: %w", name, err).Error())
+			return &TaskName{} // will never happen
+		}
 	}
 	return &TaskName{Project: projectName, Task: parsedName[2]}
 	// check a task can be found
@@ -103,29 +108,32 @@ func getStandardizedPipeline() Pipeline {
 	return res
 }
 
-func getStandardProjectName(name string) string {
+func getStandardProjectName(name string) (string, error) {
 	config, _ := configGet()
 	if name == "*" || name == "" {
-		return "*"
+		return "*", nil
 	}
 	if name == "root" {
-		return "root"
+		return "root", nil
 	}
 	if _, ok := config.Projects[name]; ok {
-		return name
+		return name, nil
 	} else if aliased, ok := config.Aliases[name]; ok {
 		if _, ok := config.Projects[aliased]; !ok {
-			exit(fmt.Sprintf("alias %s point to unknwon project %s", name, aliased))
+			return "", fmt.Errorf("alias %s point to unknwon project %s", name, aliased)
 		}
-		return aliased
+		return aliased, nil
 	}
-	exit(fmt.Sprintf("%s is neither a project name or an alias", name))
-	return ""
+	return "", fmt.Errorf("%s is neither a project name or an alias", name)
 }
 
 // project can't be an alias there
 func (p Pipeline) TaskLookup(taskName, project string) *Task {
-	taskFullName := getStandardProjectName(project) + "#" + taskName
+	stdProjectName, err := getStandardProjectName(project)
+	if err != nil {
+		exit(fmt.Errorf("looking for task %s: %w", taskName, err).Error())
+	}
+	taskFullName := stdProjectName + "#" + taskName
 	if taskDef, ok := p[taskFullName]; ok {
 		return NewTask(taskFullName, &taskDef)
 	} else if taskDef, ok := p["*#"+taskName]; ok {
@@ -160,21 +168,23 @@ func (t *Task) preparedCmd(cmdAndArgs ...string) *exec.Cmd {
 	cmd.Dir = utils.ProjectGetPath(t.Name.Project)
 	return cmd
 }
-
-func (t *Task) getJSPMCmdFromJSPMConfig(PMconfig string, printWarning bool) *exec.Cmd {
+func (t *Task) preparedJSPMRunCmd(pmCmd string, args []string) *exec.Cmd {
+	return t.preparedCmd(append(append([]string{pmCmd}, "run", t.Name.Task), args...)...)
+}
+func (t *Task) getJSPMCmdFromJSPMConfig(PMconfig string, args []string, printWarning bool) *exec.Cmd {
 	pm, err := jspm.GetPackageManagerFromString(PMconfig)
 	if err == nil {
-		return t.preparedCmd(pm.Command, "run", t.Name.Task)
+		return t.preparedJSPMRunCmd(pm.Command, args)
 	} else if printWarning {
 		utils.PrintWarning("Can't find suitable package manager ("+PMconfig+") to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip", err.Error())
 	}
 	return nil
 }
 
-func (t *Task) GetJobRunner() *exec.Cmd {
+func (t *Task) GetJobRunner(additionalArgs []string) *exec.Cmd {
 	projectPath := utils.ProjectGetPath(t.Name.Project)
 	if len(t.TaskDef.Cmd) > 0 {
-		return t.preparedCmd(t.TaskDef.Cmd...)
+		return t.preparedCmd(append(t.TaskDef.Cmd, additionalArgs...)...)
 	}
 	// check for package json script
 	pjsonPath := filepath.Join(projectPath, "package.json")
@@ -188,34 +198,38 @@ func (t *Task) GetJobRunner() *exec.Cmd {
 			if pjsonPM == "" && configJSPM == "" { // no pm defined in pjson or config try detection
 				pm, err = jspm.GetPackageManager(projectPath, pjson)
 				if err == nil {
-					return t.preparedCmd(pm.Command, "run", t.Name.Task)
+					return t.preparedJSPMRunCmd(pm.Command, additionalArgs)
+					// t.preparedCmd(pm.Command, "run", t.Name.Task)
 				}
 				// no pm found, ignore pjson task
 				utils.PrintWarning("Can't find a package manager to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip", err.Error())
 			} else if pjsonPM == configJSPM { // both config set same pm
-				return t.getJSPMCmdFromJSPMConfig(configJSPM, true)
+				return t.getJSPMCmdFromJSPMConfig(configJSPM, additionalArgs, true)
 			} else if pjsonPM != "" && configJSPM != "" { // both config and pjson set a pm compare them for compatibility
 				projectPM, projectErr := jspm.GetPackageManagerFromString(pjsonPM)
 				configPM, configErr := jspm.GetPackageManagerFromString(configJSPM)
 				if projectErr == nil && configErr == nil {
 					if projectPM == configPM {
-						return t.preparedCmd(configPM.Command, "run", t.Name.Task)
+						return t.preparedJSPMRunCmd(configPM.Command, additionalArgs)
+						// t.preparedCmd(configPM.Command, "run", t.Name.Task)
 					} else {
 						utils.PrintWarning("Package manager in package.json (" + pjsonPM + ") and monospace config (" + configJSPM + ") are not compatible => skip until manual resolution")
 						return nil
 					}
 				} else if configErr == nil {
-					return t.preparedCmd(configPM.Command, "run", t.Name.Task)
+					return t.preparedJSPMRunCmd(configPM.Command, additionalArgs)
+					// t.preparedCmd(configPM.Command, "run", t.Name.Task)
 				} else if projectErr == nil {
-					return t.preparedCmd(projectPM.Command, "run", t.Name.Task)
+					return t.preparedJSPMRunCmd(projectPM.Command, additionalArgs)
+					//t.preparedCmd(projectPM.Command, "run", t.Name.Task)
 				} else if projectErr != nil && configErr != nil {
 					utils.PrintWarning("Can't find a package manager to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip\n", projectErr.Error(), "\n", configErr.Error())
 					return nil
 				}
 			} else if configJSPM != "" { // use PM from config
-				return t.getJSPMCmdFromJSPMConfig(configJSPM, true)
+				return t.getJSPMCmdFromJSPMConfig(configJSPM, additionalArgs, true)
 			} else { // use PM from package.json
-				return t.getJSPMCmdFromJSPMConfig(pjsonPM, true)
+				return t.getJSPMCmdFromJSPMConfig(pjsonPM, additionalArgs, true)
 			}
 		}
 	}
@@ -251,13 +265,13 @@ func (t TaskList) Len() int {
 	return len(t.List)
 }
 
-func (t TaskList) GetExecutor(outputMode string) *jobExecutor.JobExecutor {
+func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobExecutor.JobExecutor {
 	e := utils.NewTaskExecutor(outputMode)
 	taskIds := make(map[string]int, t.Len())
 
 	jobs := make(map[int]jobExecutor.Job, t.Len())
 	for taskId, task := range t.List {
-		taskRunner := task.GetJobRunner()
+		taskRunner := task.GetJobRunner(additionalArgs)
 		if taskRunner != nil {
 			job := e.AddJob(jobExecutor.NamedJob{Name: task.Name.String(), Job: taskRunner})
 			taskIds[taskId] = job.Id()
@@ -332,12 +346,12 @@ func OpenGraphviz(tasks []string, filters []string) {
 	utils.Open("https://dreampuf.github.io/GraphvizOnline/#" + url.PathEscape(dot))
 }
 
-func Run(tasks []string, filters []string, outputMode string) {
+func Run(tasks []string, filters []string, additionalArgs []string, outputMode string) {
 	taskList := prepareTaskList(tasks, filters)
 	if taskList.Len() == 0 {
 		exit("no tasks found")
 	}
-	executor := taskList.GetExecutor(outputMode)
+	executor := taskList.GetExecutor(additionalArgs, outputMode)
 	executor.DagExecute()
 }
 
