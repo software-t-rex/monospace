@@ -21,10 +21,10 @@ pipeline:
     executor#test:
         cmd: [test.sh]
     monospace#doc:
-        cmd: [./gendoc.sh, -md]
+        cmd: [./gendoc.sh, -md, -man]
     monospace#build:
         cmd: [goreleaser, release, --clean, --skip-publish]
-        dependsOn: ["test"]
+        dependsOn: ["test", packages/monospace#update-package-json]
     monospace#buildnext:
         cmd: [goreleaser, build, --config, ./.goreleaser-next.yaml, --id, monospace-next, --snapshot, --clean, --single-target]
     monospace#test:
@@ -43,4 +43,6 @@ pipeline:
         cmd: [git, diff, --name-only, origin/main]
     packageJson#diforigins:
         cmd: [git, diff, --name-only, origin/main]
-    packages/monospace#build: {}
+    packages/monospace#build:
+        dependsOn: [monospace#doc]
+    packages/monospace#update-package-json: {}
