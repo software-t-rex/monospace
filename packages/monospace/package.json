@@ -1,57 +1,78 @@
 {
-  "name": "@t-rex.software/monospace",
-  "version": "0.0.17",
-  "description": "monospace kinda like monorepo but different",
-  "scripts": {
-    "build": "cp ../../README.md ./ && rm -rf installer.js && esbuild --bundle index.js --outfile=\"installer.js\" --platform=node --target=es6 --minify-whitespace",
-    "preinstall": "node installer.js"
-  },
-  "bin": {
-    "monospace": "./bin/monospace"
-  },
-  "files": [
-    "installer.js",
-    "bin/*",
-    "README.md"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/software-t-rex/monospace.git",
-    "directory": "packages/monospace"
-  },
-  "homepage": "https://github.com/software-t-rex/monospace",
-  "bugs": {
-    "url": "https://github.com/software-t-rex/monospace/issues"
-  },
-  "funding": "https://github.com/sponsors/malko",
-  "keywords": [
-    "monospace",
-    "monorepo",
-    "mono-repository",
-    "polyrepo",
-    "poly-repository",
-    "git",
-    "workspace"
-  ],
-  "author": "Jonathan Gotti <jgotti at jgotti dot org>",
-  "license": "MIT",
-  "os": [
-    "darwin",
-    "linux",
-    "freebsd",
-    "openbsd",
-    "win32"
-  ],
-  "cpu": [
-    "arm",
-    "arm64",
-    "ia32",
-    "x64"
-  ],
-  "devDependencies": {
-    "esbuild": "0.17.14",
-    "jszip": "^3.10.1",
-    "tar": "^6.1.13"
-  },
-  "private": false
+	"name": "@t-rex.software/monospace",
+	"version": "0.0.15",
+	"description": "monospace kinda like monorepo but different",
+	"scripts": {
+		"cleanup": "rm -rf README.md LICENSE manifest installer.js t-rex.software-monospace-${npm_package_version}.tgz",
+		"update-package-json": "node prepare-package-json",
+		"import-files": "cp -r ../../README.md ../../LICENSE ../../docs/monospace/cli/manifest ./",
+		"bundle": "esbuild --bundle index.js --outfile=\"installer.js\" --platform=node --target=es6 --minify-whitespace",
+		"build": "node prepare-package-json.js && pnpm run cleanup && pnpm run import-files && pnpm run bundle && npm pack",
+		"preinstall": "node installer.js"
+	},
+	"bin": {
+		"monospace": "./bin/monospace"
+	},
+	"man": [
+		"./manifest/monospace-aliases.1",
+		"./manifest/monospace-clone.1",
+		"./manifest/monospace-create.1",
+		"./manifest/monospace-exec.1",
+		"./manifest/monospace-externalize.1",
+		"./manifest/monospace-import.1",
+		"./manifest/monospace-init.1",
+		"./manifest/monospace-ls.1",
+		"./manifest/monospace-remove.1",
+		"./manifest/monospace-rename.1",
+		"./manifest/monospace-run.1",
+		"./manifest/monospace-status.1",
+		"./manifest/monospace-version.1",
+		"./manifest/monospace.1"
+	],
+	"files": [
+		"installer.js",
+		"bin/*",
+		"README.md",
+		"manifest/*"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/software-t-rex/monospace.git",
+		"directory": "packages/monospace"
+	},
+	"homepage": "https://github.com/software-t-rex/monospace",
+	"bugs": {
+		"url": "https://github.com/software-t-rex/monospace/issues"
+	},
+	"funding": "https://github.com/sponsors/malko",
+	"keywords": [
+		"monospace",
+		"monorepo",
+		"mono-repository",
+		"polyrepo",
+		"poly-repository",
+		"git",
+		"workspace"
+	],
+	"author": "Jonathan Gotti <jgotti at jgotti dot org>",
+	"license": "MIT",
+	"os": [
+		"darwin",
+		"linux",
+		"freebsd",
+		"openbsd",
+		"win32"
+	],
+	"cpu": [
+		"arm",
+		"arm64",
+		"ia32",
+		"x64"
+	],
+	"devDependencies": {
+		"esbuild": "0.17.14",
+		"jszip": "^3.10.1",
+		"tar": "^6.1.13"
+	},
+	"private": false
 }
