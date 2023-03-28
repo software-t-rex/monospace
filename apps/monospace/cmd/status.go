@@ -47,7 +47,7 @@ flags to the underlying git status command.`,
 		executor := jobExecutor.NewExecutor().WithProgressBarOutput(
 			10, false, string(colors.BgBlack)+string(colors.BrightGreen),
 		)
-		executor.AddNamedJobCmd("monospace", getStatusCommand("", args))
+		executor.AddNamedJobCmd("root", getStatusCommand("", args))
 		for _, p := range projects {
 			project := p
 			if p.Kind == utils.Internal {

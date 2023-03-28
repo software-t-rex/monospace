@@ -108,6 +108,9 @@ func getStandardProjectName(name string) string {
 	if name == "*" || name == "" {
 		return "*"
 	}
+	if name == "root" {
+		return "root"
+	}
 	if _, ok := config.Projects[name]; ok {
 		return name
 	} else if aliased, ok := config.Aliases[name]; ok {
@@ -302,6 +305,8 @@ func prepareTaskList(tasks []string, filters []string) TaskList {
 				filteredProjects = append(filteredProjects, p)
 			} else if _, ok := projects[filter]; ok {
 				filteredProjects = append(filteredProjects, filter)
+			} else if filter == "root" {
+				filteredProjects = append(filteredProjects, "root")
 			} else {
 				exit("unknown project filter:" + filter)
 			}
