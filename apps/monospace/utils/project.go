@@ -13,6 +13,16 @@ import (
 	"github.com/software-t-rex/monospace/gomodules/scaffolders"
 )
 
+var RootProject Project
+
+func init() {
+	RootProject = Project{
+		Name:    "root",
+		RepoUrl: "internal",
+		Kind:    Root,
+	}
+}
+
 type ProjectKind int
 
 const (

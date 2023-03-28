@@ -50,24 +50,12 @@ or more concise
 		if cmdBin == "git" && colors.ColorEnabled() { // add colors to git commands if color is enabled
 			cmdArgs = append([]string{"-c", "color.ui=always"}, cmdArgs...)
 		}
-		// utils.CheckErr(utils.MonospaceChdir())
-		projects := utils.ProjectsGetAll()
-		// handle project aliases
-		filter := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
-		if len(config.Aliases) > 0 {
-			for i, f := range filter {
-				alias := config.Aliases[f]
-				if alias != "" {
-					filter[i] = alias
-				}
-			}
-		}
+
+		projects := FlagGetFilteredProjects(cmd, false)
+
 		executor := utils.NewTaskExecutor(outputMode)
 		for _, p := range projects {
 			project := p
-			if len(filter) > 0 && !utils.SliceContains(filter, project.Name) {
-				continue
-			}
 			cmd := exec.Command(cmdBin, cmdArgs...)
 			cmd.Dir = project.Path()
 			switch outputMode {

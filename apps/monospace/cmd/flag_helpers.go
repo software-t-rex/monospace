@@ -21,24 +21,31 @@ func exitAndHelp(cmd *cobra.Command, err error) {
 }
 
 func FlagAddProjectFilter(cmd *cobra.Command) {
-	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name")
+	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name (can use 'root' for monospace root directory)")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
 }
 func FlagAddPersistentProjectFilter(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name")
+	cmd.PersistentFlags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name  (can use 'root' for monospace root directory)")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
 }
 func completeProjectFilter(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	suggestions := append(utils.ProjectsGetAllNameOnly(), utils.ProjectsGetAliasesNameOnly()...)
+	suggestions := append(append(utils.ProjectsGetAllNameOnly(), utils.ProjectsGetAliasesNameOnly()...), "root")
 	return suggestions, cobra.ShellCompDirectiveDefault
 }
 func FlagGetFilteredProjects(cmd *cobra.Command, repoOnly bool) []utils.Project {
+	//@todo add unit test on this one and use it for run command
 	config := utils.CheckErrOrReturn(app.ConfigGet())
 	projects := utils.ProjectsGetAll()
 	filter := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
 	filterLen := len(filter)
-	if filterLen < 1 && !repoOnly { // no filter return all projects
-		return projects
+	if filterLen < 1 { // no filter return all projects
+		if !repoOnly {
+			return projects
+		}
+		return append([]utils.Project{utils.RootProject}, projects...)
+	}
+	if (repoOnly && len(filter) == 0) || utils.SliceContains(filter, "root") { // prepend with root monospace
+		projects = append([]utils.Project{utils.RootProject}, projects...)
 	}
 	// handle project aliases
 	if len(config.Aliases) > 0 {
