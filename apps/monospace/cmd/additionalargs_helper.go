@@ -9,7 +9,7 @@ import (
 func getAdditionalArgs() []string {
 	additionalArgsIndex := utils.SliceFindIndex(os.Args, "--")
 	var additionalArgs []string
-	if additionalArgsIndex > 0 {
+	if additionalArgsIndex > -1 {
 		additionalArgs = os.Args[additionalArgsIndex+1:]
 	}
 	return additionalArgs
