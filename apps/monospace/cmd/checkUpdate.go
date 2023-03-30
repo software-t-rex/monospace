@@ -74,7 +74,7 @@ var checkUpdateCmd = &cobra.Command{
 				} else if strings.Contains(binPath, "node_modules/bin/monospace") || strings.Contains(binPath, "npm-packages/bin/monospace") {
 					updateCmd = "npm install -g @t-rex.software/monospace"
 					if strings.Contains(config.JSPM, "yarn") {
-						updateCmd = "yarn global upgrade @t-rex.software/monospace"
+						updateCmd = "yarn global add @t-rex.software/monospace"
 					}
 				}
 				if updateCmd != "" {
