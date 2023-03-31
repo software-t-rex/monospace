@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json
 go_mod_prefix: github.com/software-t-rex/monospace
 js_package_manager: ^pnpm@7.30.0
+prefered_output_mode: grouped
 projects:
     apps/monospace: internal
     gomodules/colors: internal
@@ -14,34 +15,36 @@ projects_aliases:
     executor: gomodules/go-jobexecutor
     jspm: gomodules/js-packagemanager
     monospace: apps/monospace
+    npmpkg: packages/monospace
     packageJson: gomodules/packageJson
 pipeline:
-    tidy:
-        cmd: [go, mod, tidy]
+    executor#diforigins:
+        cmd: [git, diff, --name-only, origin/main]
     executor#test:
         cmd: [test.sh]
-    monospace#doc:
-        cmd: [./gendoc.sh, -md, -man]
+    jspm#diforigins:
+        cmd: [git, diff, --name-only, origin/main]
+    jspm#test:
+        dependsOn: [packageJson#test]
+        cmd: [test.sh]
     monospace#build:
+        dependsOn: [test, npmpkg#update-package-json]
         cmd: [goreleaser, release, --clean, --skip-publish]
-        dependsOn: ["test", packages/monospace#update-package-json]
     monospace#buildnext:
         cmd: [goreleaser, build, --config, ./.goreleaser-next.yaml, --id, monospace-next, --snapshot, --clean, --single-target]
+    monospace#diforigins:
+        cmd: [git, diff, --name-only, origin/main]
+    monospace#doc:
+        cmd: [./gendoc.sh, -md, -man]
     monospace#test:
         dependsOn: [packageJson#test, executor#test, jspm#test]
         cmd: [test.sh]
-    packageJson#test:
-        cmd: [test.sh]
-    jspm#test:
-        cmd: [test.sh]
-        dependsOn: [packageJson#test]
-    monospace#diforigins:
-        cmd: [git, diff, --name-only, origin/main]
-    executor#diforigins:
-        cmd: [git, diff, --name-only, origin/main]
-    jspm#diforigins:
-        cmd: [git, diff, --name-only, origin/main]
+    npmpkg#build: {}
+    npmpkg#cleanup: {}
+    npmpkg#update-package-json: {}
     packageJson#diforigins:
         cmd: [git, diff, --name-only, origin/main]
-    packages/monospace#build: {}
-    packages/monospace#update-package-json: {}
+    packageJson#test:
+        cmd: [test.sh]
+    tidy:
+        cmd: [go, mod, tidy]
