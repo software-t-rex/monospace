@@ -55,6 +55,9 @@ var styles = map[ProjectKind](func(s ...string) string){
 	Local:    Red,
 }
 
+func (p Project) String() string {
+	return p.Name
+}
 func (p Project) StyledString() string {
 	kind := p.Kind
 	if kind == Root {
