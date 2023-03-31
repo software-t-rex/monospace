@@ -20,6 +20,16 @@ func exitAndHelp(cmd *cobra.Command, err error) {
 	os.Exit(1)
 }
 
+func FlagGetBool(cmd *cobra.Command, name string) bool {
+	return utils.CheckErrOrReturn(cmd.Flags().GetBool(name))
+}
+func FlagGetString(cmd *cobra.Command, name string) string {
+	return utils.CheckErrOrReturn(cmd.Flags().GetString(name))
+}
+func FlagGetStringSlice(cmd *cobra.Command, name string) []string {
+	return utils.CheckErrOrReturn(cmd.Flags().GetStringSlice(name))
+}
+
 func FlagAddProjectFilter(cmd *cobra.Command) {
 	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name (can use 'root' for monospace root directory)")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
@@ -32,40 +42,59 @@ func completeProjectFilter(cmd *cobra.Command, args []string, toComplete string)
 	suggestions := append(append(utils.ProjectsGetAllNameOnly(), utils.ProjectsGetAliasesNameOnly()...), "root")
 	return suggestions, cobra.ShellCompDirectiveDefault
 }
-func FlagGetFilteredProjects(cmd *cobra.Command, repoOnly bool) []utils.Project {
-	//@todo add unit test on this one and use it for run command
+
+func GetFilteredProjects(projects []utils.Project, filters []string, includeRoot bool) []utils.Project {
 	config := utils.CheckErrOrReturn(app.ConfigGet())
-	projects := utils.ProjectsGetAll()
-	filter := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
-	filterLen := len(filter)
-	if filterLen < 1 { // no filter return all projects
-		if !repoOnly {
-			return projects
-		}
-		return append([]utils.Project{utils.RootProject}, projects...)
+	filterLen := len(filters)
+	if !includeRoot && utils.SliceContains(filters, "root") {
+		includeRoot = true
 	}
-	if (repoOnly && len(filter) == 0) || utils.SliceContains(filter, "root") { // prepend with root monospace
+	// prepend with root monospace
+	if includeRoot {
 		projects = append([]utils.Project{utils.RootProject}, projects...)
 	}
-	// handle project aliases
+	if filterLen < 1 { // no filter return all projects
+		return projects
+	}
+	replaceAlias := func(name string) string { return name }
 	if len(config.Aliases) > 0 {
-		for i, f := range filter {
-			alias := config.Aliases[f]
-			if alias != "" {
-				filter[i] = alias
+		replaceAlias = func(name string) string {
+			if alias := config.Aliases[name]; alias != "" {
+				return alias
 			}
+			return name
 		}
 	}
-	filteredProjects := projects[:0]
-	for _, p := range projects {
-		if repoOnly && p.Kind == utils.Internal {
-			continue
-		} else if filterLen > 0 && !utils.SliceContains(filter, p.Name) {
-			continue
+
+	// split filters between white and black list
+	var whiteList []string
+	var blackList []string
+	for _, f := range filters {
+		if strings.HasPrefix(f, "!") {
+			blackList = append(blackList, replaceAlias(strings.TrimPrefix(f, "!")))
+		} else {
+			whiteList = append(whiteList, replaceAlias(f))
 		}
-		filteredProjects = append(filteredProjects, p)
 	}
-	return filteredProjects
+
+	// apply black list
+	if len(blackList) > 0 {
+		projects = utils.SliceFilter(projects, func(p utils.Project) bool {
+			return !utils.SliceContains(blackList, p.Name)
+		})
+	}
+	// apply white list
+	if len(whiteList) > 0 {
+		projects = utils.SliceFilter(projects, func(p utils.Project) bool {
+			return utils.SliceContains(whiteList, p.Name)
+		})
+	}
+	return projects
+}
+func FlagGetFilteredProjects(cmd *cobra.Command, includeRoot bool) []utils.Project {
+	projects := utils.ProjectsGetAll()
+	filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
+	return GetFilteredProjects(projects, filters, includeRoot)
 }
 
 // you should call GEtFlagOutputMode in the Run of the associated command
