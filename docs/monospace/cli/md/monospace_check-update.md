@@ -1,26 +1,19 @@
-## monospace ls
+## monospace check-update
 
-list known workspaces in this monospace
+Will check against monospace github repository for available updates.
 
 ### Synopsis
 
-It will list workspaces in this monospace.
-
-Example:
-```
-  monospace ls -l
-  monospace ls path/to/a/monospace
-```
+Will check against monospace github repository for available updates.
 
 ```
-monospace ls [flags]
+monospace check-update [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for ls
-  -l, --long   add information about projects repositories
+  -h, --help   help for check-update
 ```
 
 ### Options inherited from parent commands
