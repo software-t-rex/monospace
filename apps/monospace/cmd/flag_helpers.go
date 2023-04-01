@@ -34,10 +34,11 @@ func FlagAddProjectFilter(cmd *cobra.Command) {
 	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name\nYou can use 'root' for monospace root directory\nUse '\\!' prefix to exclude a project")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
 }
-func FlagAddPersistentProjectFilter(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name\nYou can use 'root' for monospace root directory\nUse '\\!' prefix to exclude a project")
-	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
-}
+
+//	func FlagAddPersistentProjectFilter(cmd *cobra.Command) {
+//		cmd.PersistentFlags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name\nYou can use 'root' for monospace root directory\nUse '\\!' prefix to exclude a project")
+//		utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
+//	}
 func completeProjectFilter(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	suggestions := append(append(utils.ProjectsGetAllNameOnly(), utils.ProjectsGetAliasesNameOnly()...), "root")
 	return suggestions, cobra.ShellCompDirectiveDefault
@@ -104,10 +105,11 @@ func FlagAddOutputMode(cmd *cobra.Command) {
 }
 
 // you should call GetFlagOutputMode in the Run of the associated command
-func FlagAddPersistentOutputMode(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringP("output-mode", "O", "grouped", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n")
-	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", completeOutputMode))
-}
+//
+//	func FlagAddPersistentOutputMode(cmd *cobra.Command) {
+//		cmd.PersistentFlags().StringP("output-mode", "O", "grouped", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n")
+//		utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", completeOutputMode))
+//	}
 func completeOutputMode(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return strings.Split(outputModes, ","), cobra.ShellCompDirectiveDefault
 }
