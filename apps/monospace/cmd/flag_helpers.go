@@ -31,11 +31,11 @@ func FlagGetStringSlice(cmd *cobra.Command, name string) []string {
 }
 
 func FlagAddProjectFilter(cmd *cobra.Command) {
-	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name (can use 'root' for monospace root directory)")
+	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name\nYou can use 'root' for monospace root directory\nUse '\\!' prefix to exclude a project")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
 }
 func FlagAddPersistentProjectFilter(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name  (can use 'root' for monospace root directory)")
+	cmd.PersistentFlags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name\nYou can use 'root' for monospace root directory\nUse '\\!' prefix to exclude a project")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
 }
 func completeProjectFilter(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
