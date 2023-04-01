@@ -65,7 +65,7 @@ or for the entire pipeline
 	Run: func(cmd *cobra.Command, args []string) {
 		outputMode := FlagGetOutputMode(cmd)
 		graphviz := utils.CheckErrOrReturn(cmd.Flags().GetBool("graphviz"))
-		filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
+		filteredProjects := FlagGetFilteredProjects(cmd, false)
 
 		if len(args) == 0 && !graphviz {
 			utils.PrintError(errors.New("missing task to run"))
@@ -86,22 +86,12 @@ or for the entire pipeline
 			return
 		}
 
-		// handle project aliases in filters
-		if len(config.Aliases) > 0 {
-			for i, f := range filters {
-				alias := config.Aliases[f]
-				if alias != "" {
-					filters[i] = alias
-				}
-			}
-		}
-
 		if graphviz {
-			tasks.OpenGraphviz(args, filters)
+			tasks.OpenGraphviz(args, filteredProjects)
 			return
 		}
 
-		tasks.Run(args, filters, additionalArgs, outputMode)
+		tasks.Run(args, filteredProjects, additionalArgs, outputMode)
 	},
 }
 

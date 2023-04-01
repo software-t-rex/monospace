@@ -87,8 +87,15 @@ type TaskList struct {
 }
 
 func getStandardizedPipeline() Pipeline {
+	config, err := configGet()
+	if err != nil {
+		exit("can't get config")
+	}
+	if config.Pipeline == nil || len(config.Pipeline) == 0 {
+		exit("no readable pipeline in monospace.yml")
+	}
+	app.PopulateEnv(nil)
 	res := make(Pipeline)
-	config := getConfig()
 	for k, v := range config.Pipeline {
 		taskName := parseTaskName(k)
 		taskDef := v
@@ -293,39 +300,16 @@ func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobEx
 	return e
 }
 
-func prepareTaskList(tasks []string, filters []string) TaskList {
-	config, err := configGet()
-	if err != nil {
-		exit("can't get config")
-	}
-	if config.Pipeline == nil || len(config.Pipeline) == 0 {
-		exit("no readable pipeline in monospace.yml")
-	}
-	app.PopulateEnv(nil)
+func prepareTaskList(tasks []string, projects []utils.Project) TaskList {
 
-	projects := config.Projects
-	aliases := config.Aliases
 	pipeline := getStandardizedPipeline()
 	taskList := pipeline.NewTaskList()
 
 	var filteredProjects []string
-
-	// projects we want to run tasks for
-	if len(filters) == 0 {
-		filteredProjects = utils.MapGetKeys(projects)
-	} else {
-		for _, filter := range filters {
-			if p, ok := aliases[filter]; ok {
-				filteredProjects = append(filteredProjects, p)
-			} else if _, ok := projects[filter]; ok {
-				filteredProjects = append(filteredProjects, filter)
-			} else if filter == "root" {
-				filteredProjects = append(filteredProjects, "root")
-			} else {
-				exit("unknown project filter:" + filter)
-			}
-		}
+	for _, project := range projects {
+		filteredProjects = append(filteredProjects, project.Name)
 	}
+
 	// add matching task to the list for each projects
 	for _, project := range filteredProjects {
 		// first check for specific task for the project
@@ -338,16 +322,16 @@ func prepareTaskList(tasks []string, filters []string) TaskList {
 	}
 	return taskList
 }
-func OpenGraphviz(tasks []string, filters []string) {
-	taskList := prepareTaskList(tasks, filters)
+func OpenGraphviz(tasks []string, projects []utils.Project) {
+	taskList := prepareTaskList(tasks, projects)
 	dot := taskList.GetDot()
 	// print the dot graph
 	fmt.Println(dot)
 	utils.Open("https://dreampuf.github.io/GraphvizOnline/#" + url.PathEscape(dot))
 }
 
-func Run(tasks []string, filters []string, additionalArgs []string, outputMode string) {
-	taskList := prepareTaskList(tasks, filters)
+func Run(tasks []string, projects []utils.Project, additionalArgs []string, outputMode string) {
+	taskList := prepareTaskList(tasks, projects)
 	if taskList.Len() == 0 {
 		exit("no tasks found")
 	}
