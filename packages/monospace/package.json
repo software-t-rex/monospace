@@ -1,6 +1,6 @@
 {
 	"name": "@t-rex.software/monospace",
-	"version": "0.0.18",
+	"version": "0.0.19",
 	"description": "monospace kinda like monorepo but different",
 	"scripts": {
 		"cleanup": "rm -rf README.md LICENSE manifest installer.js t-rex.software-monospace-${npm_package_version}.tgz",
@@ -15,6 +15,8 @@
 	},
 	"man": [
 		"./manifest/monospace-aliases.1",
+		"./manifest/monospace-check-update.1",
+		"./manifest/monospace-check.1",
 		"./manifest/monospace-clone.1",
 		"./manifest/monospace-create.1",
 		"./manifest/monospace-exec.1",
