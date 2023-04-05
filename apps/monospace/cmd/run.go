@@ -32,7 +32,7 @@ You can pass additional arguments to tasks separating them with a double hyphen.
 ` + italic(`  monospace run --project-filter modules/mymodule --project-filter modules/myothermodule test`) + `
 or more concise
 ` + italic(`  monospace run -p modules/mymodule,modules/myothermodule test`) + `
-` + italic(`  monospace run -p modules/mymodule,modules/myothermodule test -- additionalArg=value `) + `
+` + italic(`  monospace run -p modules/mymodule,modules/myothermodule test -- additionalArg=value`) + `
 
 you can get a dependency graph of tasks to run by using the --graphviz flag.
 It will output the dot representation in your terminal and open your browser

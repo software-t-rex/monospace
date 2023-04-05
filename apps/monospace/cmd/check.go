@@ -50,7 +50,7 @@ Here's the reported anomalies and the action taken when --fix flag is used:
 More choices may be available when --interactive flag is used
 
 ## Check pipeline
-- Check tasks are associated with existining projects.
+- Check tasks are associated with existing projects.
 - Check tasks depends on existing non persistent tasks.
 - Check for circular task dependencies
 There's no fix available on pipeline errors
