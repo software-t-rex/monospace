@@ -50,7 +50,7 @@ But in monospace terms there is three kind of projects:
 - local: this is exactly the same as external projects but without a configured remote repository, and so they are not published anywhere, but their name is reserved in the global monospace so the name won't be taken by another developer accidentally. This case can be used by a new library project you have not shared yet with the rest of the organization.
 
 ## How to get started / Documentation
-Go to the [documentation directory](https://raw.githubusercontent.com/software-t-rex/monospace/main/docs/monospace/index.md) and follow instructions there.
+Go to the [documentation directory](https://github.com/software-t-rex/monospace/blob/main/docs/monospace/index.md) and follow instructions there.
 
 ## Contact us
 Have questions? Want to talk about monospace? Want announcements for new versions, You can join our discord server at https://discord.gg/WHdZkqh7gA
