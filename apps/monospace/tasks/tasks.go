@@ -336,7 +336,13 @@ func Run(tasks []string, projects []utils.Project, additionalArgs []string, outp
 		exit("no tasks found")
 	}
 	executor := taskList.GetExecutor(additionalArgs, outputMode)
-	executor.DagExecute()
+	err := executor.DagExecute()
+	if err.Len() > 0 {
+		if errors.Is(err[0], jobExecutor.ErrCyclicDependencyDetected) {
+			exit(err[0].Error())
+		}
+		os.Exit(1)
+	}
 }
 
 func OpenGraphvizFull() {
