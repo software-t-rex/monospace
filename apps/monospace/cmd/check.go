@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/tasks"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -20,8 +21,11 @@ import (
 // checkCmd represents the check command
 var checkCmd = &cobra.Command{
 	Use:   "check",
-	Short: "Check projects remote origin match the monospace config file",
-	Long: `Check projects remote origin match the monospace config file.
+	Short: "Performs various checks on the monospace config file and projects",
+	Long: `Performs various checks on the monospace config file and projects.
+
+## Check projects
+Check projects remote origin match the monospace config file
 
 While using monospace you will import some new repositories to the monospace,
 create local projects which soon will become either internal or external projects.
@@ -44,6 +48,12 @@ Here's the reported anomalies and the action taken when --fix flag is used:
 		repo remote origin (error if remote origin is not set)
 
 More choices may be available when --interactive flag is used
+
+## Check pipeline
+- Check tasks are associated with existining projects.
+- Check tasks depends on existing non persistent tasks.
+- Check for circular task dependencies
+There's no fix available on pipeline errors
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
@@ -72,7 +82,7 @@ More choices may be available when --interactive flag is used
 			utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, "internal", true))
 			utils.CheckErr(utils.FileRemoveLine(monoIgnore, p.Name))
 		}
-
+		fmt.Println(utils.Bold(utils.Underline("checking projects repositories:")))
 	Loop:
 		for _, p := range filteredProjects {
 			switch p.Kind {
@@ -173,9 +183,15 @@ More choices may be available when --interactive flag is used
 			printCheckHeader(p)
 		}
 
+		// check Pipeline config is correct
+		fmt.Println(utils.Bold(utils.Underline("checking pipeline:")))
+		tasks.GetStandardizedPipeline(false).IsAcyclic(true)
+		fmt.Println(successIndicator + " pipeline ok")
+
 		if exitStatus != 0 && !fix && !interactive {
 			os.Exit(exitStatus)
 		}
+		fmt.Println(utils.Success("All good!"))
 	},
 }
 

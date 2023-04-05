@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package tasks
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -37,7 +38,7 @@ type TaskName struct {
 	Task    string
 }
 
-func (t *TaskName) String() string {
+func (t TaskName) String() string {
 	return t.Project + "#" + t.Task
 }
 
@@ -52,7 +53,7 @@ func getConfig() *app.MonospaceConfig {
 
 var taskNameRegex = regexp.MustCompile("^(?:([^#]+)#)?([^#]+)$")
 
-func parseTaskName(name string) *TaskName {
+func parseTaskName(name string) TaskName {
 	parsedName := taskNameRegex.FindStringSubmatch(strings.TrimPrefix(name, "#"))
 	var projectName string
 	if parsedName == nil {
@@ -65,34 +66,32 @@ func parseTaskName(name string) *TaskName {
 		projectName, err = getStandardProjectName(parsedName[1]) // exit on invalid projtect name
 		if err != nil {
 			exit(fmt.Errorf("parsing taskname %s: %w", name, err).Error())
-			return &TaskName{} // will never happen
+			return TaskName{} // will never happen
 		}
 	}
-	return &TaskName{Project: projectName, Task: parsedName[2]}
-	// check a task can be found
-	// if _, ok := config.Pipeline[projectName+"#"+parsedName[2]]; !ok {
-	// 	if _, ok := config.Pipeline[parsedName[2]]; !ok {
-	// 		if _, ok := config.Pipeline["*#"+parsedName[2]]; !ok {
-	// 			exit(fmt.Sprintf("can't find task %s for project %s in pipeline config", parsedName[2], projectName))
-	// 		}
-	// 	}
-	// }
-	// return &TaskName{Project: projectName, Name: parsedName[2]}
+	return TaskName{Project: projectName, Task: parsedName[2]}
 }
 
-type Pipeline map[string]app.MonospaceConfigPipeline
+type Pipeline map[string]Task
 type TaskList struct {
 	List     map[string]*Task
 	Pipeline Pipeline
 }
 
-func getStandardizedPipeline() Pipeline {
+// returns a clean pipeline
+// Will exit if pipeline contains invalid tasks or dependencies references,
+// or if tasks depends on persistent task
+func GetStandardizedPipeline(failEmpty bool) Pipeline {
 	config, err := configGet()
 	if err != nil {
 		exit("can't get config")
 	}
 	if config.Pipeline == nil || len(config.Pipeline) == 0 {
-		exit("no readable pipeline in monospace.yml")
+		if failEmpty {
+			exit("no readable pipeline in monospace.yml")
+		} else {
+			return Pipeline{}
+		}
 	}
 	app.PopulateEnv(nil)
 	res := make(Pipeline)
@@ -110,8 +109,20 @@ func getStandardizedPipeline() Pipeline {
 				}
 			}
 		}
-		res[taskName.String()] = v
+		res[taskName.String()] = Task{taskName, v}
 	}
+	// check dependencies are valid (tasks exists and are not persistent tasks)
+	for _, task := range res {
+		for _, depName := range task.TaskDef.DependsOn {
+			dep, ok := res[depName]
+			if !ok {
+				exit(fmt.Errorf("%s depends on unknown task %s", task.String(), depName).Error())
+			} else if dep.Persists() {
+				exit(fmt.Errorf("%s can't depend on persistent task %s", task.String(), depName).Error())
+			}
+		}
+	}
+	// check for circular dependencies
 	return res
 }
 
@@ -134,6 +145,8 @@ func getStandardProjectName(name string) (string, error) {
 	return "", fmt.Errorf("%s is neither a project name or an alias", name)
 }
 
+//######################### Pipeline methods #########################//
+
 // project can't be an alias there
 func (p Pipeline) TaskLookup(taskName, project string) *Task {
 	stdProjectName, err := getStandardProjectName(project)
@@ -142,9 +155,9 @@ func (p Pipeline) TaskLookup(taskName, project string) *Task {
 	}
 	taskFullName := stdProjectName + "#" + taskName
 	if taskDef, ok := p[taskFullName]; ok {
-		return NewTask(taskFullName, &taskDef)
+		return NewTask(taskFullName, taskDef.TaskDef)
 	} else if taskDef, ok := p["*#"+taskName]; ok {
-		return NewTask(taskFullName, &taskDef)
+		return NewTask(taskFullName, taskDef.TaskDef)
 	}
 	return nil
 }
@@ -153,11 +166,61 @@ func (p Pipeline) NewTaskList() TaskList {
 	return TaskList{List: make(map[string]*Task), Pipeline: p}
 }
 
-func NewTask(fullName string, taskDef *app.MonospaceConfigPipeline) *Task {
-	return &Task{
-		Name:    *parseTaskName(fullName),
-		TaskDef: *taskDef,
+func (p Pipeline) IsAcyclic(exitOnError bool) bool {
+	length := len(p)
+	dependentCount := make(map[string]int, length)
+	for _, task := range p {
+		for _, to := range task.TaskDef.DependsOn {
+			dependentCount[to]++
+		}
 	}
+
+	var queue []string
+	for taskName := range p {
+		if dependentCount[taskName] == 0 {
+			queue = append(queue, taskName)
+		}
+	}
+	resolved := 0
+	for len(queue) > 0 {
+		at := queue[0]
+		queue = queue[1:]
+		resolved++
+		for _, to := range p[at].TaskDef.DependsOn {
+			dependentCount[to]--
+			if dependentCount[to] == 0 {
+				queue = append(queue, to)
+			}
+		}
+	}
+	if exitOnError && resolved != length {
+		exit("Pipeline circular dependencies detected")
+	}
+	return resolved == length
+}
+
+//######################### Task methods #########################//
+
+func NewTask(fullName string, taskDef app.MonospaceConfigPipeline) *Task {
+	return &Task{
+		Name:    parseTaskName(fullName),
+		TaskDef: taskDef,
+	}
+}
+
+func (t *Task) Persists() bool {
+	return t.TaskDef.Persistent
+}
+func (t *Task) DependsOn(taskName TaskName) bool {
+	for _, dep := range t.TaskDef.DependsOn {
+		if dep == taskName.String() {
+			return true
+		}
+	}
+	return false
+}
+func (t *Task) String() string {
+	return t.Name.String()
 }
 
 func (t *Task) preparedCmd(cmdAndArgs ...string) *exec.Cmd {
@@ -243,6 +306,8 @@ func (t *Task) GetJobRunner(additionalArgs []string) *exec.Cmd {
 	return nil
 }
 
+//######################### TaskList methods #########################//
+
 // add a task and resolve its dependencies
 func (t TaskList) AddTask(task *Task, resolveDeps bool) TaskList {
 	t.List[task.Name.String()] = task
@@ -302,7 +367,7 @@ func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobEx
 
 func prepareTaskList(tasks []string, projects []utils.Project) TaskList {
 
-	pipeline := getStandardizedPipeline()
+	pipeline := GetStandardizedPipeline(true)
 	taskList := pipeline.NewTaskList()
 
 	var filteredProjects []string
@@ -347,7 +412,7 @@ func Run(tasks []string, projects []utils.Project, additionalArgs []string, outp
 
 func OpenGraphvizFull() {
 	config, _ := configGet()
-	pipeline := getStandardizedPipeline()
+	pipeline := GetStandardizedPipeline(true)
 	taskList := pipeline.NewTaskList()
 	taskNames := []string{}
 	for taskName := range pipeline {
