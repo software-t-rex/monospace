@@ -100,7 +100,7 @@ func FlagGetFilteredProjects(cmd *cobra.Command, includeRoot bool) []utils.Proje
 
 // you should call GEtFlagOutputMode in the Run of the associated command
 func FlagAddOutputMode(cmd *cobra.Command) {
-	cmd.Flags().StringP("output-mode", "O", "grouped", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n")
+	cmd.Flags().StringP("output-mode", "O", "", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", completeOutputMode))
 }
 
@@ -113,13 +113,18 @@ func FlagAddOutputMode(cmd *cobra.Command) {
 func completeOutputMode(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return strings.Split(outputModes, ","), cobra.ShellCompDirectiveDefault
 }
-func FlagGetOutputMode(cmd *cobra.Command) string {
+func FlagGetOutputMode(cmd *cobra.Command, dflt string) string {
 	outputMode := utils.CheckErrOrReturn(cmd.Flags().GetString("output-mode"))
 	modes := strings.Split(outputModes, ",")
-	if outputMode == "" {
-		return modes[0]
-	} else if utils.SliceContains(modes, outputMode) {
+	if utils.SliceContains(modes, outputMode) {
 		return outputMode
+	}
+	if outputMode == "" {
+		if dflt != "" {
+			return dflt
+		} else {
+			return modes[0]
+		}
 	}
 	exitAndHelp(cmd, fmt.Errorf("invalid output-mode %s", outputMode))
 	return "" // will never get called

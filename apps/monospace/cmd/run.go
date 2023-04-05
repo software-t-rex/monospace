@@ -63,7 +63,9 @@ A circular dependency check will be performed before the execution starts.
 	},
 	Args: cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		outputMode := FlagGetOutputMode(cmd)
+		CheckConfigFound(true)
+		config := utils.CheckErrOrReturn(app.ConfigGet())
+		outputMode := FlagGetOutputMode(cmd, config.PreferedOutputMode)
 		graphviz := utils.CheckErrOrReturn(cmd.Flags().GetBool("graphviz"))
 		filteredProjects := FlagGetFilteredProjects(cmd, false)
 
@@ -74,12 +76,6 @@ A circular dependency check will be performed before the execution starts.
 		}
 		// remove additional args from the command and populate additional args as job parameters
 		additionalArgs := splitAdditionalArgs(&args)
-
-		CheckConfigFound(true)
-		config := utils.CheckErrOrReturn(app.ConfigGet())
-		if outputMode == "" && config.PreferedOutputMode != "" {
-			outputMode = config.PreferedOutputMode
-		}
 
 		if graphviz && len(args) == 0 {
 			tasks.OpenGraphvizFull()
