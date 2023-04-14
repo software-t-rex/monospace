@@ -22,16 +22,26 @@ var externalizeCmd = &cobra.Command{
 	Long: `Turn an 'internal' project into an 'external' project.
 
 Here what this command will really do:
-- Add the projectName to the monospace .gitignore
+- Check that the project path is clean
+	- Propose to stash uncommited changes (--no-interactive will say yes)
+- Use git subtree split to extract the project directory and related history
+- Remove extracted directory from the monospace
 - Init a new repository in the project directory
-- Add a default gitignore for that project if none exists
-- optionally set initial branch name (--initial-branch=name, default to 'master')
-- optionally copy history from monospace for commits related to files in that project (--history)
-- optionally create a new commit with all files in the directory (--commit)
-- optionally push -u to the new origin (--push)
+	- optionally set initial branch name (--initial-branch=name, default to 'master')
+	- optionally set the new repo origin if repoUrl was given
+- merge the extracted branch from root repository into the newly created repo
+	- optionally push -u to the new repo origin (--push)
+- Add the projectName to the monospace .gitignore
+- Mark the project as external (if repoUrl is set) or local in monospace.yml
+- remove the temporary subtree branch from root repository if there's no error
+
+You can then review changes in the monospace root repository and commit them.
 
 ` + utils.Warning(`Beware that the operation will remove all files in the project directory before re-creating them.
 You should check that there's no untracked files before proceeding as they will be lost.`),
+	Example: `monospace externalize packages/osslib
+monospace externalize packages/osslib git@github.com:user/osslib.git --push --initial-branch=main --commit
+`,
 	Args: cobra.RangeArgs(1, 2),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -56,6 +66,8 @@ You should check that there's no untracked files before proceeding as they will 
 		}
 		if len(args) == 2 {
 			opts.Origin = args[1]
+		} else if opts.PushOrigin {
+			utils.Exit("you must provide a repo url when using --push")
 		}
 
 		isClean := utils.GitIsClean(monoRoot, projectName)

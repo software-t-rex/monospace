@@ -148,12 +148,11 @@ type GitExternalizeOptions struct {
 // initialize a new git repo in subdir for a project within the parentDir keeping its history
 // can exit on cleanup
 func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions) (err error) {
-	subRepoUrl := opts.Origin
 	cleanExp, err := regexp.Compile("[^a-zA-Z0-9_-]+")
 	if err != nil {
 		return err
 	}
-	branchName := "externalize-" + cleanExp.ReplaceAllString(subDir, "-")
+	tmpBranchName := "externalize-" + cleanExp.ReplaceAllString(subDir, "-")
 
 	// move to parent directory
 	err = os.Chdir(parentDir)
@@ -164,7 +163,7 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 	// check repo state and optionally stash changes if any
 	if !GitIsClean(parentDir, subDir) {
 		if !opts.AllowStash {
-			return fmt.Errorf("'%s' is not clean, try to pass AllowStash to true", subDir)
+			return fmt.Errorf("'%s' is not clean, either clean the dir or run this command in interactive mode", subDir)
 		}
 		// stash changes and restore them at the end
 		fmt.Printf(Bold("Stashing changes in %s, will unstash at the end\n"), subDir)
@@ -185,20 +184,20 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 	}
 
 	// create a new branch containing the wanted files
-	fmt.Println(Bold("Create subtree branch", branchName))
-	err = gitExec("subtree", "split", "-P", subDir, "--branch", branchName)
+	fmt.Println(Bold("Create subtree branch", tmpBranchName))
+	err = gitExec("subtree", "split", "-P", subDir, "--branch", tmpBranchName)
 	if err != nil {
 		return err
 	}
 	// don't forget to remove the newly created branch
 	defer func() {
 		if err != nil {
-			fmt.Println(Info("Files from", subDir, "can be recovered from branch", branchName))
+			fmt.Println(Info("Files from", subDir, "can be recovered from branch", tmpBranchName))
 			return
 		}
 		if os.Chdir(parentDir) == nil {
-			fmt.Println(Bold("delete temporary subtree branch", branchName))
-			CheckErr(gitExec("branch", "-D", branchName))
+			fmt.Println(Bold("delete temporary subtree branch", tmpBranchName))
+			CheckErr(gitExec("branch", "-D", tmpBranchName))
 		}
 	}()
 
@@ -221,18 +220,18 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 	}
 
 	// add parent as remote and merge the branch
-	fmt.Println(Bold("Add parent as temporary remote and merge", branchName))
+	fmt.Println(Bold("Add parent as temporary remote and merge", tmpBranchName))
 	err = gitExec("-C", subDir, "remote", "add", "remoteMonospace", parentDir)
 	if err != nil {
 		// @todo => perform a reset --hard to restore the original directory
 		return
 	}
-	err = gitExec("-C", subDir, "fetch", "--no-tags", "remoteMonospace", branchName)
+	err = gitExec("-C", subDir, "fetch", "--no-tags", "remoteMonospace", tmpBranchName)
 	if err != nil {
 		// @todo => perform a reset --hard to restore the original directory
 		return
 	}
-	err = gitExec("-C", subDir, "merge", "--ff", "remoteMonospace/"+branchName)
+	err = gitExec("-C", subDir, "merge", "--ff", "remoteMonospace/"+tmpBranchName)
 	if err != nil {
 		// @todo => perform a reset --hard to restore the original directory
 		return
@@ -244,14 +243,14 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 	}
 
 	// add origin if any
-	if subRepoUrl != "" {
-		fmt.Println(Bold("add project origin", subRepoUrl))
-		err = gitExec("-C", subDir, "remote", "add", "origin", subRepoUrl)
+	if opts.Origin != "" {
+		fmt.Println(Bold("add project origin", opts.Origin))
+		err = gitExec("-C", subDir, "remote", "add", "origin", opts.Origin)
 		if err != nil {
 			return
 		}
 		if opts.PushOrigin {
-			fmt.Println(Bold("push to", subRepoUrl))
+			fmt.Println(Bold("push to", opts.Origin))
 			notImportantErr := gitExec("-C", subDir, "push", "-u", "origin")
 			if notImportantErr != nil {
 				PrintWarning("Error while pushing to origin", notImportantErr.Error())
@@ -265,8 +264,8 @@ func GitExternalize(parentDir string, subDir string, opts GitExternalizeOptions)
 	if err != nil {
 		return err
 	}
-	if subRepoUrl != "" {
-		err = app.ConfigAddOrUpdateProject(subDir, subRepoUrl, true)
+	if opts.Origin != "" {
+		err = app.ConfigAddOrUpdateProject(subDir, opts.Origin, true)
 	} else {
 		err = app.ConfigAddOrUpdateProject(subDir, "local", true)
 	}
