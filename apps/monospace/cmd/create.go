@@ -33,13 +33,11 @@ of the monospace repository. Example for a new application: apps/my-new-app.
 It should only contain letters, numbers, underscores, slashes and hyphens
 and each path part must start with a letter or an underscore.
 
-` + underline("Example:") + `
-` + italic(`  monospace create local apps/my-new-app
-  monospace create local apps/my-new-js-app --type=js
-  monospace create local gomodules/my-go-module -t go`) + `
-
 If you want to ` + bold(`import`) + ` an existing ` + bold("'external'") + ` git repository into the monospace
 you should look at the ` + italic("monospace import") + ` command instead`,
+	Example: `  monospace create local apps/my-new-app
+  monospace create local apps/my-new-js-app --type=js
+  monospace create local gomodules/my-go-module -t go`,
 
 	Args: func(cmd *cobra.Command, args []string) error {
 		// Optionally run one of the validators provided by cobra
@@ -70,14 +68,4 @@ you should look at the ` + italic("monospace import") + ` command instead`,
 func init() {
 	RootCmd.AddCommand(createCmd)
 	FlagAddProjectType(createCmd)
-	//flagCreateSkipPM
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// createCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

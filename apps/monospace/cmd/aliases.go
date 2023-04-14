@@ -27,11 +27,10 @@ You can add aliases to a project by using the 'alias add' command
 Aliases should only contain letters, numbers, underscores and hyphens and start
 with a letter or an underscore.
 
-without arguments this command will return the list of current aliases
-` + underline("Examples:") + `
-` + italic(`  monospace aliases list
+without arguments this command will return the list of current aliases`,
+	Example: `  monospace aliases list
   monospace aliases add packages/mypackage myalias
-  monospace aliases remove myalias`),
+  monospace aliases remove myalias`,
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return []string{"add", "remove", "list"}, cobra.ShellCompDirectiveDefault

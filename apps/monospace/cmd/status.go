@@ -25,12 +25,15 @@ var statusCmd = &cobra.Command{
 	Short:   "Return aggregated git status information for all repositories in the monospace",
 	Long: `Return aggregated git status information for all repositories in the monospace:
 
-You can pass args to git status by separating them with double hyphen '--'
-` + underline("Example:") + `
+You can pass args to git status by separating them with double hyphen '--'`,
+	Example: `  monospace status
+  # passing git status args
   monospace status -- --porcelain
-
-` + italic(`monospace st`) + ` is an alias of this command but will add the --short and --branch
-flags to the underlying git status command.`,
+  # st is an alias
+	# it will add the --short and --branch flags to underlying git status command.
+  monospace st
+  # is the same as
+  monospace status -- --short --branch`,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
 		utils.CheckErr(utils.MonospaceChdir())

@@ -23,10 +23,8 @@ var importCmd = &cobra.Command{
 	Long: `Import an 'external' project repository:
 
 Import behave like the create command but instead of creating a new project,
-it will clone a remote 'external' repository into the current monospace.
-
-` + underline("Example:") + `
-` + italic(`  monospace import packages/fancylib git@github.com:username/fancylib.git`),
+it will clone a remote 'external' repository into the current monospace.`,
+	Example: `  monospace import packages/fancylib git@github.com:username/fancylib.git`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		// Optionally run one of the validators provided by cobra
 		if err := cobra.ExactArgs(2)(cmd, args); err != nil {
