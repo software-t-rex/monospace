@@ -3,6 +3,8 @@
 To configure your monospace you can edit file .monospace/monospace.yml at the root of your monospace directory.
 Filename MUST be monospace.**yml** not .monospace.yaml.
 
+> This documentation may be late at describing options as the configuration options evolve. Latest options will always be described in [monospace.schema.json](https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json)
+
 ## js_package_manager (string)
 **defaults**: ^pnpm@7.27.0
 
@@ -11,7 +13,20 @@ the syntax is similar to the packageManager property in package.json files.
 
 ## go_mod_prefix (string)
 **defaults**: example.com
+
 Prefix to use when creating new go modules.
+
+## preferred_output_mode (string)
+**default**: grouped
+
+Default output mode to use for run and exec commands.
+- none: no output from tasks
+- interleaved: print prefixed output from tasks as they arrive
+- grouped: print combined output of tasks as they complete.
+- status-only: display running status summary
+- errors-only: is like interleaved output but displaying only what comes on stderr
+
+> You can always override this with the --output-mode option of the run or exec command
 
 ## projects (object)
 It is preferred to use monospace create/import/externalize/remove commands to edit projects settings.
@@ -51,6 +66,9 @@ List of other tasks that need to complete before executing this one.
 Task names in the list that are not prefixed will match a task defined for the same project.
 You can specify another task from another project by prefixing the task name with the project name
 (relative path to the project within the monospace directory) and a sharp.
+
+> Dependencies are not magically resolved and must be explicitly set in the config file. This is, at least for now a design choice!
+
 Here's an example:
 ```yaml
 pipeline:
@@ -60,6 +78,17 @@ pipeline:
 ```
 In this configuration myproject#build will depend on the tests for myproject and the build of myOtherProject to be successful.
 
+### persistent (boolean)
+**default** false
+Persistent tasks are long-running process such as server, or watchers that will not exit unless manually stopped.
+> It is important to mark such tasks as persistent, doing so monospace will prevent other tasks to depend on them and will inform you of configuration problem when calling the run command or when performing a ```monospace check```.
 
+### output_mode (string)
+**default**: to preferred_output_mode
+
+If set monospace will try to respect this setting when calling run command.
+If run launches multiple tasks with different settings it will default to the preferred_output_mode
+You can always override this with the --output-mode option of the run command
+Acceptable values are the same as preferred_output_mode.
 
 
