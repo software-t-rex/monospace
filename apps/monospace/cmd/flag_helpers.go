@@ -100,7 +100,7 @@ func FlagGetFilteredProjects(cmd *cobra.Command, includeRoot bool) []utils.Proje
 
 // you should call GEtFlagOutputMode in the Run of the associated command
 func FlagAddOutputMode(cmd *cobra.Command) {
-	cmd.Flags().StringP("output-mode", "O", "", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n")
+	cmd.Flags().StringP("output-mode", "O", "", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n(default to monospace.yml settings or grouped if not set)")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", completeOutputMode))
 }
 

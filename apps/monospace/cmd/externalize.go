@@ -37,8 +37,9 @@ Here what this command will really do:
 
 You can then review changes in the monospace root repository and commit them.
 
-` + utils.Warning(`Beware that the operation will remove all files in the project directory before re-creating them.
-You should check that there's no untracked files before proceeding as they will be lost.`),
+` + utils.Warning(`> Beware that the operation will remove all files in the project directory
+> before re-creating them. You should check that there's no untracked files
+> before proceeding as they will be lost.`),
 	Example: `monospace externalize packages/osslib
 monospace externalize packages/osslib git@github.com:user/osslib.git --push --initial-branch=main --commit
 `,
