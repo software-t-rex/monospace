@@ -25,16 +25,7 @@
 				},
 				"prefered_output_mode": {
 					"title": "monospace.yml: prefered_output_mode",
-					"description": "Default output mode to use for run and exec commands.\n\nnone: no output from tasks\ninterleaved: print prefixed output from tasks as they arrive\ngrouped: print combined output of tasks as they complete.\nstatus-only: display running status summary\nerrors-only: is like interleaved output but displaying only what comes on stderr\n\nDefault to grouped",
-					"type":"string",
-					"enum": [
-						"grouped",
-						"interleaved",
-						"errors-only",
-						"status-only",
-						"none"
-					],
-					"default": "grouped"
+					"$ref": "#/definitions/output_mode"
 				},
 				"projects": {
 					"title": "monospace.yml: projects",
@@ -62,7 +53,7 @@
 					"description": "An object representing the task dependency graph of your monospace.",
 					"type": "object",
 					"additionalProperties": {
-						"$ref": "#/definitions/PipelineSchema",
+						"$ref": "#/definitions/TaskSchema",
 						"description": "Name of a task that can be executed by monospace run.\nIt can be prefixed by a project name or alias and a '#' to make the task specific for that project, ie: myproject#taskToRun"
 					},
 					"default": {}
@@ -90,7 +81,7 @@
 			 }
 		},
 
-		"PipelineSchema": {
+		"TaskSchema": {
 			"title": "monospace.yml: pipeline[task]",
 			"type": "object",
 			"properties": {
@@ -115,9 +106,26 @@
 					"description": "Persistent tasks are long-running process such as server, or watchers that will not exit unless manually stopped.\nIt is important to mark such tasks as persistent, doing so monospace will prevent other tasks to depend on them and will inform you of configuration problem when running in check mode.",
 					"type": "boolean",
 					"default": false
+				},
+				"output_mode": {
+					"title": "monospace.yml: pipeline[task].output_mode",
+					"$ref": "#/definitions/output_mode"
 				}
 			},
 			"additionalProperties": false
+		},
+		"output_mode": {
+			"description": "Default output mode to use for run and exec commands.\n\n- none: no output from tasks\n- interleaved: print prefixed output from tasks as they arrive\n- grouped: print combined output of tasks as they complete.\n- status-only: display running status summary\n- errors-only: is like interleaved output but displaying only what comes on stderr\n\nDefaults:\n- prefered_output_mode: grouped\n- pipeline[task].output_mode: inherits from prefered_output_mode",
+			"type":"string",
+			"enum": [
+				"grouped",
+				"interleaved",
+				"errors-only",
+				"status-only",
+				"none"
+			],
+			"default": "grouped"
 		}
+
 	}
 }

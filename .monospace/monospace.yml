@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json
+# yaml-language-server: $schema=../apps/monospace/schemas/monospace.schema.json
 go_mod_prefix: github.com/software-t-rex/monospace
 js_package_manager: ^pnpm@7.30.0
 prefered_output_mode: grouped
@@ -30,8 +30,10 @@ pipeline:
     monospace#build:
         dependsOn: [test, npmpkg#update-package-json]
         cmd: [goreleaser, release, --clean, --skip-publish]
+        output_mode: interleaved
     monospace#buildnext:
         cmd: [goreleaser, build, --config, ./.goreleaser-next.yaml, --id, monospace-next, --snapshot, --clean, --single-target]
+        output_mode: interleaved
     monospace#diforigins:
         cmd: [git, diff, --name-only, origin/main]
     monospace#doc:
@@ -39,6 +41,7 @@ pipeline:
     monospace#test:
         dependsOn: [packageJson#test, executor#test, jspm#test]
         cmd: [test.sh]
+        output_mode: status-only
     npmpkg#build: {}
     npmpkg#cleanup: {}
     npmpkg#update-package-json: {}

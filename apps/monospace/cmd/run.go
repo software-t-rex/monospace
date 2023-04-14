@@ -65,29 +65,63 @@ A circular dependency check will be performed before the execution starts.
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
 		config := utils.CheckErrOrReturn(app.ConfigGet())
-		outputMode := FlagGetOutputMode(cmd, config.PreferedOutputMode)
 		graphviz := utils.CheckErrOrReturn(cmd.Flags().GetBool("graphviz"))
-		filteredProjects := FlagGetFilteredProjects(cmd, false)
 
-		if len(args) == 0 && !graphviz {
+		// special cases either full graphviz or no task to run
+		if len(args) == 0 {
+			if graphviz {
+				tasks.OpenGraphvizFull()
+				return
+			}
 			utils.PrintError(errors.New("missing task to run"))
 			cmd.Help()
 			os.Exit(1)
 		}
+
+		filteredProjects := FlagGetFilteredProjects(cmd, false)
 		// remove additional args from the command and populate additional args as job parameters
 		additionalArgs := splitAdditionalArgs(&args)
+		taskList := tasks.PrepareTaskList(args, filteredProjects)
 
-		if graphviz && len(args) == 0 {
-			tasks.OpenGraphvizFull()
-			return
-		}
-
+		// we don't need to bother with ouput mode for graphviz output
 		if graphviz {
-			tasks.OpenGraphviz(args, filteredProjects)
+			tasks.OpenGraphviz(taskList)
 			return
 		}
 
-		tasks.Run(args, filteredProjects, additionalArgs, outputMode)
+		// we make extra job to determine best output mode for the task
+		flagOuputMode := utils.CheckErrOrReturn(cmd.Flags().GetString("output-mode"))
+		var outputMode string
+		if flagOuputMode != "" {
+			// flag is set so we use it
+			outputMode = flagOuputMode
+		} else {
+			// there's no user value we try to guess
+			for _, taskArgName := range args {
+				var tmpOutputMode string
+				for taskStdName, task := range taskList.List {
+					if strings.HasSuffix(taskStdName, "#"+taskArgName) && task.TaskDef.OutputMode != "" {
+						if tmpOutputMode == "" {
+							tmpOutputMode = task.TaskDef.OutputMode
+						} else if tmpOutputMode != task.TaskDef.OutputMode { // ignore ambiguous output mode
+							tmpOutputMode = ""
+							break
+						}
+					}
+				}
+				// we found a value so we use it and stop looking
+				if tmpOutputMode != "" {
+					outputMode = tmpOutputMode
+					break
+				}
+			}
+		}
+
+		if outputMode == "" { // we still don't have a value so we use global default
+			outputMode = FlagGetOutputMode(cmd, config.PreferedOutputMode)
+		}
+
+		tasks.Run(taskList, additionalArgs, outputMode)
 	},
 }
 

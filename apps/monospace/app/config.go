@@ -23,7 +23,7 @@ type MonospaceConfigPipeline struct {
 	Outputs    []string `yaml:"outputs,omitempty"`
 	Inputs     []string `yaml:"inputs,omitempty"`
 	Cache      bool     `yaml:"cache,omitempty"`
-	OutputMode string   `yaml:"outputMode,omitempty"`
+	OutputMode string   `yaml:"output_mode,omitempty"`
 	Persistent bool     `yaml:"persistent,omitempty"`
 	Cmd        []string `yaml:"cmd,omitempty,flow"`
 }

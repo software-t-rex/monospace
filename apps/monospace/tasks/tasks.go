@@ -365,7 +365,7 @@ func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobEx
 	return e
 }
 
-func prepareTaskList(tasks []string, projects []utils.Project) TaskList {
+func PrepareTaskList(tasks []string, projects []utils.Project) TaskList {
 
 	pipeline := GetStandardizedPipeline(true)
 	taskList := pipeline.NewTaskList()
@@ -387,16 +387,14 @@ func prepareTaskList(tasks []string, projects []utils.Project) TaskList {
 	}
 	return taskList
 }
-func OpenGraphviz(tasks []string, projects []utils.Project) {
-	taskList := prepareTaskList(tasks, projects)
+func OpenGraphviz(taskList TaskList) {
 	dot := taskList.GetDot()
 	// print the dot graph
 	fmt.Println(dot)
 	utils.Open("https://dreampuf.github.io/GraphvizOnline/#" + url.PathEscape(dot))
 }
 
-func Run(tasks []string, projects []utils.Project, additionalArgs []string, outputMode string) {
-	taskList := prepareTaskList(tasks, projects)
+func Run(taskList TaskList, additionalArgs []string, outputMode string) {
 	if taskList.Len() == 0 {
 		exit("no tasks found")
 	}
