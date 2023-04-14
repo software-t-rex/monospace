@@ -14,7 +14,7 @@ func Monospace() error {
 		return err
 	}
 	monoName := filepath.Base(wd)
-	// @todo handle some configs like gomodule prefix, and prefered package manager
+	// @todo handle some configs like gomodule prefix, and preferred package manager
 	fmt.Printf("create .monospace/monospace.yml\n")
 	if !IsDirNoErr(filepath.Join(wd, ".monospace")) {
 		if err := os.Mkdir(filepath.Join(wd, ".monospace"), 0750); err != nil {

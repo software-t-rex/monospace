@@ -39,7 +39,7 @@ or more concise
 		config := utils.CheckErrOrReturn(app.ConfigGet())
 		cmdBin := args[0]
 		cmdArgs := args[1:]
-		outputMode := FlagGetOutputMode(cmd, config.PreferedOutputMode)
+		outputMode := FlagGetOutputMode(cmd, config.PreferredOutputMode)
 
 		if cmdBin != "" && cmdBin[0] == '.' { // make relative path relative to projects
 			cmdBin = filepath.Join(utils.CheckErrOrReturn(os.Getwd()), cmdBin)

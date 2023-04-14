@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=../apps/monospace/schemas/monospace.schema.json
 go_mod_prefix: github.com/software-t-rex/monospace
 js_package_manager: ^pnpm@7.30.0
-prefered_output_mode: grouped
+preferred_output_mode: grouped
 projects:
     apps/monospace: internal
     gomodules/colors: internal

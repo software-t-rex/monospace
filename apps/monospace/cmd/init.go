@@ -74,7 +74,7 @@ each of these steps won't overwrite existing files if any
 }
 
 func init() {
-	// @todo add prompt for prefered js package manager and go.mod default prefix
+	// @todo add prompt for preferred js package manager and go.mod default prefix
 	RootCmd.AddCommand(initCmd)
 	FlagAddNoInteractive(initCmd)
 }

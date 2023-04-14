@@ -23,8 +23,8 @@
 					"type":"string",
 					"default": "example.com"
 				},
-				"prefered_output_mode": {
-					"title": "monospace.yml: prefered_output_mode",
+				"preferred_output_mode": {
+					"title": "monospace.yml: preferred_output_mode",
 					"$ref": "#/definitions/output_mode"
 				},
 				"projects": {
@@ -115,7 +115,7 @@
 			"additionalProperties": false
 		},
 		"output_mode": {
-			"description": "Default output mode to use for run and exec commands.\n\n- none: no output from tasks\n- interleaved: print prefixed output from tasks as they arrive\n- grouped: print combined output of tasks as they complete.\n- status-only: display running status summary\n- errors-only: is like interleaved output but displaying only what comes on stderr\n\nDefaults:\n- prefered_output_mode: grouped\n- pipeline[task].output_mode: inherits from prefered_output_mode",
+			"description": "Default output mode to use for run and exec commands.\n\n- none: no output from tasks\n- interleaved: print prefixed output from tasks as they arrive\n- grouped: print combined output of tasks as they complete.\n- status-only: display running status summary\n- errors-only: is like interleaved output but displaying only what comes on stderr\n\nDefaults:\n- preferred_output_mode: grouped\n- pipeline[task].output_mode: inherits from preferred_output_mode",
 			"type":"string",
 			"enum": [
 				"grouped",

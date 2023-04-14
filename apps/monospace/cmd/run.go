@@ -118,7 +118,7 @@ A circular dependency check will be performed before the execution starts.
 		}
 
 		if outputMode == "" { // we still don't have a value so we use global default
-			outputMode = FlagGetOutputMode(cmd, config.PreferedOutputMode)
+			outputMode = FlagGetOutputMode(cmd, config.PreferredOutputMode)
 		}
 
 		tasks.Run(taskList, additionalArgs, outputMode)
