@@ -49,11 +49,29 @@ snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
+  abbrev: -1
   filters:
     exclude:
-      - '^docs:'
       - '^test:'
-      - '^(🎨|🔥|✅|🔐|🚧|📝|💚|👷|📈|♻️|🍱|💡|🙈|🤡|⚗️|🍻|🔀|🏷️|⚰️|🧪|💩|✏️|🚨|📌|🗑️)'
+      - '^(🎨|🔥|✅|🔐|🚧|💚|👷|📈|♻️|🍱|💡|🙈|🤡|⚗️|🍻|🔀|🏷️|⚰️|🧪|💩|✏️|🚨|📌|🗑️|🔖|🚚)'
+  groups:
+    - title: Breaking Changes
+      regexp: '^(💥)'
+      order: 0
+    - title: Security Fixes
+      regexp: '^(🔒️)'
+      order: 1
+    - title: Features
+      regexp: '^(✨|🚸|⚡️|💄|♿️|📱|🚩)'
+      order: 2
+    - title: Bug Fixes
+      regexp: '^(🐛|🚑️|🩹)'
+      order: 3
+    - title: Documentation
+      regexp: '^(📝)'
+      order: 4
+    - title: Others
+      order: 999
 
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
