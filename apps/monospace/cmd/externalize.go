@@ -55,6 +55,11 @@ monospace externalize packages/osslib git@github.com:user/osslib.git --push --in
 		CheckConfigFound(true)
 		monoRoot := utils.MonospaceGetRoot()
 		projectName := args[0]
+		project := utils.CheckErrOrReturn(utils.ProjectGetByName(projectName))
+		if project.Kind != utils.Internal {
+			utils.Exit("Can only externalize an internal project")
+		}
+
 		flagPush := utils.CheckErrOrReturn(cmd.Flags().GetBool("push"))
 		initBranch := utils.CheckErrOrReturn(cmd.Flags().GetString("initial-branch"))
 		noConfirm := FlagGetNoInteractive(cmd)
