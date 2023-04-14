@@ -31,7 +31,32 @@ func runStep(t *testing.T, name string, fn func(t *testing.T)) {
 	}
 }
 
+var unSkipedSteps []string = []string{
+	"create",
+	"aliases",     // require create
+	"import",      // require create
+	"clone",       // require import, create
+	"rename",      // require import, create
+	"remove",      // require create
+	"ls",          // require all previous steps
+	"run",         // require clone, and steps above
+	"exec",        // require run and all steps required by run
+	"check",       // require create, import and rename
+	"externalize", // no deps
+	// "status",
+}
+
+func skipOrContinue(t *testing.T, stepName string) {
+	for _, val := range unSkipedSteps {
+		if val == stepName {
+			return
+		}
+	}
+	t.Skip()
+}
+
 func TestCmd_Suite(t *testing.T) {
+
 	// SETUP TEST SUITE
 	type testCase struct {
 		name    string        // test name
@@ -119,6 +144,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "create", func(t *testing.T) {
+		skipOrContinue(t, "create")
 		tests := []testCase{
 			{"ls without project should display a message", []string{"ls"}, icmd.Expected{ExitCode: 0, Out: "No projects found start by adding one to your monospace."}, nil, ""},
 			{"with no args", []string{"create"}, icmd.Expected{ExitCode: 1}, nil, ""},
@@ -161,7 +187,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "aliases", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "aliases")
 		tests := []testCase{
 			{"with no args and no aliases return message no aliases", []string{"aliases"}, icmd.Expected{ExitCode: 0, Out: "No aliases defined\n"}, nil, ""},
 			{"create with invalid project should error", []string{"aliases", "add", "invalidPath", "invalidAlias", "-C"}, icmd.Expected{ExitCode: 1, Err: "Error: unknown project invalidPath"}, nil, ""},
@@ -178,7 +204,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "import", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "import")
 		tests := []testCase{
 			{"from other repo should work", []string{"import", "modules/external", "file://" + filepath.Join(monospaceDir, "../../gomodules/js-packagemanager")}, icmd.Success,
 				hasDir("modules", false, hasDir("external", true,
@@ -192,7 +218,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "clone", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "clone")
 		// we need to comit changes to the initialized repo if we want something to clone
 		icmd.RunCmd(icmd.Command("git", "add", "."), initDirOp).Assert(t, icmd.Success)
 		icmd.RunCmd(icmd.Command("git", "commit", "-m", "commitChanges"), initDirOp).Assert(t, icmd.Expected{ExitCode: 0, Out: ""})
@@ -224,7 +250,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "rename", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "rename")
 		tests := []testCase{
 			{"should error on invalid project", []string{"rename", "inexsiting", "renamed"}, icmd.Expected{ExitCode: 1}, nil, "Unkwown project"},
 			{"should error with invalid project name", []string{"rename", "modules/external", "modules/&renamed"}, icmd.Expected{ExitCode: 1}, nil, "not a valid project name"},
@@ -239,7 +265,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "remove", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "remove")
 		tests := []testCase{
 			{"should error on unknown project", []string{"remove", "unknown"}, icmd.Expected{ExitCode: 1}, nil, "Unknown project"},
 			{"should keep the directory if -y", []string{"remove", "packages/mylib", "-y"}, icmd.Success,
@@ -261,7 +287,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "ls", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "ls")
 		longOutput := "apps/myapp (local)\nmodules/renamed (file:///home/malko/git/T-REx/monospace/gomodules/js-packagemanager)\npackages/jslib (internal)"
 		tests := []testCase{
 			{"should return the list of projects", []string{"ls", "-C"}, icmd.Expected{ExitCode: 0, Out: "apps/myapp\nmodules/renamed\npackages/jslib"}, nil, ""},
@@ -272,12 +298,8 @@ func TestCmd_Suite(t *testing.T) {
 		runTestCases(initDir.Path())(t, tests)
 	})
 
-	runStep(t, "externalize", func(t *testing.T) {
-
-	})
-
 	runStep(t, "run", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "run")
 		// add some tasks to initial repo
 		confPath := cloneDir.Join("clonedRepo/.monospace/monospace.yml")
 		config, _ := app.ConfigRead(confPath)
@@ -361,7 +383,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "run on root project", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "run")
 		runTCs := runTestCases(cloneDir.Join("clonedRepo"))
 		runTC := func(tc testCase) {
 			t.Helper()
@@ -385,7 +407,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "run with additional args", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "run")
 		runTCs := runTestCases(cloneDir.Join("clonedRepo"))
 		runTC := func(tc testCase) {
 			t.Helper()
@@ -402,7 +424,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "exec", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "exec")
 		runTCs := runTestCases(cloneDir.Join("clonedRepo"))
 		runTC := func(tc testCase) {
 			t.Helper()
@@ -432,7 +454,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "check local projects", func(t *testing.T) {
-		// t.Skip()
+		skipOrContinue(t, "check")
 		runTCs := runTestCases(initDir.Path())
 		runTC := func(tc testCase) {
 			t.Helper()
@@ -504,6 +526,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "check external projects", func(t *testing.T) {
+		skipOrContinue(t, "check")
 		runTCs := runTestCases(initDir.Path())
 		runTC := func(tc testCase) {
 			t.Helper()
@@ -580,6 +603,7 @@ func TestCmd_Suite(t *testing.T) {
 	})
 
 	runStep(t, "check internal projects", func(t *testing.T) {
+		skipOrContinue(t, "check")
 		runTCs := runTestCases(initDir.Path())
 		runTC := func(tc testCase) {
 			t.Helper()
@@ -639,7 +663,33 @@ func TestCmd_Suite(t *testing.T) {
 		})
 	})
 
-	runStep(t, "status", func(t *testing.T) {
+	runStep(t, "externalize", func(t *testing.T) {
+		skipOrContinue(t, "externalize")
+		// Setup test
+		subExternalOp := hasDir("subExternal", true, fs.WithFile("sub-readme.md", "readme"))
+		willExternalOp := hasDir("modules", true,
+			hasDir("willExternalize", true,
+				fs.WithFile("readme.md", "readme"),
+				subExternalOp,
+			),
+		)
+		runMonospace([]string{"create", "internal", "modules/willExternalize"}, initDirOp).Assert(t, icmd.Success)
+		fs.Apply(t, initDir, hasDir("modules", true, willExternalOp))
+		runMonospace([]string{"exec", "git", "-p", "root", "--", "-C", initDir.Path(), "add", "."}, initDirOp).Assert(t, icmd.Success)
+		runMonospace([]string{"exec", "git", "-p", "root", "--", "-C", initDir.Path(), "commit", "-m", "add willExternalize"}, initDirOp).Assert(t, icmd.Success)
+		runTCs := runTestCases(initDir.Path())
 
+		// run tests
+		tests := []testCase{
+			{"should warn on --push without repoUrl", []string{"externalize", "modules/willExternalize", "--push"}, icmd.Expected{ExitCode: 1}, nil, "you must provide a repo url when using --push"},
+			{"should correctly externalize an internal project", []string{"externalize", "modules/willExternalize", "-y", "-b", "dfltbranchname"}, icmd.Success, nil, "Externalization done"},
+			{"should correctly set initial branch", []string{"exec", "git", "-p", "modules/willExternalize", "--", "branch"}, icmd.Success, nil, `\* dfltbranchname`},
+		}
+		runTCs(t, tests)
+
+	})
+
+	runStep(t, "status", func(t *testing.T) {
+		skipOrContinue(t, "status")
 	})
 }
