@@ -51,17 +51,23 @@ Here's the reported anomalies and the action taken when --fix flag is used:
 
 More choices may be available when --interactive flag is used
 
-## Check pipeline
+## Check pipeline (skipped if --project-filter is used)
 - Check tasks are associated with existing projects.
 - Check tasks depends on existing non persistent tasks.
 - Check for circular task dependencies
 There's no fix available on pipeline errors
+
+## Check githooks path (warning only, skipped if --project-filter is used)
+- if a .monospace/githooks dir exists check git core.hooksPath is set to it
+There's no fix available on githooks path errors only a warning message, it
+won't change the exit status of the command.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
 		utils.CheckErr(mono.SpaceChdir())
 		monoRoot := mono.SpaceGetRoot()
 		monoIgnore := filepath.Join(monoRoot, ".gitignore")
+		hasFilter := cmd.Flags().Changed("project-filter")
 		filteredProjects := FlagGetFilteredProjects(cmd, false)
 		interactive := FlagGetBool(cmd, "interactive")
 		successIndicator := utils.Green("✔")
@@ -85,6 +91,9 @@ There's no fix available on pipeline errors
 			utils.CheckErr(utils.FileRemoveLine(monoIgnore, p.Name))
 		}
 		fmt.Println(utils.Bold(utils.Underline("checking projects repositories:")))
+		if len(filteredProjects) < 1 {
+			fmt.Println("no project to check")
+		}
 	Loop:
 		for _, p := range filteredProjects {
 			switch p.Kind {
@@ -185,10 +194,28 @@ There's no fix available on pipeline errors
 			printCheckHeader(p)
 		}
 
-		// check Pipeline config is correct
-		fmt.Println(utils.Bold(utils.Underline("checking pipeline:")))
-		tasks.GetStandardizedPipeline(false).IsAcyclic(true)
-		fmt.Println(successIndicator + " pipeline ok")
+		// following checks are not performed when filter is in use
+		if !hasFilter {
+			// check Pipeline config is correct
+			fmt.Println(utils.Bold(utils.Underline("checking pipeline:")))
+			tasks.GetStandardizedPipeline(false).IsAcyclic(true)
+			fmt.Println(successIndicator + " pipeline ok")
+
+			// check githooks path is correctly set
+			if utils.FileExistsNoErr(filepath.Join(monoRoot, app.DfltHooksDir)) {
+				fmt.Printf(utils.Bold(utils.Underline("found %s checking git core.hookspath:\n")), app.DfltHooksDir)
+				hookspath, err := git.GetHooksDir(monoRoot)
+				if err == nil {
+					if hookspath == app.DfltHooksDir {
+						fmt.Println(successIndicator + " git core.hookspath set to " + app.DfltHooksDir)
+					} else {
+						fmt.Println(failureIndicator + " " + utils.Warning("git core.hookspath is not set to "+app.DfltHooksDir))
+						fmt.Println("You can either remove this directory or set your git config to use it:")
+						fmt.Printf("git -C %s config core.hookspath %s\n", monoRoot, app.DfltHooksDir)
+					}
+				}
+			}
+		}
 
 		if exitStatus != 0 && !fix && !interactive {
 			os.Exit(exitStatus)
@@ -200,6 +227,6 @@ There's no fix available on pipeline errors
 func init() {
 	RootCmd.AddCommand(checkCmd)
 	FlagAddProjectFilter(checkCmd)
-	checkCmd.Flags().Bool("fix", false, "Fix reported anomalies, disable interactive mode")
+	checkCmd.Flags().Bool("fix", false, "Try to fix reported anomalies, disable interactive mode")
 	checkCmd.Flags().BoolP("interactive", "i", false, "Prompt for action to take on each reported anomaly")
 }
