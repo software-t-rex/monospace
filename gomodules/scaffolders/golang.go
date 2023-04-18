@@ -20,7 +20,7 @@ func Golang() error {
 	}
 
 	if !fileExistsNoErr("main.go") {
-		err = writeTemplateFile("main.go", filepath.Join(pwd, "main.go"), nil)
+		err = writeTemplateFile("golang/main.go", filepath.Join(pwd, "main.go"), nil)
 		if err != nil {
 			printWarning("Error writing main.go")
 			err = nil

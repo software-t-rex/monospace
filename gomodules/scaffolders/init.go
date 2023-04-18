@@ -63,6 +63,15 @@ func writeTemplateFile(src string, dest string, replacer *strings.Replacer) erro
 	return err
 }
 
+func writeExecutableTemplateFile(src string, dest string, replacer *strings.Replacer) error {
+	err := writeTemplateFile(src, dest, replacer)
+	if err != nil {
+		return err
+	}
+	// #nosec G306 - we want the group access
+	return os.Chmod(dest, 0750)
+}
+
 func Confirm(msg string, dflt bool) bool {
 	noInteractive := os.Getenv("MONOSPACE_NO_INTERACTIVE")
 	if noInteractive == "1" || noInteractive == "true" {
