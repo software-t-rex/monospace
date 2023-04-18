@@ -1,4 +1,4 @@
-package utils
+package mono
 
 import (
 	"errors"
@@ -10,7 +10,9 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/git"
 	"github.com/software-t-rex/monospace/gomodules/scaffolders"
+	"github.com/software-t-rex/monospace/utils"
 )
 
 var RootProject Project
@@ -50,9 +52,9 @@ type Project struct {
 }
 
 var styles = map[ProjectKind](func(s ...string) string){
-	Internal: Green,
-	External: Blue,
-	Local:    Red,
+	Internal: utils.Green,
+	External: utils.Blue,
+	Local:    utils.Red,
 }
 
 func (p Project) String() string {
@@ -101,7 +103,7 @@ func ProjectExists(name string) (exists bool) {
 func ProjectsGetAliasesNameOnly() (res []string) {
 	config, _ := app.ConfigGet()
 	if config.Aliases != nil {
-		return MapGetKeys(config.Aliases)
+		return utils.MapGetKeys(config.Aliases)
 	}
 	return []string{}
 }
@@ -110,7 +112,7 @@ func ProjectsGetAliasesNameOnly() (res []string) {
 func ProjectsGetAllNameOnly() (res []string) {
 	projectsMap, _ := getProjectsMap()
 	if projectsMap != nil {
-		res = MapGetKeys(projectsMap)
+		res = utils.MapGetKeys(projectsMap)
 		sort.Strings(res)
 	}
 	return
@@ -138,11 +140,11 @@ func ProjectsGetByPrefix(prefix string, noPrefix bool) (res []string) {
 		prefix = prefix + "/"
 	}
 	projects := ProjectsGetAllNameOnly()
-	hasPrefix := PrefixPredicate(prefix)
+	hasPrefix := utils.PrefixPredicate(prefix)
 	if !noPrefix {
-		res = SliceFilter(projects, hasPrefix)
+		res = utils.SliceFilter(projects, hasPrefix)
 	} else {
-		res = SliceMapAndFilter(projects, func(p string) (string, bool) {
+		res = utils.SliceMapAndFilter(projects, func(p string) (string, bool) {
 			if hasPrefix(p) {
 				p, _ = strings.CutPrefix(p, prefix)
 				return p, true
@@ -169,9 +171,9 @@ func ProjectAsStruct(name string, repoUrl string) (res Project) {
 
 func ProjectDetectMainLang(name string) string {
 	projectPath := ProjectGetPath(name)
-	if FileExistsNoErr(filepath.Join(projectPath, "go.mod")) {
+	if utils.FileExistsNoErr(filepath.Join(projectPath, "go.mod")) {
 		return "golang"
-	} else if FileExistsNoErr(filepath.Join(projectPath, "package.json")) {
+	} else if utils.FileExistsNoErr(filepath.Join(projectPath, "package.json")) {
 		return "js"
 	}
 	return "unknown"
@@ -212,23 +214,23 @@ func ProjectGetByName(name string) (Project, error) {
 
 func ProjectGetPath(projectName string) string {
 	if projectName == "root" {
-		return MonospaceGetRoot()
+		return SpaceGetRoot()
 	}
-	return filepath.Join(MonospaceGetRoot(), filepath.Clean(projectName))
+	return filepath.Join(SpaceGetRoot(), filepath.Clean(projectName))
 }
 
 /* exit on error */
 func ProjectCreate(projectName string, repoUrl string, projectType string) {
 	// check name is Ok
 	if ProjectExists(projectName) {
-		Exit("project already exists")
+		utils.Exit("project already exists")
 	} else if !ProjectIsValidName(projectName) {
-		Exit("invalid project name")
+		utils.Exit("invalid project name")
 	}
 
 	projectPath := ProjectGetPath(projectName)
-	dirExists, err := IsDir(projectPath)
-	CheckErr(err)
+	dirExists, err := utils.IsDir(projectPath)
+	utils.CheckErr(err)
 
 	project := Project{
 		Name:    projectName,
@@ -245,38 +247,38 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 	}
 
 	// set some env variables
-	CheckErr(app.PopulateEnv(map[string]string{"PROJECT_PATH": projectName}))
+	utils.CheckErr(app.PopulateEnv(map[string]string{"PROJECT_PATH": projectName}))
 
 	// set cwd to monospace directory
-	CheckErr(MonospaceChdir())
+	utils.CheckErr(SpaceChdir())
 
 	// create dir if not exists
 	if !dirExists {
-		CheckErrWithMsg(os.MkdirAll(project.Path(), 0750), "Error while creating package")
+		utils.CheckErrWithMsg(os.MkdirAll(project.Path(), 0750), "Error while creating package")
 	}
 
 	// add to .monopace.yml
 	if project.Kind == External {
-		CheckErr(app.ConfigAddProject(project.Name, project.RepoUrl, true))
+		utils.CheckErr(app.ConfigAddProject(project.Name, project.RepoUrl, true))
 	} else {
-		CheckErr(app.ConfigAddProject(project.Name, project.Kind.String(), true))
+		utils.CheckErr(app.ConfigAddProject(project.Name, project.Kind.String(), true))
 	}
 
 	// move to new package directory
-	CheckErr(os.Chdir(projectPath))
+	utils.CheckErr(os.Chdir(projectPath))
 
 	// strategy for different kind of projects
 	switch project.Kind {
 	case Local:
 		fmt.Println("Initialize local repository")
-		CheckErr(MonospaceInitRepo(project.Name)) // will add gitignore
+		utils.CheckErr(SpaceInitRepo(project.Name)) // will add gitignore
 	case Internal:
-		CheckErr(GitAddGitIgnoreFile())
+		utils.CheckErr(git.GitAddGitIgnoreFile())
 	case External:
 		fmt.Println("Clone repository")
-		CheckErr(ProjectCloneRepo(project))
+		utils.CheckErr(ProjectCloneRepo(project))
 	default:
-		Exit("unknown project kind must be local, internal or external")
+		utils.Exit("unknown project kind must be local, internal or external")
 	}
 
 	// no need to init projects for external projects
@@ -284,22 +286,22 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 		switch projectType {
 		case "js":
 			fmt.Println("Initialize package manager")
-			CheckErr(scaffolders.Javascript())
+			utils.CheckErr(scaffolders.Javascript())
 		case "go":
 			fmt.Println("Initialize go module")
-			CheckErr(scaffolders.Golang())
+			utils.CheckErr(scaffolders.Golang())
 		default:
-			PrintWarning("Unknown project type '" + projectType + "' => ignored")
+			utils.PrintWarning("Unknown project type '" + projectType + "' => ignored")
 		}
 	}
 
-	fmt.Println(Success("project successfully added to your monospace"))
+	fmt.Println(utils.Success("project successfully added to your monospace"))
 }
 
 func ProjectCloneRepo(project Project) (err error) {
-	err = MonospaceAddProjectToGitignore(project.Name)
+	err = SpaceAddProjectToGitignore(project.Name)
 	if err == nil {
-		err = GitClone(project.RepoUrl, project.Path())
+		err = git.GitClone(project.RepoUrl, project.Path())
 	}
 	return
 }
@@ -309,26 +311,26 @@ func ProjectRemoveFromGitignore(project Project, silent bool) (err error) {
 		if !silent {
 			fmt.Println("Remove from gitignore")
 		}
-		err = FileRemoveLine(filepath.Join(MonospaceGetRoot(), ".gitignore"), project.Name)
+		err = utils.FileRemoveLine(filepath.Join(SpaceGetRoot(), ".gitignore"), project.Name)
 	}
 	return
 }
 
 /* exit on error */
 func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
-	project := CheckErrOrReturn(ProjectGetByName(projectName))
-	CheckErr(app.ConfigRemoveProject(project.Name, true))
+	project := utils.CheckErrOrReturn(ProjectGetByName(projectName))
+	utils.CheckErr(app.ConfigRemoveProject(project.Name, true))
 
-	printSuccess := func() { fmt.Println(Success("Project " + projectName + " successfully removed")) }
+	printSuccess := func() { fmt.Println(utils.Success("Project " + projectName + " successfully removed")) }
 
-	CheckErr(ProjectRemoveFromGitignore(project, false))
+	utils.CheckErr(ProjectRemoveFromGitignore(project, false))
 
 	if !rmdir {
 		printSuccess()
 		fmt.Println("You should now delete the project directory.")
 	} else {
-		if !withConfirm || Confirm("Do you want to delete "+project.Name, false) {
-			CheckErr(RmDir(project.Path()))
+		if !withConfirm || utils.Confirm("Do you want to delete "+project.Name, false) {
+			utils.CheckErr(utils.RmDir(project.Path()))
 		}
 		printSuccess()
 	}

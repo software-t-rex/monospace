@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/software-t-rex/monospace/git"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -48,23 +50,23 @@ monospace externalize packages/osslib git@github.com:user/osslib.git --push --in
 		if len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveNoFileComp
+		return mono.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveNoFileComp
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
 
 		CheckConfigFound(true)
-		monoRoot := utils.MonospaceGetRoot()
+		monoRoot := mono.SpaceGetRoot()
 		projectName := args[0]
-		project := utils.CheckErrOrReturn(utils.ProjectGetByName(projectName))
-		if project.Kind != utils.Internal {
+		project := utils.CheckErrOrReturn(mono.ProjectGetByName(projectName))
+		if project.Kind != mono.Internal {
 			utils.Exit("Can only externalize an internal project")
 		}
 
 		flagPush := utils.CheckErrOrReturn(cmd.Flags().GetBool("push"))
 		initBranch := utils.CheckErrOrReturn(cmd.Flags().GetString("initial-branch"))
 		noConfirm := FlagGetNoInteractive(cmd)
-		opts := utils.GitExternalizeOptions{
+		opts := git.GitExternalizeOptions{
 			PushOrigin: flagPush,
 		}
 		if initBranch != "" {
@@ -76,7 +78,7 @@ monospace externalize packages/osslib git@github.com:user/osslib.git --push --in
 			utils.Exit("you must provide a repo url when using --push")
 		}
 
-		isClean := utils.GitIsClean(monoRoot, projectName)
+		isClean := git.GitIsClean(monoRoot, projectName)
 		if !isClean {
 			if noConfirm {
 				opts.AllowStash = true
@@ -90,7 +92,7 @@ monospace externalize packages/osslib git@github.com:user/osslib.git --push --in
 				}
 			}
 		}
-		utils.CheckErr(utils.GitExternalize(monoRoot, projectName, opts))
+		utils.CheckErr(git.GitExternalize(monoRoot, projectName, opts))
 
 		fmt.Println(utils.Success("Externalization done"))
 	},

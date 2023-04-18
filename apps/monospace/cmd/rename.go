@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -27,31 +28,31 @@ will update the monospace gitignore and .monospace.yml files accordingly.`,
 		if len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveDefault
 		}
-		return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveNoFileComp
+		return mono.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveNoFileComp
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
-		utils.CheckErr(os.Chdir(utils.MonospaceGetRoot()))
+		utils.CheckErr(os.Chdir(mono.SpaceGetRoot()))
 
 		oldName := args[0]
 		newName := args[1]
 
-		if !utils.MonospaceHasProject(oldName) {
+		if !mono.SpaceHasProject(oldName) {
 			utils.Exit(fmt.Sprintf("Unkwown project %s", oldName))
 		} else if utils.FileExistsNoErr(newName) {
 			utils.Exit(fmt.Sprintf("%s already exists", oldName))
-		} else if !utils.ProjectIsValidName(newName) {
+		} else if !mono.ProjectIsValidName(newName) {
 			utils.Exit(fmt.Sprintf("%s is not a valid project name", newName))
 		}
 
-		project := utils.CheckErrOrReturn(utils.ProjectGetByName(oldName))
+		project := utils.CheckErrOrReturn(mono.ProjectGetByName(oldName))
 
 		utils.CheckErr(app.ConfigRemoveProject(project.Name, false))
 		utils.CheckErr(app.ConfigAddProject(newName, project.RepoUrl, true))
 
-		if project.Kind != utils.Internal {
-			utils.CheckErr(utils.ProjectRemoveFromGitignore(project, true))
-			utils.CheckErr(utils.MonospaceAddProjectToGitignore(newName))
+		if project.Kind != mono.Internal {
+			utils.CheckErr(mono.ProjectRemoveFromGitignore(project, true))
+			utils.CheckErr(mono.SpaceAddProjectToGitignore(newName))
 		}
 
 		utils.CheckErr(os.Rename(oldName, newName))

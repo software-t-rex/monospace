@@ -1,4 +1,4 @@
-package utils
+package tasks
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 
 	exctr "github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/utils"
 )
 
 func setInterleavedOutputDisplayNames(jobs exctr.JobList) {
@@ -26,12 +27,12 @@ func setInterleavedOutputDisplayNames(jobs exctr.JobList) {
 	}
 }
 
-func NewTaskExecutor(outputMode string) *exctr.JobExecutor {
+func NewExecutor(outputMode string) *exctr.JobExecutor {
 	e := exctr.NewExecutor()
 	startTime := time.Now()
 	var bold, success, failure, reset string
-	successIndicator := Green("✔")
-	failureIndicator := Red("✘")
+	successIndicator := utils.Green("✔")
+	failureIndicator := utils.Red("✘")
 	if colors.ColorEnabled() {
 		bold = string(colors.Bold)
 		success = string(colors.BrightGreen)
@@ -67,7 +68,7 @@ func NewTaskExecutor(outputMode string) *exctr.JobExecutor {
 							pw.Write([]byte(res))
 						}
 						if err != nil {
-							pw.Write([]byte(ErrorStyle(err.Error())))
+							pw.Write([]byte(utils.ErrorStyle(err.Error())))
 						}
 						return res, err
 					}
@@ -113,10 +114,10 @@ func NewTaskExecutor(outputMode string) *exctr.JobExecutor {
 			err := ""
 			res := ""
 			if job.Err != nil {
-				err = Indent(ErrorStyle(job.Err.Error()), "  ")
+				err = utils.Indent(utils.ErrorStyle(job.Err.Error()), "  ")
 			}
 			if job.Res != "" {
-				res = Indent(job.Res, "  ")
+				res = utils.Indent(job.Res, "  ")
 			}
 			fmt.Print(statusLine, err, res)
 		})

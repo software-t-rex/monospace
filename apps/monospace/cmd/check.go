@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/git"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/tasks"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
@@ -57,8 +59,8 @@ There's no fix available on pipeline errors
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
-		utils.CheckErr(utils.MonospaceChdir())
-		monoRoot := utils.MonospaceGetRoot()
+		utils.CheckErr(mono.SpaceChdir())
+		monoRoot := mono.SpaceGetRoot()
 		monoIgnore := filepath.Join(monoRoot, ".gitignore")
 		filteredProjects := FlagGetFilteredProjects(cmd, false)
 		interactive := FlagGetBool(cmd, "interactive")
@@ -67,7 +69,7 @@ There's no fix available on pipeline errors
 		fix := FlagGetBool(cmd, "fix")
 		exitStatus := 0
 
-		printCheckHeader := func(p utils.Project, warningMsg ...string) {
+		printCheckHeader := func(p mono.Project, warningMsg ...string) {
 			if len(warningMsg) < 1 {
 				fmt.Printf(utils.Bold("%s %s\n"), successIndicator, p.StyledString())
 				return
@@ -77,7 +79,7 @@ There's no fix available on pipeline errors
 			utils.PrintWarning(warningMsg...)
 
 		}
-		setInternal := func(p utils.Project) {
+		setInternal := func(p mono.Project) {
 			fmt.Println("setting project as internal...")
 			utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, "internal", true))
 			utils.CheckErr(utils.FileRemoveLine(monoIgnore, p.Name))
@@ -86,11 +88,11 @@ There's no fix available on pipeline errors
 	Loop:
 		for _, p := range filteredProjects {
 			switch p.Kind {
-			case utils.Local:
+			case mono.Local:
 				if isdir, _ := utils.IsDir(p.Path()); !isdir { // unexisting directory
 					continue Loop // local project can exists only on another dev machine
 				}
-				if !utils.GitIsRepoRootDir(p.Path()) { // just normal directory
+				if !git.GitIsRepoRootDir(p.Path()) { // just normal directory
 					printCheckHeader(p, fmt.Sprintf("%s is not a git repository", p.StyledString()))
 					if fix {
 						setInternal(p)
@@ -99,7 +101,7 @@ There's no fix available on pipeline errors
 							setInternal(p)
 						} else if utils.Confirm("Do you want to init a git repo ?", true) {
 							fmt.Println("initializing a git repo...")
-							utils.GitInit(p.Path(), true)
+							git.GitInit(p.Path(), true)
 							utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, p.RepoUrl, true))
 						}
 					}
@@ -107,8 +109,8 @@ There's no fix available on pipeline errors
 				}
 				// check origin is not set
 				var origin string
-				if utils.CheckErrOrReturn(utils.GitHasOrigin(p.Path())) {
-					origin = utils.CheckErrOrReturn(utils.GitGetOrigin(p.Path()))
+				if utils.CheckErrOrReturn(git.GitHasOrigin(p.Path())) {
+					origin = utils.CheckErrOrReturn(git.GitGetOrigin(p.Path()))
 				}
 				if origin != "" {
 					printCheckHeader(p, fmt.Sprintf("origin is set to %s for local project %s", origin, p.StyledString()))
@@ -117,20 +119,20 @@ There's no fix available on pipeline errors
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
 					} else if interactive && utils.Confirm(fmt.Sprintf("Do you want to remove %s origin?", p.StyledString()), false) {
 						fmt.Println("removing origin...")
-						utils.CheckErr(utils.GitRemoveOrigin(p.Path()))
+						utils.CheckErr(git.GitRemoveOrigin(p.Path()))
 					}
 					continue Loop
 				}
-			case utils.External:
+			case mono.External:
 				if isdir, _ := utils.IsDir(p.Path()); !isdir { // unexisting directory
 					printCheckHeader(p, fmt.Sprintf("project %s does not exist", p.StyledString()))
 					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to clone %s to %s ?", p.RepoUrl, p.StyledString()), true)) {
 						fmt.Println("cloning...")
-						utils.CheckErr(utils.GitClone(p.RepoUrl, p.Path()))
+						utils.CheckErr(git.GitClone(p.RepoUrl, p.Path()))
 					}
 					continue Loop
 				}
-				if !utils.GitIsRepoRootDir(p.Path()) { // just normal directory
+				if !git.GitIsRepoRootDir(p.Path()) { // just normal directory
 					printCheckHeader(p, fmt.Sprintf("%s is not a git repository", p.StyledString()))
 					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to set %s as internal ?", p.StyledString()), true)) {
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, "internal", true))
@@ -138,7 +140,7 @@ There's no fix available on pipeline errors
 					}
 					continue Loop
 				}
-				origin := utils.CheckErrOrReturn(utils.GitGetOrigin(p.Path()))
+				origin := utils.CheckErrOrReturn(git.GitGetOrigin(p.Path()))
 				// @todo if origin empty make it a local project
 				if origin != p.RepoUrl {
 					printCheckHeader(p, fmt.Sprintf("origin mismatch for external project %s", p.StyledString()))
@@ -151,12 +153,12 @@ There's no fix available on pipeline errors
 							utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
 						} else if utils.Confirm(fmt.Sprintf("Do you want to set %s remote origin to %s ?", p.StyledString(), p.RepoUrl), true) {
 							fmt.Println("setting remote origin...")
-							utils.CheckErr(utils.GitSetOrigin(p.Path(), p.RepoUrl))
+							utils.CheckErr(git.GitSetOrigin(p.Path(), p.RepoUrl))
 						}
 					}
 					continue Loop
 				}
-			case utils.Internal:
+			case mono.Internal:
 				if isdir, _ := utils.IsDir(p.Path()); !isdir { // unexisting directory fix: remove
 					printCheckHeader(p, fmt.Sprintf("project %s does not exist", p.StyledString()))
 					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to remove %s project ?", p.StyledString()), true)) {
@@ -165,9 +167,9 @@ There's no fix available on pipeline errors
 					}
 					continue Loop
 				}
-				if utils.GitIsRepoRootDir(p.Path()) {
+				if git.GitIsRepoRootDir(p.Path()) {
 					printCheckHeader(p, fmt.Sprintf("internal project %s is a git repository", p.StyledString()))
-					origin := utils.CheckErrOrReturn(utils.GitGetOrigin(p.Path()))
+					origin := utils.CheckErrOrReturn(git.GitGetOrigin(p.Path()))
 					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to set %s as external(%s)?", p.StyledString(), origin), true)) {
 						fmt.Println("setting project as external...")
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))

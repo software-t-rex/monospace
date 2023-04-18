@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 
 	"github.com/spf13/cobra"
@@ -29,16 +30,16 @@ var lsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 1 {
 			utils.CheckErr(os.Chdir(args[0]))
-			utils.MonospaceGetRootNoCache()
+			mono.SpaceGetRootNoCache()
 			initConfig() // force reload of monospace config
 		}
 		CheckConfigFound(true)
-		projects := utils.ProjectsGetAll()
+		projects := mono.ProjectsGetAll()
 		if len(projects) < 1 {
 			fmt.Println("No projects found start by adding one to your monospace.")
 		} else {
 			isLong, _ := cmd.Flags().GetBool("long")
-			out := utils.SliceMap(projects, func(p utils.Project) string {
+			out := utils.SliceMap(projects, func(p mono.Project) string {
 				if isLong {
 					if p.RepoUrl == "" {
 						return fmt.Sprintf("%s (%s)", p.StyledString(), p.Kind.String())

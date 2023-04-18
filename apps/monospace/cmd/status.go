@@ -14,6 +14,7 @@ import (
 
 	"github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +37,7 @@ You can pass args to git status by separating them with double hyphen '--'`,
   monospace status -- --short --branch`,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
-		utils.CheckErr(utils.MonospaceChdir())
+		utils.CheckErr(mono.SpaceChdir())
 
 		// add --short flag if called with 'st' alias
 		if cmd.CalledAs() == "st" {
@@ -45,7 +46,7 @@ You can pass args to git status by separating them with double hyphen '--'`,
 
 		isShort := utils.SliceContains(args, "--short") || utils.SliceContains(args, "--porcelain")
 		nameStyle := colors.Style(colors.Bold)
-		projects := utils.ProjectsGetAll()
+		projects := mono.ProjectsGetAll()
 		internals := []string{}
 		executor := jobExecutor.NewExecutor().WithProgressBarOutput(
 			10, false, string(colors.BgBlack)+string(colors.BrightGreen),
@@ -53,7 +54,7 @@ You can pass args to git status by separating them with double hyphen '--'`,
 		executor.AddNamedJobCmd("root", getStatusCommand("", args))
 		for _, p := range projects {
 			project := p
-			if p.Kind == utils.Internal {
+			if p.Kind == mono.Internal {
 				if !isShort {
 					internals = append(internals, p.Name)
 				}

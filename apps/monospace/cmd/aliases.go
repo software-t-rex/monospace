@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -38,9 +39,9 @@ without arguments this command will return the list of current aliases`,
 		if len(args) == 1 {
 			switch args[0] {
 			case "add":
-				return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveDefault
+				return mono.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveDefault
 			case "remove":
-				return utils.ProjectsGetAliasesNameOnly(), cobra.ShellCompDirectiveDefault
+				return mono.ProjectsGetAliasesNameOnly(), cobra.ShellCompDirectiveDefault
 			default:
 				return nil, cobra.ShellCompDirectiveError
 			}
@@ -88,14 +89,4 @@ without arguments this command will return the list of current aliases`,
 
 func init() {
 	RootCmd.AddCommand(aliasesCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// aliasesCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// aliasesCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

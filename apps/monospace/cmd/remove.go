@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package cmd
 
 import (
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 
 	"github.com/spf13/cobra"
@@ -28,13 +29,13 @@ It will:
 	Example: `  monospace remove apps/my-app`,
 	Args:    cobra.ExactArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveNoFileComp
+		return mono.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveNoFileComp
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
 		noInteractive := FlagGetNoInteractive(cmd)
 		rmDir := utils.CheckErrOrReturn(cmd.Flags().GetBool("rmdir"))
-		utils.ProjectRemove(args[0], !noInteractive || rmDir, !noInteractive && !rmDir)
+		mono.ProjectRemove(args[0], !noInteractive || rmDir, !noInteractive && !rmDir)
 	},
 }
 

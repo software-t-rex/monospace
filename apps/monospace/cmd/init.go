@@ -12,7 +12,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/software-t-rex/monospace/git"
 	"github.com/software-t-rex/monospace/gomodules/scaffolders"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -47,9 +49,9 @@ each of these steps won't overwrite existing files if any`,
 		if len(args) == 1 {
 			wd, err := filepath.Abs(args[0])
 			utils.CheckErr(err)
-			parentMonospace = utils.MonospaceGetRootForPath(wd)
+			parentMonospace = mono.SpaceGetRootForPath(wd)
 		} else {
-			parentMonospace = utils.MonospaceGetRootNoCache()
+			parentMonospace = mono.SpaceGetRootNoCache()
 		}
 
 		// check path is not inside a monospace directory
@@ -57,14 +59,19 @@ each of these steps won't overwrite existing files if any`,
 			utils.Exit(fmt.Sprintf("'%s' is already a monospace directory", parentMonospace))
 		}
 
+		// if path is given create the directory and cd into it
 		if len(args) == 1 {
 			utils.CheckErr(utils.MakeDir(args[0]))
 			utils.CheckErr(os.Chdir(args[0]))
 		}
 
 		// scaffold monospace
+		fmt.Println("initialize git repository")
+		utils.CheckErr(git.GitInit("./", true))
+
+		fmt.Println("initialize monospace")
 		utils.CheckErr(scaffolders.Monospace())
-		utils.CheckErr(utils.GitInit("./", true))
+
 		fmt.Println(utils.Success("Monospace successfully initialized."))
 		if len(args) == 1 {
 			fmt.Printf("%s is ready for work\n", args[0])

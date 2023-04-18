@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	"github.com/software-t-rex/monospace/gomodules/colors"
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/mono"
 
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ it will clone a remote 'external' repository into the current monospace.`,
 		if err := cobra.ExactArgs(2)(cmd, args); err != nil {
 			return err
 		}
-		if !utils.ProjectIsValidName(args[0]) {
+		if !mono.ProjectIsValidName(args[0]) {
 			return fmt.Errorf(colors.Error("'%s'")+" is not a valid project name", args[0])
 		}
 		return nil
@@ -39,11 +39,11 @@ it will clone a remote 'external' repository into the current monospace.`,
 		if len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		return utils.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveDefault
+		return mono.ProjectsGetAllNameOnly(), cobra.ShellCompDirectiveDefault
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
-		utils.ProjectCreate(args[0], args[1], "")
+		mono.ProjectCreate(args[0], args[1], "")
 	},
 }
 

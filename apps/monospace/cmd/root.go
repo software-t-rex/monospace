@@ -15,6 +15,7 @@ import (
 
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 )
 
@@ -82,5 +83,5 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	colors.Toggle(!flagRootDisableColorOutput)
-	app.ConfigInit(utils.MonospaceGetConfigPath())
+	app.ConfigInit(mono.SpaceGetConfigPath())
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/software-t-rex/go-jobExecutor/v2"
 	jspm "github.com/software-t-rex/js-packagemanager"
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/software-t-rex/packageJson"
 )
@@ -227,15 +228,15 @@ func (t *Task) preparedCmd(cmdAndArgs ...string) *exec.Cmd {
 	args := utils.SliceMap(cmdAndArgs, os.ExpandEnv)
 	if _, err := exec.LookPath(args[0]); err != nil {
 		// lookup for command in .monospace/bin
-		binPath := filepath.Join(utils.MonospaceGetRoot(), ".monospace", "bin", args[0])
-		if utils.FileExistsNoErr(filepath.Join(utils.MonospaceGetRoot(), ".monospace", "bin", args[0])) {
+		binPath := filepath.Join(mono.SpaceGetRoot(), ".monospace", "bin", args[0])
+		if utils.FileExistsNoErr(filepath.Join(mono.SpaceGetRoot(), ".monospace", "bin", args[0])) {
 			args[0] = binPath
 		}
 	}
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Path = os.ExpandEnv(cmd.Path)
 	cmd.Args = utils.SliceMap(cmd.Args, os.ExpandEnv)
-	cmd.Dir = utils.ProjectGetPath(t.Name.Project)
+	cmd.Dir = mono.ProjectGetPath(t.Name.Project)
 	return cmd
 }
 func (t *Task) preparedJSPMRunCmd(pmCmd string, args []string) *exec.Cmd {
@@ -252,7 +253,7 @@ func (t *Task) getJSPMCmdFromJSPMConfig(PMconfig string, args []string, printWar
 }
 
 func (t *Task) GetJobRunner(additionalArgs []string) *exec.Cmd {
-	projectPath := utils.ProjectGetPath(t.Name.Project)
+	projectPath := mono.ProjectGetPath(t.Name.Project)
 	if len(t.TaskDef.Cmd) > 0 {
 		return t.preparedCmd(append(t.TaskDef.Cmd, additionalArgs...)...)
 	}
@@ -338,7 +339,7 @@ func (t TaskList) Len() int {
 }
 
 func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobExecutor.JobExecutor {
-	e := utils.NewTaskExecutor(outputMode)
+	e := NewExecutor(outputMode)
 	taskIds := make(map[string]int, t.Len())
 
 	jobs := make(map[int]jobExecutor.Job, t.Len())
@@ -365,7 +366,7 @@ func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobEx
 	return e
 }
 
-func PrepareTaskList(tasks []string, projects []utils.Project) TaskList {
+func PrepareTaskList(tasks []string, projects []mono.Project) TaskList {
 
 	pipeline := GetStandardizedPipeline(true)
 	taskList := pipeline.NewTaskList()

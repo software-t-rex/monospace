@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -40,11 +41,11 @@ func FlagAddProjectFilter(cmd *cobra.Command) {
 //		utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
 //	}
 func completeProjectFilter(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	suggestions := append(append(utils.ProjectsGetAllNameOnly(), utils.ProjectsGetAliasesNameOnly()...), "root")
+	suggestions := append(append(mono.ProjectsGetAllNameOnly(), mono.ProjectsGetAliasesNameOnly()...), "root")
 	return suggestions, cobra.ShellCompDirectiveDefault
 }
 
-func GetFilteredProjects(projects []utils.Project, filters []string, includeRoot bool) []utils.Project {
+func GetFilteredProjects(projects []mono.Project, filters []string, includeRoot bool) []mono.Project {
 	config := utils.CheckErrOrReturn(app.ConfigGet())
 	filterLen := len(filters)
 	if !includeRoot && utils.SliceContains(filters, "root") {
@@ -52,7 +53,7 @@ func GetFilteredProjects(projects []utils.Project, filters []string, includeRoot
 	}
 	// prepend with root monospace
 	if includeRoot {
-		projects = append([]utils.Project{utils.RootProject}, projects...)
+		projects = append([]mono.Project{mono.RootProject}, projects...)
 	}
 	if filterLen < 1 { // no filter return all projects
 		return projects
@@ -80,20 +81,20 @@ func GetFilteredProjects(projects []utils.Project, filters []string, includeRoot
 
 	// apply black list
 	if len(blackList) > 0 {
-		projects = utils.SliceFilter(projects, func(p utils.Project) bool {
+		projects = utils.SliceFilter(projects, func(p mono.Project) bool {
 			return !utils.SliceContains(blackList, p.Name)
 		})
 	}
 	// apply white list
 	if len(whiteList) > 0 {
-		projects = utils.SliceFilter(projects, func(p utils.Project) bool {
+		projects = utils.SliceFilter(projects, func(p mono.Project) bool {
 			return utils.SliceContains(whiteList, p.Name)
 		})
 	}
 	return projects
 }
-func FlagGetFilteredProjects(cmd *cobra.Command, includeRoot bool) []utils.Project {
-	projects := utils.ProjectsGetAll()
+func FlagGetFilteredProjects(cmd *cobra.Command, includeRoot bool) []mono.Project {
+	projects := mono.ProjectsGetAll()
 	filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
 	return GetFilteredProjects(projects, filters, includeRoot)
 }

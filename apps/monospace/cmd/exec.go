@@ -16,6 +16,7 @@ import (
 
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/tasks"
 	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
@@ -48,7 +49,7 @@ You can restrict the command to one or more projects using flag --project-filter
 
 		projects := FlagGetFilteredProjects(cmd, false)
 
-		executor := utils.NewTaskExecutor(outputMode)
+		executor := tasks.NewExecutor(outputMode)
 		for _, p := range projects {
 			project := p
 			cmd := exec.Command(cmdBin, cmdArgs...)

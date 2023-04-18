@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/utils"
 
 	"github.com/spf13/cobra"
@@ -50,7 +51,7 @@ into it.`,
 				os.Exit(1)
 			}
 		}
-		utils.MonospaceClone(destDirectory, repoUrl)
+		mono.SpaceClone(destDirectory, repoUrl)
 	},
 }
 

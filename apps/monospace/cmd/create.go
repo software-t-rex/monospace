@@ -12,7 +12,7 @@ import (
 	"fmt"
 
 	"github.com/software-t-rex/monospace/gomodules/colors"
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/mono"
 
 	"github.com/spf13/cobra"
 )
@@ -47,7 +47,7 @@ you should look at the ` + italic("monospace import") + ` command instead`,
 		if args[0] != "internal" && args[0] != "local" {
 			return errors.New("you must specify either " + colors.Error("'internal'") + " or " + colors.Error("'local'") + " as first argument")
 		}
-		if !utils.ProjectIsValidName(args[1]) {
+		if !mono.ProjectIsValidName(args[1]) {
 			return fmt.Errorf(colors.Error("'%s'")+" is not a valid project name", args[1])
 		}
 		return nil
@@ -61,7 +61,7 @@ you should look at the ` + italic("monospace import") + ` command instead`,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
 		pType := GetFlagProjectType(cmd)
-		utils.ProjectCreate(args[1], args[0], pType)
+		mono.ProjectCreate(args[1], args[0], pType)
 	},
 }
 
