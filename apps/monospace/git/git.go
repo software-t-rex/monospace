@@ -23,6 +23,17 @@ func gitExec(args ...string) error {
 	return cmd.Run()
 }
 
+// exec git command in given directory prepending args with "-C <directory>"
+// if directory is empty or . or ./ then execute in current directory
+// return combinedOutput
+func gitExecOutput(args ...string) (string, error) {
+	cmd := exec.Command("git", args...)
+	res, err := cmd.CombinedOutput()
+	return strings.TrimSpace(string(res)), err
+}
+
+// exec git command in given directory prepending args with "-C <directory>"
+// if directory is empty or . or ./ then execute in current directory
 func ExecDir(directory string, args ...string) error {
 	if directory == "" || directory == "./" || directory == "." {
 		return gitExec(args...)

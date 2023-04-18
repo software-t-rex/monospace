@@ -97,6 +97,12 @@ To turn the cloned repository into a monospace you can run this command:
 cd ` + destDirectory + ` && monospace init`)
 	}
 
+	// if githooks were installed set git hooks path to .monospace/githooks
+	if utils.FileExistsNoErr(filepath.Join(monospaceRoot, app.DfltHooksDir)) {
+		fmt.Printf(utils.Info("found githooks directory, set git core.hookspath to %s\n"), app.DfltHooksDir)
+		utils.CheckErr(git.SetHooksDir(monospaceRoot, app.DfltHooksDir))
+	}
+
 	// read the config file
 	config := utils.CheckErrOrReturn(app.ConfigRead(app.DfltcfgFilePath))
 	if config.Projects == nil || len(config.Projects) < 1 {
