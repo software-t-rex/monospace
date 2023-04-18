@@ -135,7 +135,13 @@ func TestCmd_Suite(t *testing.T) {
 			hasFile("go.work"),
 			hasFile("pnpm-workspace.yaml"),
 			hasDir(".git", true),
-			hasDir(".monospace", false, hasFile("monospace.yml")),
+			hasDir(".monospace", false,
+				hasFile("monospace.yml"),
+				hasDir("githooks", false,
+					hasFile("post-merge"),
+					hasFile("post-checkout"),
+				),
+			),
 		)
 		assert.Assert(t, fs.Equal(initDir.Path(), expected))
 		runMonospace([]string{"ls"}, icmd.Dir(initDir.Path())).Assert(t, icmd.Expected{
