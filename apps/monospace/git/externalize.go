@@ -38,7 +38,7 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 	}
 
 	// check repo state and optionally stash changes if any
-	if !GitIsClean(monoRootDir, subDir) {
+	if !IsClean(monoRootDir, subDir) {
 		if !opts.AllowStash {
 			return fmt.Errorf("'%s' is not clean, either clean the dir or run this command in interactive mode", subDir)
 		}

@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/software-t-rex/monospace/gomodules/colors"
 	"github.com/software-t-rex/monospace/utils"
 )
 
@@ -38,7 +37,7 @@ func ExecDir(directory string, args ...string) error {
 }
 
 // check the current git dir is clean
-func GitIsClean(repoDir string, subDir string) bool {
+func IsClean(repoDir string, subDir string) bool {
 	args := []string{}
 	if repoDir != "" {
 		args = append(args, "-C", repoDir)
@@ -57,12 +56,12 @@ func GitIsClean(repoDir string, subDir string) bool {
 }
 
 // clone given repo to destPath directory
-func GitClone(repoUrl string, destPath string) error {
+func Clone(repoUrl string, destPath string) error {
 	return gitExec("clone", repoUrl, destPath)
 }
 
 // add default .gitignore to current directory
-func GitAddGitIgnoreFile() error {
+func AddGitIgnoreFile() error {
 	if utils.FileExistsNoErr(".gitignore") {
 		fmt.Println(".gitignore already exists, left untouched")
 		return nil
@@ -72,7 +71,7 @@ func GitAddGitIgnoreFile() error {
 }
 
 // initialize a git repo in the given directory
-func GitInit(directory string, addIgnoreFile bool) (err error) {
+func Init(directory string, addIgnoreFile bool) (err error) {
 	if utils.FileExistsNoErr(".git") {
 		fmt.Println("git init: git already initialized => skip")
 	} else {
@@ -82,13 +81,13 @@ func GitInit(directory string, addIgnoreFile bool) (err error) {
 		}
 	}
 	if addIgnoreFile {
-		return GitAddGitIgnoreFile()
+		return AddGitIgnoreFile()
 	}
 	return err
 }
 
-// print the last git commit for given directory
-func GitHistoryLastCommit(directory string) (res string, err error) {
+/*/ print the last git commit for given directory
+func HistoryLastCommit(directory string) (res string, err error) {
 	var args []string
 	if colors.ColorEnabled() {
 		args = append(args, "-c", "color.ui=always")
@@ -99,19 +98,15 @@ func GitHistoryLastCommit(directory string) (res string, err error) {
 		"--abbrev-commit",
 		"HEAD^..HEAD",
 	)
-	/* #nosec G204 - cParam is not a user input */
+	/* #nosec G204 - cParam is not a user input * /
 	cmd := exec.Command("git", args...)
 	cmd.Dir = directory
 	var resBytes []byte
 	resBytes, err = cmd.CombinedOutput()
 	res = string(resBytes)
 	return res, err
-}
+}*/
 
-func GitConfigSet(directory string, key string, value string) error {
-	return gitExec("-C", directory, "config", key, value)
-}
-
-func GitIsRepoRootDir(directory string) bool {
+func IsRepoRootDir(directory string) bool {
 	return utils.FileExistsNoErr(directory + "/.git")
 }

@@ -101,7 +101,7 @@ won't change the exit status of the command.
 				if isdir, _ := utils.IsDir(p.Path()); !isdir { // unexisting directory
 					continue Loop // local project can exists only on another dev machine
 				}
-				if !git.GitIsRepoRootDir(p.Path()) { // just normal directory
+				if !git.IsRepoRootDir(p.Path()) { // just normal directory
 					printCheckHeader(p, fmt.Sprintf("%s is not a git repository", p.StyledString()))
 					if fix {
 						setInternal(p)
@@ -110,7 +110,7 @@ won't change the exit status of the command.
 							setInternal(p)
 						} else if utils.Confirm("Do you want to init a git repo ?", true) {
 							fmt.Println("initializing a git repo...")
-							git.GitInit(p.Path(), true)
+							git.Init(p.Path(), true)
 							utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, p.RepoUrl, true))
 						}
 					}
@@ -118,8 +118,8 @@ won't change the exit status of the command.
 				}
 				// check origin is not set
 				var origin string
-				if utils.CheckErrOrReturn(git.GitHasOrigin(p.Path())) {
-					origin = utils.CheckErrOrReturn(git.GitGetOrigin(p.Path()))
+				if utils.CheckErrOrReturn(git.HasOrigin(p.Path())) {
+					origin = utils.CheckErrOrReturn(git.OriginGet(p.Path()))
 				}
 				if origin != "" {
 					printCheckHeader(p, fmt.Sprintf("origin is set to %s for local project %s", origin, p.StyledString()))
@@ -128,7 +128,7 @@ won't change the exit status of the command.
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
 					} else if interactive && utils.Confirm(fmt.Sprintf("Do you want to remove %s origin?", p.StyledString()), false) {
 						fmt.Println("removing origin...")
-						utils.CheckErr(git.GitRemoveOrigin(p.Path()))
+						utils.CheckErr(git.OriginRemove(p.Path()))
 					}
 					continue Loop
 				}
@@ -137,11 +137,11 @@ won't change the exit status of the command.
 					printCheckHeader(p, fmt.Sprintf("project %s does not exist", p.StyledString()))
 					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to clone %s to %s ?", p.RepoUrl, p.StyledString()), true)) {
 						fmt.Println("cloning...")
-						utils.CheckErr(git.GitClone(p.RepoUrl, p.Path()))
+						utils.CheckErr(git.Clone(p.RepoUrl, p.Path()))
 					}
 					continue Loop
 				}
-				if !git.GitIsRepoRootDir(p.Path()) { // just normal directory
+				if !git.IsRepoRootDir(p.Path()) { // just normal directory
 					printCheckHeader(p, fmt.Sprintf("%s is not a git repository", p.StyledString()))
 					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to set %s as internal ?", p.StyledString()), true)) {
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, "internal", true))
@@ -149,7 +149,7 @@ won't change the exit status of the command.
 					}
 					continue Loop
 				}
-				origin := utils.CheckErrOrReturn(git.GitGetOrigin(p.Path()))
+				origin := utils.CheckErrOrReturn(git.OriginGet(p.Path()))
 				// @todo if origin empty make it a local project
 				if origin != p.RepoUrl {
 					printCheckHeader(p, fmt.Sprintf("origin mismatch for external project %s", p.StyledString()))
@@ -162,7 +162,7 @@ won't change the exit status of the command.
 							utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
 						} else if utils.Confirm(fmt.Sprintf("Do you want to set %s remote origin to %s ?", p.StyledString(), p.RepoUrl), true) {
 							fmt.Println("setting remote origin...")
-							utils.CheckErr(git.GitSetOrigin(p.Path(), p.RepoUrl))
+							utils.CheckErr(git.OriginSet(p.Path(), p.RepoUrl))
 						}
 					}
 					continue Loop
@@ -176,9 +176,9 @@ won't change the exit status of the command.
 					}
 					continue Loop
 				}
-				if git.GitIsRepoRootDir(p.Path()) {
+				if git.IsRepoRootDir(p.Path()) {
 					printCheckHeader(p, fmt.Sprintf("internal project %s is a git repository", p.StyledString()))
-					origin := utils.CheckErrOrReturn(git.GitGetOrigin(p.Path()))
+					origin := utils.CheckErrOrReturn(git.OriginGet(p.Path()))
 					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to set %s as external(%s)?", p.StyledString(), origin), true)) {
 						fmt.Println("setting project as external...")
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
@@ -204,7 +204,7 @@ won't change the exit status of the command.
 			// check githooks path is correctly set
 			if utils.FileExistsNoErr(filepath.Join(monoRoot, app.DfltHooksDir)) {
 				fmt.Printf(utils.Bold(utils.Underline("found %s checking git core.hookspath:\n")), app.DfltHooksDir)
-				hookspath, err := git.GetHooksDir(monoRoot)
+				hookspath, err := git.HooksPathGet(monoRoot)
 				if err == nil {
 					if hookspath == app.DfltHooksDir {
 						fmt.Println(successIndicator + " git core.hookspath set to " + app.DfltHooksDir)

@@ -273,7 +273,7 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 		fmt.Println("Initialize local repository")
 		utils.CheckErr(SpaceInitRepo(project.Name)) // will add gitignore
 	case Internal:
-		utils.CheckErr(git.GitAddGitIgnoreFile())
+		utils.CheckErr(git.AddGitIgnoreFile())
 	case External:
 		fmt.Println("Clone repository")
 		utils.CheckErr(ProjectCloneRepo(project))
@@ -301,7 +301,7 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 func ProjectCloneRepo(project Project) (err error) {
 	err = SpaceAddProjectToGitignore(project.Name)
 	if err == nil {
-		err = git.GitClone(project.RepoUrl, project.Path())
+		err = git.Clone(project.RepoUrl, project.Path())
 	}
 	return
 }

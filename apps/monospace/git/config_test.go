@@ -9,7 +9,7 @@ import (
 func TestConfig(t *testing.T) {
 	// setup
 	tmpdir := t.TempDir()
-	assert.NilError(t, GitInit(tmpdir, false), "Failed to init git repo")
+	assert.NilError(t, Init(tmpdir, false), "Failed to init git repo")
 
 	runStep := func(t *testing.T, name string, fn func(t *testing.T)) {
 		if !t.Run(name, fn) {
@@ -33,10 +33,10 @@ func TestConfig(t *testing.T) {
 
 	runStep(t, "Should be able to get and set hooks dir", func(t *testing.T) {
 		// set
-		err := SetHooksDir(tmpdir, "test/hooks")
+		err := HooksPathSet(tmpdir, "test/hooks")
 		assert.NilError(t, err, "Failed to set hooks dir")
 		// get
-		got, err := GetHooksDir(tmpdir)
+		got, err := HooksPathGet(tmpdir)
 		assert.NilError(t, err, "Failed to get hooks dir")
 		assert.Equal(t, got, "test/hooks", "Hooks dir is not the expected one")
 	})

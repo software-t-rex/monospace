@@ -68,14 +68,14 @@ each of these steps won't overwrite existing files if any`,
 
 		// scaffold monospace
 		fmt.Println("initialize git repository")
-		utils.CheckErr(git.GitInit("./", true))
+		utils.CheckErr(git.Init("./", true))
 
 		fmt.Println("initialize monospace")
 		utils.CheckErr(scaffolders.Monospace())
 
 		// if githooks where installed set git hooks path to .monospace/githooks
 		if utils.FileExistsNoErr(app.DfltHooksDir) {
-			utils.CheckErr(git.SetHooksDir("./", app.DfltHooksDir))
+			utils.CheckErr(git.HooksPathSet("./", app.DfltHooksDir))
 		}
 
 		if noInteractive || utils.Confirm("Do you want to commit changes ?", true) {

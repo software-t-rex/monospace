@@ -78,7 +78,7 @@ monospace externalize packages/osslib git@github.com:user/osslib.git --push --in
 			utils.Exit("you must provide a repo url when using --push")
 		}
 
-		isClean := git.GitIsClean(monoRoot, projectName)
+		isClean := git.IsClean(monoRoot, projectName)
 		if !isClean {
 			if noConfirm {
 				opts.AllowStash = true

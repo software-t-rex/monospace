@@ -85,7 +85,7 @@ func SpaceClone(destDirectory string, repoUrl string) {
 		utils.Exit(err.Error())
 	}
 	fmt.Println(utils.Info("Cloning root repository..."))
-	err = git.GitClone(repoUrl, destDirectory)
+	err = git.Clone(repoUrl, destDirectory)
 	utils.CheckErr(err)
 	fmt.Println(utils.Success("Cloning done."))
 	// move to the monorepo root
@@ -100,7 +100,7 @@ cd ` + destDirectory + ` && monospace init`)
 	// if githooks were installed set git hooks path to .monospace/githooks
 	if utils.FileExistsNoErr(filepath.Join(monospaceRoot, app.DfltHooksDir)) {
 		fmt.Printf(utils.Info("found githooks directory, set git core.hookspath to %s\n"), app.DfltHooksDir)
-		utils.CheckErr(git.SetHooksDir(monospaceRoot, app.DfltHooksDir))
+		utils.CheckErr(git.HooksPathSet(monospaceRoot, app.DfltHooksDir))
 	}
 
 	// read the config file
@@ -136,7 +136,7 @@ func SpaceInitRepo(projectName string) (err error) {
 	if err == nil {
 		projectPath := ProjectGetPath(projectName)
 		hasGitIgnore := utils.FileExistsNoErr(filepath.Join(projectPath, ".gitignore"))
-		err = git.GitInit(projectPath, !hasGitIgnore)
+		err = git.Init(projectPath, !hasGitIgnore)
 	}
 	return
 }

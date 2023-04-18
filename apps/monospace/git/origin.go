@@ -9,7 +9,7 @@ import (
 	"github.com/software-t-rex/monospace/utils"
 )
 
-func GitGetOrigin(directory string) (string, error) {
+func OriginGet(directory string) (string, error) {
 	cmd := exec.Command("git", "-C", directory, "remote", "get-url", "origin")
 	var errMsg bytes.Buffer
 	cmd.Stderr = &errMsg
@@ -22,7 +22,7 @@ func GitGetOrigin(directory string) (string, error) {
 	}
 	return "", err
 }
-func GitHasOrigin(directory string) (bool, error) {
+func HasOrigin(directory string) (bool, error) {
 	cmd := exec.Command("git", "-C", directory, "remote", "show")
 	remotes, err := cmd.Output()
 	if err != nil {
@@ -33,8 +33,8 @@ func GitHasOrigin(directory string) (bool, error) {
 	}
 	return false, nil
 }
-func GitSetOrigin(directory string, origin string) error {
-	has, err := GitHasOrigin(directory)
+func OriginSet(directory string, origin string) error {
+	has, err := HasOrigin(directory)
 	if err != nil {
 		return err
 	}
@@ -44,6 +44,6 @@ func GitSetOrigin(directory string, origin string) error {
 	return gitExec("-C", directory, "remote", "add", "origin", origin)
 }
 
-func GitRemoveOrigin(directory string) error {
+func OriginRemove(directory string) error {
 	return gitExec("-C", directory, "remote", "remove", "origin")
 }
