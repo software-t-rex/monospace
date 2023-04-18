@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/git"
 	"github.com/software-t-rex/monospace/gomodules/scaffolders"
 	"github.com/software-t-rex/monospace/mono"
@@ -71,6 +72,16 @@ each of these steps won't overwrite existing files if any`,
 
 		fmt.Println("initialize monospace")
 		utils.CheckErr(scaffolders.Monospace())
+
+		// if githooks where installed set git hooks path to .monospace/githooks
+		if utils.FileExistsNoErr(app.DfltHooksDir) {
+			utils.CheckErr(git.SetHooksDir("./", app.DfltHooksDir))
+		}
+
+		if noInteractive || utils.Confirm("Do you want to commit changes ?", true) {
+			utils.CheckErr(git.ExecDir("./", "add", "."))
+			utils.CheckErr(git.ExecDir("./", "commit", "-m", "initialize monospace"))
+		}
 
 		fmt.Println(utils.Success("Monospace successfully initialized."))
 		if len(args) == 1 {
