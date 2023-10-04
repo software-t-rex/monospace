@@ -32,6 +32,7 @@ Default output mode to use for run and exec commands.
 It is preferred to use monospace create/import/externalize/remove commands to edit projects settings.
 But it can be sometimes useful to edit it manually, if you know what you are doing.
 It is a Key=value pair object with relative path to projects from the root of your monospace as keys, and associated repositories URL as values.
+It can't be "root" as this is a reserved word for the monospace root project.
 
 The repository URL can take following values:
 - "internal" for projects that use the monospace root repository
@@ -41,6 +42,7 @@ The repository URL can take following values:
 ## aliases (object)
 You should prefer to use the **aliases** command instead of editing manually this setting.
 It is simply a list of aliases as keys associated with relative project path in your monospace.
+The "root" alias can't be defined as it is already pointing to the monospace project.
 
 Aliases can be used when defining tasks in the pipeline, or when filtering projects for various commands.
 

@@ -35,10 +35,10 @@
 				},
 				"projects_aliases": {
 					"title": "monospace.yml: projects_aliases",
-					"description": "Aliases for projects, it allows you to define shorter names to use in commands that point to projects.",
+					"description": "Aliases for projects, it allows you to define shorter names to use in commands that point to projects. (can't be 'root' as it is a reserved alias).",
 					"type": "object",
 					"propertyNames": {
-						"pattern": "^[A-Za-z0-9_-]+$"
+						"pattern": "^(?!root$)[A-Za-z0-9_-]+$"
 					},
 					"patternProperties": {
 						"^[A-Za-z0-9_-]+$": {
@@ -69,13 +69,13 @@
 			"title": "monospace.yml: projects",
 			"type": "object",
 			"propertyNames": {
-				"pattern": "^[A-Za-z0-9./_-]+$"
+				"pattern": "^(?!root$)[A-Za-z0-9./_-]+$"
 			 },
 			 "patternProperties": {
 				"^[A-Za-z0-9./_-]+$": {
 					"type":"string",
 					"default": "internal",
-					"description": "Keys are path to the project in the monospace.\nValues are either:'internal', 'local' or a git repository url ending with .git",
+					"description": "Keys are path to the project in the monospace (can't be 'root' as it is a reserved word).\nValues are either:'internal', 'local' or a git repository url ending with .git",
 					"pattern": "^internal|^local|.git$"
 				}
 			 }

@@ -18,14 +18,14 @@ import (
 )
 
 type MonospaceConfigPipeline struct {
-	DependsOn  []string `yaml:"dependsOn,omitempty,flow"`
-	Env        []string `yaml:"env,omitempty,flow"`
-	Outputs    []string `yaml:"outputs,omitempty"`
-	Inputs     []string `yaml:"inputs,omitempty"`
-	Cache      bool     `yaml:"cache,omitempty"`
-	OutputMode string   `yaml:"output_mode,omitempty"`
-	Persistent bool     `yaml:"persistent,omitempty"`
-	Cmd        []string `yaml:"cmd,omitempty,flow"`
+	DependsOn  []string          `yaml:"dependsOn,omitempty,flow"`
+	Env        map[string]string `yaml:"env,omitempty,flow"`
+	Outputs    []string          `yaml:"outputs,omitempty"`
+	Inputs     []string          `yaml:"inputs,omitempty"`
+	Cache      bool              `yaml:"cache,omitempty"`
+	OutputMode string            `yaml:"output_mode,omitempty"`
+	Persistent bool              `yaml:"persistent,omitempty"`
+	Cmd        []string          `yaml:"cmd,omitempty,flow"`
 }
 type MonospaceConfig struct {
 	GoModPrefix         string                             `yaml:"go_mod_prefix,omitempty"`
@@ -57,6 +57,9 @@ func writeFile(filePath string, body []byte) error {
 
 func (c *MonospaceConfig) GetPath() string {
 	return c.configPath
+}
+func (c *MonospaceConfig) GetDir() string {
+	return filepath.Dir(c.configPath)
 }
 func (c *MonospaceConfig) GetRoot() string {
 	return c.root
@@ -144,6 +147,9 @@ func ConfigAddProjectAlias(projectName string, alias string, save bool) error {
 	config, err := ConfigGet()
 	if err != nil {
 		return err
+	}
+	if alias == "root" {
+		return fmt.Errorf("alias %s is reserved", alias)
 	}
 	aliasOk, err := regexp.MatchString("^[a-zA-Z_][a-zA-Z0-9_-]*(\\/[a-zA-Z_][a-zA-Z0-9_-]*)*$", alias)
 	if !aliasOk {

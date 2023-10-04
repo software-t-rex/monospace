@@ -254,7 +254,7 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 
 	// create dir if not exists
 	if !dirExists {
-		utils.CheckErrWithMsg(os.MkdirAll(project.Path(), 0750), "Error while creating package")
+		utils.CheckErrWithMsg(os.MkdirAll(project.Path(), 0750), "Error while creating project directory")
 	}
 
 	// add to .monopace.yml
