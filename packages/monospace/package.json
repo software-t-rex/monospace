@@ -1,6 +1,6 @@
 {
 	"name": "@t-rex.software/monospace",
-	"version": "0.0.22",
+	"version": "0.0.23",
 	"description": "monospace kinda like monorepo but different",
 	"scripts": {
 		"cleanup": "rm -rf README.md LICENSE manifest installer.js t-rex.software-monospace-${npm_package_version}.tgz",
@@ -27,6 +27,7 @@
 		"./manifest/monospace-remove.1",
 		"./manifest/monospace-rename.1",
 		"./manifest/monospace-run.1",
+		"./manifest/monospace-state.1",
 		"./manifest/monospace-status.1",
 		"./manifest/monospace-version.1",
 		"./manifest/monospace.1"
