@@ -171,7 +171,11 @@ func (s *MonospaceStateList) Restore(name string) {
 	utils.CheckErr(git.CheckoutRev(SpaceGetRoot(), s.States[name][0].Revision))
 	for _, state := range s.States[name][1:] {
 		if !utils.SliceContains(uncleanProjects, state.Project) && !utils.SliceContains(unknownProjects, state.Project) && !utils.SliceContains(notGitProjects, state.Project) {
-			utils.CheckErr(git.CheckoutRev(ProjectGetPath(state.Project), state.Revision))
+			err := git.CheckoutRev(ProjectGetPath(state.Project), state.Revision)
+			if err != nil {
+				utils.PrintWarning(err.Error())
+				utils.PrintWarning("Failed to restore " + state.Project + " to revision " + state.Revision)
+			}
 		}
 	}
 }
