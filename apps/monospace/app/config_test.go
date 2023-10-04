@@ -54,7 +54,7 @@ func TestConfigInitAndSave(t *testing.T) {
 	var testConfig = *sampleConfig
 	configPath := filepath.Join(t.TempDir(), "config.yml")
 	testConfig.configPath = configPath
-	testConfig.root = filepath.Dir(configPath)
+	testConfig.root = filepath.Dir(filepath.Dir(configPath))
 
 	err := ConfigInit(configPath)
 	if err == nil {

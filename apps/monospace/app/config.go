@@ -106,7 +106,7 @@ func ConfigRead(configPath string) (*MonospaceConfig, error) {
 	}
 	err = yaml.Unmarshal(raw, &config)
 	config.configPath = configPath
-	config.root = filepath.Dir(configPath)
+	config.root = filepath.Dir(filepath.Dir(configPath))
 	return config, err
 }
 

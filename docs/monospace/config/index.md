@@ -55,7 +55,7 @@ For js projects you don't need to specify a command, it will call the script wit
 	- you can call script in the project directory by prefixing them with **./**
 	- it's not real shell command but go exec.Command so the same limitations apply, for example you can't use redirection or logical operators. If you need fancy stuff like that you should create a shell script which you will point to in the **cmd** property.
 - the dir .monospace/bin/ will be added to your $PATH. So you can put global executable there and you will be able to run them for each project. (beware that it will be looked up after your already defined $PATH environment variable so if you put a binary with a name that is already accessible in your path, the one in .monospace/bin won't be called)
-- env variables will be replaced, monospace will populate a bunch of them such as:
+- env variables ($Var or ${VAR}) will be replaced, monospace will populate a bunch of them such as:
 	- MONOSPACE_ROOT: absolute path of to your monospace
 	- MONOSPACE_VERSION: the version of your monospace cli
 	- MONOSPACE_JSPM: the value of _js_package_manager_
