@@ -349,9 +349,14 @@ func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobEx
 			job := e.AddJob(jobExecutor.NamedJob{Name: task.Name.String(), Job: taskRunner})
 			taskIds[taskId] = job.Id()
 			jobs[job.Id()] = job
+		} else if task.TaskDef.DependsOn != nil && len(task.TaskDef.DependsOn) > 0 {
+			fmt.Printf(utils.Info("%s#%s is a dummy task, will only executes its dependencies.\n"), task.Name.Project, task.Name.Task)
+			job := e.AddJob(jobExecutor.NamedJob{Name: task.Name.String(), Job: func() (string, error) { return "", nil }})
+			taskIds[taskId] = job.Id()
+			jobs[job.Id()] = job
 		} else {
-			// exit("Don't know what to do for task " + task.Name.String())
-			fmt.Printf(utils.Info("%s: no %s task\n"), task.Name.Project, task.Name.Task)
+			// no cmd and no dependencies
+			exit(task.Name.String() + " task has no cmd, no package.json script or dependencies, provide at least one of those or remove the task from pipeline.")
 		}
 	}
 	// add dependencies
