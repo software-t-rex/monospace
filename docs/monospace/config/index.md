@@ -6,7 +6,7 @@ Filename MUST be monospace.**yml** not .monospace.yaml.
 > This documentation may be late at describing options as the configuration options evolve. Latest options will always be described in [monospace.schema.json](https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json)
 
 ## js_package_manager (string)
-**defaults**: ^pnpm@7.27.0
+**defaults**: ^pnpm@8.8.0
 
 this is used to define you package manager of choice. It will be used when you will want to run tasks against javascript projects.
 the syntax is similar to the packageManager property in package.json files.

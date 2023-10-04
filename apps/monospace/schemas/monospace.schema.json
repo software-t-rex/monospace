@@ -15,7 +15,7 @@
 					"title": "monospace.yml: js_package_manager",
 					"description": "specify the package manager to use in js/ts projects. It use the same syntax as package.json package_manager",
 					"type":"string",
-					"default": "^pnpm@7.27.0"
+					"default": "^pnpm@8.8.0"
 				},
 				"go_mod_prefix": {
 					"title": "monospace.yml: go_mod_prefix",
