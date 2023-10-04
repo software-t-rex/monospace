@@ -60,6 +60,24 @@ func Clone(repoUrl string, destPath string) error {
 	return gitExec("clone", repoUrl, destPath)
 }
 
+func GetRevision(directory string) (string, error) {
+	cmd := exec.Command("git", "-C", directory, "rev-parse", "--short", "HEAD")
+	res, err := cmd.CombinedOutput()
+	return strings.TrimSpace(string(res)), err
+}
+
+func CheckoutRev(directory string, revision string) error {
+	rev, err := GetRevision(directory)
+	if err != nil {
+		return err
+	}
+	if rev == revision {
+		fmt.Println("already on revision", revision)
+		return nil
+	}
+	return ExecDir(directory, "checkout", revision)
+}
+
 // add default .gitignore to current directory
 func AddGitIgnoreFile() error {
 	if utils.FileExistsNoErr(".gitignore") {
