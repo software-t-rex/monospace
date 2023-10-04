@@ -4,9 +4,18 @@ Allow to pin a full monospace state and restore it later
 
 ### Synopsis
 
-The state command allow to pin the state of all projects in the monospace and
-to restore pinned states at a later time. This can be useful when you want to 
-reproduce a particular state of your monospace and to share it with co-workers.
+The state command allow to "pin" the state of all projects in the monospace and
+to "restore" pinned states at a later time. This can be useful when you want to 
+reproduce a particular state of your monospace and share it with co-workers.
+
+Basically this store the current revision of all projects in the monospace.
+This is not a full backup of the monospace as it does not store the content of 
+the projects but only the revision of each project.
+
+When using the "state restore" command, each projects will be checked out to the
+given revision. This will leave your repositories in a detached head state.
+
+Local projects will be ignored and left as is.
 
 This is highly experimental, any feedback will be greatly appreciated!
 
