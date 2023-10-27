@@ -352,11 +352,11 @@ func TestCmd_Suite(t *testing.T) {
 			nil, "no tasks found",
 		})
 		runTC(testCase{
-			"when unfiltered shoud run top level task on all project",
+			"when unfiltered shoud run top level task on all project and root",
 			[]string{"run", "-C", "sayhellofromroot"},
 			icmd.Success,
 			nil,
-			`(?:(?:packages\/(?:mylib|golib|jslib)|modules\/external)#sayhellofromroot\s+succeed.*\s*hello from root[\s\S]*?){4}.*Tasks: ✔ 4 succeed / 4 total`,
+			`(?:(?:packages\/(?:mylib|golib|jslib)|modules\/external|root)#sayhellofromroot\s+succeed.*\s*hello from root[\s\S]*?){5}.*Tasks: ✔ 5 succeed / 5 total`,
 		})
 		runTC(testCase{
 			"when filtered shoud run top level task on selected project only",
