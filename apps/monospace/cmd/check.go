@@ -68,7 +68,7 @@ won't change the exit status of the command.
 		monoRoot := mono.SpaceGetRoot()
 		monoIgnore := filepath.Join(monoRoot, ".gitignore")
 		hasFilter := cmd.Flags().Changed("project-filter")
-		filteredProjects := FlagGetFilteredProjects(cmd, false)
+		filteredProjects := FlagGetFilteredProjects(cmd)
 		interactive := FlagGetBool(cmd, "interactive")
 		successIndicator := utils.Green("✔")
 		failureIndicator := utils.Red("✘")
@@ -226,7 +226,7 @@ won't change the exit status of the command.
 
 func init() {
 	RootCmd.AddCommand(checkCmd)
-	FlagAddProjectFilter(checkCmd)
+	FlagAddProjectFilter(checkCmd, false)
 	checkCmd.Flags().Bool("fix", false, "Try to fix reported anomalies, disable interactive mode")
 	checkCmd.Flags().BoolP("interactive", "i", false, "Prompt for action to take on each reported anomaly")
 }

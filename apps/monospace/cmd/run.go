@@ -37,6 +37,8 @@ A circular dependency check will be performed before the execution starts.`,
   # or more concise
   monospace run -p modules/mymodule,modules/myothermodule test
   monospace run -p modules/mymodule,modules/myothermodule test -- additionalArg=value
+	# run tasks on monospace root only
+	monospace run -p root task
   # get some dependency graph
   monospace run task --graphviz
   # or for the entire pipeline
@@ -75,7 +77,7 @@ A circular dependency check will be performed before the execution starts.`,
 			os.Exit(1)
 		}
 
-		filteredProjects := FlagGetFilteredProjects(cmd, false)
+		filteredProjects := FlagGetFilteredProjects(cmd)
 		// remove additional args from the command and populate additional args as job parameters
 		additionalArgs := splitAdditionalArgs(&args)
 		taskList := tasks.PrepareTaskList(args, filteredProjects)
@@ -124,7 +126,7 @@ A circular dependency check will be performed before the execution starts.`,
 
 func init() {
 	RootCmd.AddCommand(runCmd)
-	FlagAddProjectFilter(runCmd)
+	FlagAddProjectFilter(runCmd, true)
 	FlagAddOutputMode(runCmd)
 	runCmd.Flags().BoolP("graphviz", "g", false, "Open a graph visualisation of the task execution plan instead of executing it")
 }

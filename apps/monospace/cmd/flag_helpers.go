@@ -31,9 +31,14 @@ func FlagGetStringSlice(cmd *cobra.Command, name string) []string {
 	return utils.CheckErrOrReturn(cmd.Flags().GetStringSlice(name))
 }
 
-func FlagAddProjectFilter(cmd *cobra.Command) {
-	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name\nYou can use 'root' for monospace root directory\nUse '\\!' prefix to exclude a project")
+func FlagAddProjectFilter(cmd *cobra.Command, includeRootAsDefault bool) {
+	if !includeRootAsDefault {
+		cmd.Flags().BoolP("include-root", "r", false, "Include 'root' monospace directory in the list of projects\n- Without any filter, 'root' is only appended to projects list\n- Used with --project-filter, 'root' is appended to filters list")
+	}
+	cmd.Flags().StringSliceP("project-filter", "p", []string{}, "Filter projects by name\nThis is like 'whitelisting' project in the list\nYou can use 'root' for monospace root directory")
+	cmd.Flags().StringSliceP("project-filter-out", "P", []string{}, "Filter out by name\nExclude projects from the list (blacklisting)")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter", completeProjectFilter))
+	utils.CheckErr(cmd.RegisterFlagCompletionFunc("project-filter-out", completeProjectFilter))
 }
 
 //	func FlagAddPersistentProjectFilter(cmd *cobra.Command) {
@@ -93,9 +98,25 @@ func GetFilteredProjects(projects []mono.Project, filters []string, includeRoot 
 	}
 	return projects
 }
-func FlagGetFilteredProjects(cmd *cobra.Command, includeRoot bool) []mono.Project {
+func FlagGetFilteredProjects(cmd *cobra.Command) []mono.Project {
 	projects := mono.ProjectsGetAll()
 	filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
+	filtersOut := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter-out"))
+	includeRoot := false
+	if cmd.Flags().Lookup("include-root") == nil {
+		includeRoot = true
+	} else if FlagGetBool(cmd, "include-root") {
+		if len(filters) > 0 {
+			if !utils.SliceContains(filters, "root") {
+				filters = append(filters, "root")
+			}
+		} else {
+			includeRoot = true
+		}
+	}
+	for _, f := range filtersOut {
+		filters = append(filters, "!"+f)
+	}
 	return GetFilteredProjects(projects, filters, includeRoot)
 }
 

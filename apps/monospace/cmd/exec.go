@@ -47,7 +47,7 @@ You can restrict the command to one or more projects using flag --project-filter
 			cmdArgs = append([]string{"-c", "color.ui=always"}, cmdArgs...)
 		}
 
-		projects := FlagGetFilteredProjects(cmd, false)
+		projects := FlagGetFilteredProjects(cmd)
 
 		executor := tasks.NewExecutor(outputMode)
 		for _, p := range projects {
@@ -67,7 +67,7 @@ You can restrict the command to one or more projects using flag --project-filter
 
 func init() {
 	RootCmd.AddCommand(execCmd)
-	FlagAddProjectFilter(execCmd)
+	FlagAddProjectFilter(execCmd, false)
 	FlagAddOutputMode(execCmd)
 
 }
