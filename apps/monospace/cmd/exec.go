@@ -58,7 +58,7 @@ You can restrict the command to one or more projects using flag --project-filter
 			case "interleaved":
 				executor.AddNamedJobCmd(project.Name, cmd)
 			default:
-				executor.AddNamedJobCmd(fmt.Sprintf("%s: %s", utils.Bold(project.Name), strings.Join(args, " ")), cmd)
+				executor.AddNamedJobCmd(fmt.Sprintf("%s: %s", project.StyledString(), strings.Join(args, " ")), cmd)
 			}
 		}
 		executor.Execute()

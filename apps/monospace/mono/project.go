@@ -52,6 +52,7 @@ type Project struct {
 }
 
 var styles = map[ProjectKind](func(s ...string) string){
+	Root:     utils.Yellow,
 	Internal: utils.Green,
 	External: utils.Blue,
 	Local:    utils.Red,
@@ -62,9 +63,6 @@ func (p Project) String() string {
 }
 func (p Project) StyledString() string {
 	kind := p.Kind
-	if kind == Root {
-		kind = 0
-	}
 	return styles[kind](p.Name)
 }
 

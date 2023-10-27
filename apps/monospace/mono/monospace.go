@@ -32,9 +32,8 @@ func SpaceGetRootNoCache() string {
 func SpaceGetRootForPath(absPath string) string {
 	absPath = filepath.ToSlash(absPath)
 
-	// @todo check this work on windows before release to public
 	for absPath != "" && absPath != "." {
-		if utils.FileExistsNoErr(filepath.Join(absPath, "/", app.DfltcfgFilePath)) {
+		if utils.FileExistsNoErr(filepath.Join(absPath, app.DfltcfgFilePath)) {
 			return absPath
 		}
 		// go up one dir

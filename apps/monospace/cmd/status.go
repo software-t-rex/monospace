@@ -45,22 +45,22 @@ You can pass args to git status by separating them with double hyphen '--'`,
 		}
 
 		isShort := utils.SliceContains(args, "--short") || utils.SliceContains(args, "--porcelain")
-		nameStyle := colors.Style(colors.Bold)
+		nameStyle := utils.Bold
 		projects := mono.ProjectsGetAll()
 		internals := []string{}
 		executor := jobExecutor.NewExecutor().WithProgressBarOutput(
-			10, false, string(colors.BgBlack)+string(colors.BrightGreen),
+			10, false, string(colors.BgBlack+colors.BrightGreen),
 		)
-		executor.AddNamedJobCmd("root", getStatusCommand("", args))
+		executor.AddNamedJobCmd(mono.RootProject.StyledString(), getStatusCommand("", args))
 		for _, p := range projects {
 			project := p
 			if p.Kind == mono.Internal {
 				if !isShort {
-					internals = append(internals, p.Name)
+					internals = append(internals, p.StyledString())
 				}
 				continue
 			}
-			executor.AddNamedJobCmd(project.Name, getStatusCommand(project.Path(), args))
+			executor.AddNamedJobCmd(project.StyledString(), getStatusCommand(project.Path(), args))
 		}
 
 		executor.OnJobsDone(func(jobs jobExecutor.JobList) {
