@@ -18,11 +18,13 @@ projects_aliases:
     npmpkg: packages/monospace
     packageJson: gomodules/packageJson
 pipeline:
-    executor#diforigins:
+    root#difforigin:
+        cmd: [git, diff, --name-only, origin/main]
+    executor#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     executor#test:
         cmd: [test.sh]
-    jspm#diforigins:
+    jspm#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     jspm#test:
         dependsOn: [packageJson#test]
@@ -34,7 +36,7 @@ pipeline:
     monospace#buildnext:
         cmd: [goreleaser, build, --config, ./.goreleaser-next.yaml, --id, monospace-next, --snapshot, --clean, --single-target]
         output_mode: interleaved
-    monospace#diforigins:
+    monospace#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     monospace#doc:
         cmd: [./gendoc.sh, -md, -man]
@@ -45,9 +47,10 @@ pipeline:
     npmpkg#build: {}
     npmpkg#cleanup: {}
     npmpkg#update-package-json: {}
-    packageJson#diforigins:
+    packageJson#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     packageJson#test:
         cmd: [test.sh]
     tidy:
-        cmd: [go, mod, tidy]
+        cmd: [/bin/bash, -c, "[ -f go.mod ] && go mod tidy || echo 'no go.mod file => skipped'"]
+        output_mode: grouped

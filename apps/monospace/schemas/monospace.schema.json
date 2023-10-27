@@ -35,7 +35,7 @@
 				},
 				"projects_aliases": {
 					"title": "monospace.yml: projects_aliases",
-					"description": "Aliases for projects, it allows you to define shorter names to use in commands that point to projects. (can't be 'root' as it is a reserved alias).",
+					"description": "Aliases for projects, it allows you to define shorter names to use in commands that point to projects. (can't be 'root' as it is a reserved alias)",
 					"type": "object",
 					"propertyNames": {
 						"pattern": "^(?!root$)[A-Za-z0-9_-]+$"
@@ -50,7 +50,7 @@
 				},
 				"pipeline": {
 					"title": "monospace.yml: pipeline",
-					"description": "An object representing the task dependency graph of your monospace.",
+					"description": "An object representing the task dependency graph of your monospace",
 					"type": "object",
 					"additionalProperties": {
 						"$ref": "#/definitions/TaskSchema",
@@ -87,7 +87,7 @@
 			"properties": {
 				"cmd" :{
 					"title": "monospace.yml: pipeline[task].cmd",
-					"description": "By default task will be looked up in the package.json script properties.\nYou can override this behavior by providing the command to execute. It must be an array of string ie: [\"ls\", \"-l\"].\nThis can also be useful for projects that don't have a package.json at all",
+					"description": "By default task will be looked up in the package.json script properties.\nYou can override this behavior by providing the command to execute. It must be an array of string ie: [ls, -l].\nThis can also be useful for projects that don't have a package.json at all.\n----\nℹ: This is not a shell command, so you can't use shell features like pipes, redirections, etc...\nEither use an external script for this or something like [/bin/sh, -c, \"command1 && command2\"]",
 					"type": "array",
 					"items": {"type":"string"},
 					"default":[]
@@ -103,7 +103,7 @@
 				},
 				"persistent": {
 					"title": "monospace.yml: pipeline[task].persistent",
-					"description": "Persistent tasks are long-running process such as server, or watchers that will not exit unless manually stopped.\nIt is important to mark such tasks as persistent, doing so monospace will prevent other tasks to depend on them and will inform you of configuration problem when running in check mode.",
+					"description": "Persistent tasks are long-running process such as server, or watchers that will not exit unless manually stopped.\nIt is important to mark such tasks as persistent, doing so monospace will prevent other tasks to depend on them and will inform you of configuration problem when running in check mode",
 					"type": "boolean",
 					"default": false
 				},
