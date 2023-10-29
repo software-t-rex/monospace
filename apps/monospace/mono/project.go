@@ -84,7 +84,7 @@ func ProjectIsValidName(name string) bool {
 		return false
 	}
 	// check if the project name is containing only letters, numbers, underscores, slashes and hyphens
-	match, _ := regexp.MatchString("^[a-zA-Z_][a-zA-Z0-9_-]*(\\/[a-zA-Z_][a-zA-Z0-9_-]*)*$", name)
+	match, _ := regexp.MatchString("^[a-zA-Z_][a-zA-Z0-9_.-]*(\\/[a-zA-Z_][a-zA-Z0-9_.-]*)*$", name)
 	return match
 }
 
