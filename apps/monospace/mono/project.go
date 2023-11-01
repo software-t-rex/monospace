@@ -35,6 +35,9 @@ const (
 )
 
 func (p ProjectKind) String() string {
+	if p == -1 {
+		return "root"
+	}
 	return [...]string{"local", "internal", "external"}[p]
 }
 func (p ProjectKind) EnumIndex() int {

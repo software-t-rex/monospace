@@ -35,6 +35,7 @@ You can restrict the command to one or more projects using flag --project-filter
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
+		app.PopulateEnv(nil)
 		config := utils.CheckErrOrReturn(app.ConfigGet())
 		cmdBin := args[0]
 		cmdArgs := args[1:]
@@ -52,6 +53,9 @@ You can restrict the command to one or more projects using flag --project-filter
 		executor := tasks.NewExecutor(outputMode)
 		for _, p := range projects {
 			project := p
+			os.Setenv("MONOSPACE_PROJECT_KIND", project.Kind.String())
+			os.Setenv("MONOSPACE_PROJECT_NAME", project.Name)
+			os.Setenv("MONOSPACE_PROJECT_PATH", project.Path())
 			cmd := exec.Command(cmdBin, cmdArgs...)
 			cmd.Dir = project.Path()
 			switch outputMode {
