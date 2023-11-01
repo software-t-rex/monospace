@@ -47,7 +47,7 @@ func (p ProjectKind) EnumIndex() int {
 type Project struct {
 	// Name is relative path of the project in the monospace
 	Name string
-	// can be either empty "", "detached" or a git repository url
+	// can be either empty "", "detached" or a git repository url (can it still be detached ?)
 	RepoUrl string
 	// wether the projet is managed by the monospace repository or not
 	Kind ProjectKind
@@ -72,6 +72,17 @@ func (p Project) StyledString() string {
 func (p Project) Path() string {
 	return ProjectGetPath(p.Name)
 }
+
+func (p Project) IsGit() bool {
+	if p.IsInternal() || p.RepoUrl == "" {
+		return false
+	}
+	return git.IsRepoRootDir(p.Path())
+}
+func (p Project) IsRoot() bool     { return p.Kind == Root }
+func (p Project) IsInternal() bool { return p.Kind == Internal }
+func (p Project) IsExternal() bool { return p.Kind == External }
+func (p Project) IsLocal() bool    { return p.Kind == Local }
 
 func getProjectsMap() (map[string]string, error) {
 	config, err := app.ConfigGet()
