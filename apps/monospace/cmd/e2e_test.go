@@ -43,7 +43,7 @@ var unSkipedSteps []string = []string{
 	"exec",        // require run and all steps required by run
 	"check",       // require create, import and rename
 	"externalize", // no deps
-	// "status",
+	"status",
 }
 
 func skipOrContinue(t *testing.T, stepName string) {
@@ -444,6 +444,13 @@ func TestCmd_Suite(t *testing.T) {
 			`(?:(?:packages\/(?:mylib|golib|jslib)|modules\/external): echo ok\s+succeed.*\s*ok[\s\S]*?){4}.*Tasks: ✔ 4 succeed / 4 total`,
 		})
 		runTC(testCase{
+			"with --include-root shoud call command on root too",
+			[]string{"exec", "-C", "--include-root", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:(?:packages\/(?:mylib|golib|jslib)|modules\/external|root): echo ok\s+succeed.*\s*ok[\s\S]*?){5}.*Tasks: ✔ 5 succeed / 5 total`,
+		})
+		runTC(testCase{
 			"with root filter only shoud call command on root only",
 			[]string{"exec", "-C", "ls", "-p", "root"},
 			icmd.Success,
@@ -457,6 +464,78 @@ func TestCmd_Suite(t *testing.T) {
 			nil,
 			`(?:(?:packages/mylib|root): echo ok with args succeed.*\s+ok with args[\s\S]+){2}Tasks: ✔ 2 succeed / 2 total`,
 		})
+		runTC(testCase{
+			"with --git shoud call command on git projects only (no root)",
+			[]string{"exec", "-C", "--git", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:modules\/external: echo ok\s+succeed.*\s*ok[\s\S]*?){1}.*Tasks: ✔ 1 succeed / 1 total`,
+		})
+		runTC(testCase{
+			"with --git --include-root shoud call command on git projects only (with root)",
+			[]string{"exec", "-C", "--git", "-r", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:(?:root|modules\/external): echo ok\s+succeed.*\s*ok[\s\S]*?){2}.*Tasks: ✔ 2 succeed / 2 total`,
+		})
+		runTC(testCase{
+			"with --external shoud call command on external projects only",
+			[]string{"exec", "-C", "--external", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:modules\/external: echo ok\s+succeed.*\s*ok[\s\S]*?){1}.*Tasks: ✔ 1 succeed / 1 total`,
+		})
+		runTC(testCase{
+			"with --internal shoud call command on internal projects only",
+			[]string{"exec", "-C", "--internal", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:(?:packages\/(?:mylib|golib|jslib)): echo ok\s+succeed.*\s*ok[\s\S]*?){3}.*Tasks: ✔ 3 succeed / 3 total`,
+		})
+		// Add a local project (setup for next test case)
+		runTC(testCase{
+			"should be able to add local project",
+			[]string{"create", "local", "modules/local"},
+			icmd.Success,
+			hasDir("modules", true, hasDir("local", true)),
+			"",
+		})
+		runTC(testCase{
+			"with --local shoud call command on local projects only",
+			[]string{"exec", "-C", "--local", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:modules\/local: echo ok\s+succeed.*\s*ok[\s\S]*?){1}.*Tasks: ✔ 1 succeed / 1 total`,
+		})
+		runTC(testCase{
+			"with --local --external shoud call command on local and external projects only",
+			[]string{"exec", "-C", "--local", "--external", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:(?:modules\/local|modules\/external): echo ok\s+succeed.*\s*ok[\s\S]*?){2}.*Tasks: ✔ 2 succeed / 2 total`,
+		})
+		runTC(testCase{
+			"with --local --internal shoud call command on local and internal projects only",
+			[]string{"exec", "-C", "--local", "--internal", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:(?:modules\/local|packages\/(?:mylib|golib|jslib)): echo ok\s+succeed.*\s*ok[\s\S]*?){4}.*Tasks: ✔ 4 succeed / 4 total`,
+		})
+		runTC(testCase{
+			"with --external --internal shoud call command on external and internal projects only",
+			[]string{"exec", "-C", "--external", "--internal", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:(?:modules\/external|packages\/(?:mylib|golib|jslib)): echo ok\s+succeed.*\s*ok[\s\S]*?){4}.*Tasks: ✔ 4 succeed / 4 total`,
+		})
+		runTC(testCase{
+			"with --include-root --local --external --internal --git shoud call command only on git projects (with root)",
+			[]string{"exec", "-C", "--include-root", "--local", "--external", "--internal", "--git", "echo", "ok"},
+			icmd.Success,
+			nil,
+			`(?:(?:root|modules\/(?:loc|extern)al): echo ok\s+succeed.*\s*ok[\s\S]*?){3}.*Tasks: ✔ 3 succeed / 3 total`,
+		})
+
 	})
 
 	runStep(t, "check local projects", func(t *testing.T) {
