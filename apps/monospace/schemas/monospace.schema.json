@@ -1,131 +1,131 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"$id": "https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json",
-	"title": "monospace.yml",
-	"$ref": "#/definitions/RootSchema",
-	"definitions": {
-		"RootSchema": {
-			"type": "object",
-			"properties": {
-				"$schema": {
-					"type": "string",
-					"default": "https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json"
-				},
-				"js_package_manager": {
-					"title": "monospace.yml: js_package_manager",
-					"description": "specify the package manager to use in js/ts projects. It use the same syntax as package.json package_manager",
-					"type":"string",
-					"default": "^pnpm@8.8.0"
-				},
-				"go_mod_prefix": {
-					"title": "monospace.yml: go_mod_prefix",
-					"description": "Default namespace to use for your go modules",
-					"type":"string",
-					"default": "example.com"
-				},
-				"preferred_output_mode": {
-					"title": "monospace.yml: preferred_output_mode",
-					"$ref": "#/definitions/output_mode"
-				},
-				"projects": {
-					"title": "monospace.yml: projects",
-					"description": "Key value pair where keys are path to the project in the monospace and values are either: 'internal', 'local', or a git repo url",
-					"type": "object",
-					"$ref": "#/definitions/ProjectSchema"
-				},
-				"projects_aliases": {
-					"title": "monospace.yml: projects_aliases",
-					"description": "Aliases for projects, it allows you to define shorter names to use in commands that point to projects. (can't be 'root' as it is a reserved alias)",
-					"type": "object",
-					"propertyNames": {
-						"pattern": "^(?!root$)[A-Za-z0-9_-]+$"
-					},
-					"patternProperties": {
-						"^[A-Za-z0-9_-]+$": {
-							"description": "This must be the name of a project defined in projects",
-							"type":"string",
-							"pattern": "^[A-Za-z0-9./_-]+$"
-						}
-					}
-				},
-				"pipeline": {
-					"title": "monospace.yml: pipeline",
-					"description": "An object representing the task dependency graph of your monospace",
-					"type": "object",
-					"additionalProperties": {
-						"$ref": "#/definitions/TaskSchema",
-						"description": "Name of a task that can be executed by monospace run.\nIt can be prefixed by a project name or alias and a '#' to make the task specific for that project, ie: myproject#taskToRun"
-					},
-					"default": {}
-				}
-			},
-			"additionalProperties": false,
-			"required": [
-				"projects"
-			]
-		},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json",
+  "title": "monospace.yml",
+  "$ref": "#/definitions/RootSchema",
+  "definitions": {
+    "RootSchema": {
+      "type": "object",
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "default": "https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json"
+        },
+        "js_package_manager": {
+          "title": "monospace.yml: js_package_manager",
+          "description": "specify the package manager to use in js/ts projects. It use the same syntax as package.json package_manager",
+          "type":"string",
+          "default": "^pnpm@8.8.0"
+        },
+        "go_mod_prefix": {
+          "title": "monospace.yml: go_mod_prefix",
+          "description": "Default namespace to use for your go modules",
+          "type":"string",
+          "default": "example.com"
+        },
+        "preferred_output_mode": {
+          "title": "monospace.yml: preferred_output_mode",
+          "$ref": "#/definitions/output_mode"
+        },
+        "projects": {
+          "title": "monospace.yml: projects",
+          "description": "Key value pair where keys are path to the project in the monospace and values are either: 'internal', 'local', or a git repo url",
+          "type": "object",
+          "$ref": "#/definitions/ProjectSchema"
+        },
+        "projects_aliases": {
+          "title": "monospace.yml: projects_aliases",
+          "description": "Aliases for projects, it allows you to define shorter names to use in commands that point to projects. (can't be 'root' as it is a reserved alias)",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(?!root$)[A-Za-z0-9_-]+$"
+          },
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+$": {
+              "description": "This must be the name of a project defined in projects",
+              "type":"string",
+              "pattern": "^[A-Za-z0-9./_-]+$"
+            }
+          }
+        },
+        "pipeline": {
+          "title": "monospace.yml: pipeline",
+          "description": "An object representing the task dependency graph of your monospace",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/TaskSchema",
+            "description": "Name of a task that can be executed by monospace run.\nIt can be prefixed by a project name or alias and a '#' to make the task specific for that project, ie: myproject#taskToRun"
+          },
+          "default": {}
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "projects"
+      ]
+    },
 
-		"ProjectSchema": {
-			"title": "monospace.yml: projects",
-			"type": "object",
-			"propertyNames": {
-				"pattern": "^(?!root$)[A-Za-z0-9./_-]+$"
-			 },
-			 "patternProperties": {
-				"^[A-Za-z0-9./_-]+$": {
-					"type":"string",
-					"default": "internal",
-					"description": "Keys are path to the project in the monospace (can't be 'root' as it is a reserved word).\nValues are either:'internal', 'local' or a git repository url ending with .git",
-					"pattern": "^internal|^local|.git$"
-				}
-			 }
-		},
+    "ProjectSchema": {
+      "title": "monospace.yml: projects",
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(?!root$)[A-Za-z0-9./_-]+$"
+       },
+       "patternProperties": {
+        "^[A-Za-z0-9./_-]+$": {
+          "type":"string",
+          "default": "internal",
+          "description": "Keys are path to the project in the monospace (can't be 'root' as it is a reserved word).\nValues are either:'internal', 'local' or a git repository url ending with .git",
+          "pattern": "^internal|^local|.git$"
+        }
+       }
+    },
 
-		"TaskSchema": {
-			"title": "monospace.yml: pipeline[task]",
-			"type": "object",
-			"properties": {
-				"cmd" :{
-					"title": "monospace.yml: pipeline[task].cmd",
-					"description": "By default task will be looked up in the package.json script properties.\nYou can override this behavior by providing the command to execute. It must be an array of string ie: [ls, -l].\nThis can also be useful for projects that don't have a package.json at all.\n----\nℹ: This is not a shell command, so you can't use shell features like pipes, redirections, etc...\nEither use an external script for this or something like [/bin/sh, -c, \"command1 && command2\"]",
-					"type": "array",
-					"items": {"type":"string"},
-					"default":[]
-				},
-				"dependsOn": {
-					"title": "monospace.yml: pipeline[task].dependsOn",
-					"description": "The list of tasks that this task depends on.\nIt can be the name of a task for the same project (ie: myOtherTask)\nor you can also point to other projects tasks like this 'packages/projectName#taskName'",
-					"type": "array",
-					"items": {
-						"type": "string"
-					},
-					"default": []
-				},
-				"persistent": {
-					"title": "monospace.yml: pipeline[task].persistent",
-					"description": "Persistent tasks are long-running process such as server, or watchers that will not exit unless manually stopped.\nIt is important to mark such tasks as persistent, doing so monospace will prevent other tasks to depend on them and will inform you of configuration problem when running in check mode",
-					"type": "boolean",
-					"default": false
-				},
-				"output_mode": {
-					"title": "monospace.yml: pipeline[task].output_mode",
-					"$ref": "#/definitions/output_mode"
-				}
-			},
-			"additionalProperties": false
-		},
-		"output_mode": {
-			"description": "Default output mode to use for run and exec commands.\n\n- none: no output from tasks\n- interleaved: print prefixed output from tasks as they arrive\n- grouped: print combined output of tasks as they complete.\n- status-only: display running status summary\n- errors-only: is like interleaved output but displaying only what comes on stderr\n\nDefaults:\n- preferred_output_mode: grouped\n- pipeline[task].output_mode: inherits from preferred_output_mode",
-			"type":"string",
-			"enum": [
-				"grouped",
-				"interleaved",
-				"errors-only",
-				"status-only",
-				"none"
-			],
-			"default": "grouped"
-		}
+    "TaskSchema": {
+      "title": "monospace.yml: pipeline[task]",
+      "type": "object",
+      "properties": {
+        "cmd" :{
+          "title": "monospace.yml: pipeline[task].cmd",
+          "description": "By default task will be looked up in the package.json script properties.\nYou can override this behavior by providing the command to execute. It must be an array of string ie: [ls, -l].\nThis can also be useful for projects that don't have a package.json at all.\n----\nℹ: This is not a shell command, so you can't use shell features like pipes, redirections, etc...\nEither use an external script for this or something like [/bin/sh, -c, \"command1 && command2\"]",
+          "type": "array",
+          "items": {"type":"string"},
+          "default":[]
+        },
+        "dependsOn": {
+          "title": "monospace.yml: pipeline[task].dependsOn",
+          "description": "The list of tasks that this task depends on.\nIt can be the name of a task for the same project (ie: myOtherTask)\nor you can also point to other projects tasks like this 'packages/projectName#taskName'",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "persistent": {
+          "title": "monospace.yml: pipeline[task].persistent",
+          "description": "Persistent tasks are long-running process such as server, or watchers that will not exit unless manually stopped.\nIt is important to mark such tasks as persistent, doing so monospace will prevent other tasks to depend on them and will inform you of configuration problem when running in check mode",
+          "type": "boolean",
+          "default": false
+        },
+        "output_mode": {
+          "title": "monospace.yml: pipeline[task].output_mode",
+          "$ref": "#/definitions/output_mode"
+        }
+      },
+      "additionalProperties": false
+    },
 
-	}
+    "output_mode": {
+      "description": "Default output mode to use for run and exec commands.\n\n- none: no output from tasks\n- interleaved: print prefixed output from tasks as they arrive\n- grouped: print combined output of tasks as they complete.\n- status-only: display running status summary\n- errors-only: is like interleaved output but displaying only what comes on stderr\n\nDefaults:\n- preferred_output_mode: grouped\n- pipeline[task].output_mode: inherits from preferred_output_mode",
+      "type":"string",
+      "enum": [
+        "grouped",
+        "interleaved",
+        "errors-only",
+        "status-only",
+        "none"
+      ],
+      "default": "grouped"
+    }
+  }
 }
