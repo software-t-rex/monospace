@@ -106,5 +106,7 @@ Default package manager is pnpm 7, for now this is the only one tested but it sh
 monospace .npmrc will contains the following default settings
 - auto-install-peers=true
 - resolve-peers-from-workspace-root=true
+- shared-workspace-lockfile=false
+- save-workspace-protocol=rolling
 
 If you think that this is not a good default feel free to contact us and explain why you think we should use other defaults. I'm always prone to change my mind about such decisions when there's good reasons to do so.

@@ -45,7 +45,7 @@ func Monospace() error {
 
 	// check for npmRc or create it
 	if !fileExistsNoErr(".npmrc") {
-		fmt.Printf("create .npmrc\n")
+		fmt.Printf("create .npmrc with recommanded settings\n")
 		err = writeTemplateFile("monospace/npmrc", ".npmrc", nil)
 		if err != nil {
 			return err
