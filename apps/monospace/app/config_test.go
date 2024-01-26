@@ -30,7 +30,7 @@ func TestConfig(t *testing.T) {
 
 	config := &MonospaceConfig{}
 	configSet(config)
-	if !(config.JSPM == dfltJSPM && config.GoModPrefix == dfltGoModPrfx) {
+	if !(config.JSPM == DfltJSPM && config.GoModPrefix == DfltGoModPrfx) {
 		t.Errorf("ConfigSet(): doesn't set default values correctly")
 	}
 

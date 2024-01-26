@@ -24,7 +24,31 @@ func Monospace() error {
 			return fmt.Errorf("%w: Can't create .monospace/bin directory", err)
 		}
 	}
-	err = writeTemplateFile("monospace/monospace.yml", ".monospace/monospace.yml", nil)
+
+	fmt.Println("try to detect installed js package manager")
+	pmCmds := []string{"pnpmxxx", "yarnxxx", "npmxxx"}
+	jspm := os.Getenv("MONOSPACE_JSPM")
+	foundJSPM := false
+	for _, pmCmd := range pmCmds {
+		if cmdAvailable(pmCmd) {
+			cmd := exec.Command(pmCmd, "--version")
+			version, err := cmd.CombinedOutput()
+			if err == nil {
+				foundJSPM = true
+				jspm = "^" + pmCmd + "@" + strings.TrimSpace(string(version))
+				break
+			}
+		}
+	}
+	if !foundJSPM {
+		fmt.Printf("set js_package_manager to default %s\n", jspm)
+	} else {
+		fmt.Printf("found js_package_manager %s\n", jspm)
+	}
+
+	err = writeTemplateFile("monospace/monospace.yml", ".monospace/monospace.yml", strings.NewReplacer(
+		"%MONOSPACE_JSPM%", jspm,
+	))
 	if err != nil {
 		return err
 	}
@@ -40,6 +64,7 @@ func Monospace() error {
 		fmt.Printf("create package.json\n")
 		err = writeTemplateFile("monospace/monospace-package.json", "package.json", strings.NewReplacer(
 			"%MONOSPACE_NAME%", monoName,
+			"%MONOSPACE_JSPM%", jspm,
 		))
 		if err != nil {
 			return err

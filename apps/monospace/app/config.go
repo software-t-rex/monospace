@@ -74,13 +74,13 @@ func configSet(config *MonospaceConfig) {
 	}
 	c := config
 	if c.GoModPrefix == "" {
-		c.GoModPrefix = dfltGoModPrfx
+		c.GoModPrefix = DfltGoModPrfx
 	}
 	if c.JSPM == "" {
-		c.JSPM = dfltJSPM
+		c.JSPM = DfltJSPM
 	}
 	if c.PreferredOutputMode == "" {
-		c.PreferredOutputMode = dfltPreferredOutputMode
+		c.PreferredOutputMode = DfltPreferredOutputMode
 	}
 	appConfig = config
 }

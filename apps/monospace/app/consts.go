@@ -2,9 +2,9 @@ package app
 
 import "path/filepath"
 
-const dfltJSPM string = "^pnpm@8.14.3"
-const dfltGoModPrfx string = "example.com"
-const dfltPreferredOutputMode string = "grouped"
+const DfltJSPM string = "^pnpm@8.14.3"
+const DfltGoModPrfx string = "example.com"
+const DfltPreferredOutputMode string = "grouped"
 
 var DfltcfgFilePath string = filepath.Join(".monospace", "monospace.yml")
 var DfltHooksDir string = filepath.Join(".monospace", "githooks")

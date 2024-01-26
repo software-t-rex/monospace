@@ -66,6 +66,11 @@ each of these steps won't overwrite existing files if any`,
 			utils.CheckErr(os.Chdir(args[0]))
 		}
 
+		// set some env vars
+		utils.CheckErr(os.Setenv("MONOSPACE_JSPM", app.DfltJSPM))
+		utils.CheckErr(os.Setenv("MONOSPACE_VERSION", app.Version))
+		utils.CheckErr(os.Setenv("MONOSPACE_ROOT", utils.CheckErrOrReturn(os.Getwd())))
+
 		// scaffold monospace
 		fmt.Println("initialize git repository")
 		utils.CheckErr(git.Init("./", true))
