@@ -20,8 +20,8 @@ github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTE
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/software-t-rex/go-jobExecutor/v2 v2.1.2 h1:HGmJs8c/kDvw2KbJM4U0VoelRdDAJDy6jfzdftkYKrQ=
 github.com/software-t-rex/go-jobExecutor/v2 v2.1.2/go.mod h1:NQ4D7iJ/2b7NxcC2vn5sTVdRFazb6vILjfUqICPAaV8=
-github.com/software-t-rex/js-packagemanager v0.0.4 h1:hwqMiu2gCDs+WqhwG81bY0sUR/c8F4GJ9rsxVQXD1pE=
-github.com/software-t-rex/js-packagemanager v0.0.4/go.mod h1:jzlvLQH1tWyVdLn4+fvkY8BKWkZ5QOHwnro1UAIdE24=
+github.com/software-t-rex/js-packagemanager v0.0.5 h1:XgqCdiNpCN3LyW5pCuQyRNqwSoDG/UuMgHATkmu3ssI=
+github.com/software-t-rex/js-packagemanager v0.0.5/go.mod h1:jzlvLQH1tWyVdLn4+fvkY8BKWkZ5QOHwnro1UAIdE24=
 github.com/software-t-rex/packageJson v0.0.3 h1:toST4bZyaQsJka1y2ZirPLL3ogav6FRPxaAkQNTo4/4=
 github.com/software-t-rex/packageJson v0.0.3/go.mod h1:xZCOf76hxaSxRDwHmDqfjqaMsYNgSu0UKjqrsyf3E7g=
 github.com/spf13/cobra v1.6.1 h1:o94oiPyS4KD1mPy2fmcYYHHfCxLqYjJOhGsCHFZtEzA=

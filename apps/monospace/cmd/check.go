@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
+	jspm "github.com/software-t-rex/js-packagemanager"
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/git"
 	"github.com/software-t-rex/monospace/mono"
@@ -61,6 +63,10 @@ There's no fix available on pipeline errors
 - if a .monospace/githooks dir exists check git core.hooksPath is set to it
 There's no fix available on githooks path errors only a warning message, it
 won't change the exit status of the command.
+
+## Check js_package_manager (skipped if --project-filter is used)
+- check package manager version match the one installed: fixed by updating config
+won't change the exit status of the command.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
@@ -72,6 +78,7 @@ won't change the exit status of the command.
 		interactive := FlagGetBool(cmd, "interactive")
 		successIndicator := utils.Green("✔")
 		failureIndicator := utils.Red("✘")
+		unknwonIndicator := utils.Yellow("�")
 		fix := FlagGetBool(cmd, "fix")
 		exitStatus := 0
 
@@ -83,13 +90,56 @@ won't change the exit status of the command.
 			exitStatus = 1
 			fmt.Printf(utils.Bold("%s %s\n"), failureIndicator, p.StyledString())
 			utils.PrintWarning(warningMsg...)
-
 		}
+
 		setInternal := func(p mono.Project) {
 			fmt.Println("setting project as internal...")
 			utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, "internal", true))
 			utils.CheckErr(utils.FileRemoveLine(monoIgnore, p.Name))
 		}
+
+		// check package manager version
+		checkJSPMVersion := func() error {
+			fmt.Println(utils.Bold(utils.Underline("checking js_package_manager config:")))
+			var pm *jspm.PackageManager
+			var err error
+			var version string
+			var updateVersion bool
+			config := utils.CheckErrOrReturn(app.ConfigGet())
+			pm, err = jspm.GetPackageManagerFromString(config.JSPM)
+			if err != nil {
+				fmt.Println(failureIndicator + " " + utils.Warning(err.Error()))
+				return err
+			}
+			version, err = pm.GetVersion()
+			if err != nil {
+				fmt.Println(failureIndicator + " " + utils.Warning(err.Error()))
+				return err
+			}
+			if version == "" {
+				fmt.Println(unknwonIndicator + " " + utils.Warning("unable to get installed package manager version"))
+				return nil
+			}
+			if strings.HasSuffix(config.JSPM, version) {
+				fmt.Println(successIndicator + " " + utils.Success(pm.Slug+" at version "+version))
+				return nil
+			}
+			versionConfig := "^" + pm.Slug + "@" + version
+			if fix {
+				updateVersion = true
+			} else if interactive && utils.Confirm(fmt.Sprintf("Do you want to update js_package_manager config from %s to %s ?", config.JSPM, versionConfig), true) {
+				updateVersion = true
+			}
+			if !updateVersion {
+				fmt.Printf(failureIndicator+" "+utils.Warning("js_package_manager config (%s) is not up to date with installed version (%s)\n"), config.JSPM, version)
+			} else {
+				config.JSPM = versionConfig
+				utils.CheckErr(config.Save())
+				fmt.Printf("%s updated js_package_manager config to %s ...\n", successIndicator, versionConfig)
+			}
+			return nil
+		}
+
 		fmt.Println(utils.Bold(utils.Underline("checking projects repositories:")))
 		if len(filteredProjects) < 1 {
 			fmt.Println("no project to check")
@@ -215,6 +265,9 @@ won't change the exit status of the command.
 					}
 				}
 			}
+
+			// check packagemanager version is correct
+			checkJSPMVersion()
 		}
 
 		if exitStatus != 0 && !fix && !interactive {
