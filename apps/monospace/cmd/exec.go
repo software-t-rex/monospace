@@ -33,10 +33,10 @@ You can restrict the command to one or more projects using flag --project-filter
 	Example: `  monospace exec --project-filter modules/mymodule --project-filter modules/myothermodule -- ls -la
   # or more concise
   monospace exec -p modules/mymodule,modules/myothermodule -- ls -la
-	# create a branch on all git projects at once (including root)
-	monospace exec --git -r -- git checkout -b my-new-branch
-	# fetching only external projects
-	monospace exec --external -- git fetch`,
+  # create a branch on all git projects at once (including root)
+  monospace exec --git -r -- git checkout -b my-new-branch
+  # fetching only external projects
+  monospace exec --external -- git fetch`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)

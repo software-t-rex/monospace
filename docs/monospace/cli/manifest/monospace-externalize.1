@@ -18,14 +18,14 @@ Turn an 'internal' project into an 'external' project.
 .PP
 Here what this command will really do:
 - Check that the project path is clean
-	- Propose to stash uncommited changes (--no-interactive will say yes)
+  - Propose to stash uncommited changes (--no-interactive will say yes)
 - Use git subtree split to extract the project directory and related history
 - Remove extracted directory from the monospace
 - Init a new repository in the project directory
-	- optionally set initial branch name (--initial-branch=name, default to 'master')
-	- optionally set the new repo origin if repoUrl was given
+  - optionally set initial branch name (--initial-branch=name, default to 'master')
+  - optionally set the new repo origin if repoUrl was given
 - merge the extracted branch from root repository into the newly created repo
-	- optionally push -u to the new repo origin (--push)
+  - optionally push -u to the new repo origin (--push)
 - Add the projectName to the monospace .gitignore
 - Mark the project as external (if repoUrl is set) or local in monospace.yml
 - remove the temporary subtree branch from root repository if there's no error

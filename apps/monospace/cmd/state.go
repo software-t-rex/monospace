@@ -38,7 +38,7 @@ Local projects will be ignored and left as is.
   monospace state restore myState
   # list all pinned states
   monospace state list
-	# remove a pinned state
+  # remove a pinned state
   monospace state unpin myState`,
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {

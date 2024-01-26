@@ -38,18 +38,18 @@ in the monospace.yml config file consistent.
 
 Here's the reported anomalies and the action taken when --fix flag is used:
 - for local projects:
-	- check it's still a git repository: fixed by setting project as internal
-	- check project remote origin is still not set: fixed by updating config
-		with repo remote origin or setting project internal
+  - check it's still a git repository: fixed by setting project as internal
+  - check project remote origin is still not set: fixed by updating config
+    with repo remote origin or setting project internal
 - for external projects:
-	- check project files exists: fixed by cloning the project
-	- check project dir is a git repository: fixed by setting project internal
-	- check project repo origin match the one in config: fixed by updating the
-		config with repo remote origin
+  - check project files exists: fixed by cloning the project
+  - check project dir is a git repository: fixed by setting project internal
+  - check project repo origin match the one in config: fixed by updating the
+    config with repo remote origin
 - for internal projects:
-	- check project dir exists: fixed by removing project from config
-	- check project is not a git repository: fixed by updating config with
-		repo remote origin (error if remote origin is not set)
+  - check project dir exists: fixed by removing project from config
+  - check project is not a git repository: fixed by updating config with
+    repo remote origin (error if remote origin is not set)
 
 More choices may be available when --interactive flag is used
 

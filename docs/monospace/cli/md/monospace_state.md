@@ -32,7 +32,7 @@ monospace state [flags]
   monospace state restore myState
   # list all pinned states
   monospace state list
-	# remove a pinned state
+  # remove a pinned state
   monospace state unpin myState
 ```
 

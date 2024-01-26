@@ -19,7 +19,7 @@ monospace status [flags]
   # passing git status args
   monospace status -- --porcelain
   # st is an alias
-	# it will add the --short and --branch flags to underlying git status command.
+  # it will add the --short and --branch flags to underlying git status command.
   monospace st
   # is the same as
   monospace status -- --short --branch
