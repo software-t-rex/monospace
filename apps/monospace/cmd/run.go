@@ -22,7 +22,7 @@ import (
 var runCmd = &cobra.Command{
 	Use:   "run [options] task1 [task2...]",
 	Short: "Run given tasks in each project directory",
-	Long: `Run given command in each project directory concurrently.
+	Long: `Run given tasks defined in monospace.yml in each project directory concurrently. 
 
 You can restrict the tasks execution to one or more projects
 using the --project-filter flag.
@@ -37,8 +37,8 @@ A circular dependency check will be performed before the execution starts.`,
   # or more concise
   monospace run -p modules/mymodule,modules/myothermodule test
   monospace run -p modules/mymodule,modules/myothermodule test -- additionalArg=value
-	# run tasks on monospace root only
-	monospace run -p root task
+  # run tasks on monospace root only
+  monospace run -p root task
   # get some dependency graph
   monospace run task --graphviz
   # or for the entire pipeline

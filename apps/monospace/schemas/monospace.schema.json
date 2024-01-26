@@ -87,7 +87,7 @@
       "properties": {
         "cmd" :{
           "title": "monospace.yml: pipeline[task].cmd",
-          "description": "By default task will be looked up in the package.json script properties.\nYou can override this behavior by providing the command to execute. It must be an array of string ie: [ls, -l].\nThis can also be useful for projects that don't have a package.json at all.\n----\nℹ: This is not a shell command, so you can't use shell features like pipes, redirections, etc...\nEither use an external script for this or something like [/bin/sh, -c, \"command1 && command2\"]",
+          "description": "By default task will be looked up in the package.json script properties.\nYou can override this behavior by providing the command to execute. It must be an array of string ie: [ls, -l].\nThis can also be useful for projects that don't have a package.json at all.\n----\nℹ: This is not a shell command, so you can't use shell features like pipes, redirections, etc...\nEither use an external script for this or something like [/bin/sh, -c, \"command1 && command2\"]\nAdditionally .monospace/bin will be added to your path and can be used to store utility commands to ship with your monospace.",
           "type": "array",
           "items": {"type":"string"},
           "default":[]

@@ -20,6 +20,9 @@ func Monospace() error {
 		if err := os.Mkdir(filepath.Join(wd, ".monospace"), 0750); err != nil {
 			return fmt.Errorf("%w: Can't create .monospace directory", err)
 		}
+		if err := os.Mkdir(filepath.Join(wd, ".monospace/bin"), 0750); err != nil {
+			return fmt.Errorf("%w: Can't create .monospace/bin directory", err)
+		}
 	}
 	err = writeTemplateFile("monospace/monospace.yml", ".monospace/monospace.yml", nil)
 	if err != nil {
