@@ -2,7 +2,7 @@ package app
 
 import "path/filepath"
 
-const dfltJSPM string = "^pnpm@8.8.0"
+const dfltJSPM string = "^pnpm@8.14.3"
 const dfltGoModPrfx string = "example.com"
 const dfltPreferredOutputMode string = "grouped"
 
