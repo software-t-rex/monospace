@@ -137,6 +137,7 @@ func TestCmd_Suite(t *testing.T) {
 			hasDir(".git", true),
 			hasDir(".monospace", false,
 				hasFile("monospace.yml"),
+				hasDir("bin", false),
 				hasDir("githooks", false,
 					hasFile("post-merge"),
 					hasFile("post-checkout"),
