@@ -13,6 +13,7 @@ import (
 	"github.com/software-t-rex/monospace/git"
 	"github.com/software-t-rex/monospace/gomodules/scaffolders"
 	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/packageJson"
 )
 
 var RootProject Project
@@ -83,6 +84,12 @@ func (p Project) IsRoot() bool     { return p.Kind == Root }
 func (p Project) IsInternal() bool { return p.Kind == Internal }
 func (p Project) IsExternal() bool { return p.Kind == External }
 func (p Project) IsLocal() bool    { return p.Kind == Local }
+func (p Project) HasPackageJson() bool {
+	return utils.FileExistsNoErr(filepath.Join(p.Path(), "package.json"))
+}
+func (p Project) GetPackageJson() (*packageJson.PackageJSON, error) {
+	return packageJson.Read(filepath.Join(p.Path(), "package.json"))
+}
 
 func getProjectsMap() (map[string]string, error) {
 	config, err := app.ConfigGet()
@@ -214,9 +221,7 @@ func ProjectGetByName(name string) (Project, error) {
 		name = config.Aliases[name]
 	}
 	projects := config.Projects
-	if err != nil {
-		return Project{}, err
-	}
+
 	repoUrl, exists := projects[name]
 	if !exists {
 		err = errors.New("Unknown project '" + name + "'")
