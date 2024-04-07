@@ -18,14 +18,15 @@ import (
 )
 
 type MonospaceConfigPipeline struct {
-	DependsOn  []string          `yaml:"dependsOn,omitempty,flow"`
-	Env        map[string]string `yaml:"env,omitempty,flow"`
-	Outputs    []string          `yaml:"outputs,omitempty"`
-	Inputs     []string          `yaml:"inputs,omitempty"`
-	Cache      bool              `yaml:"cache,omitempty"`
-	OutputMode string            `yaml:"output_mode,omitempty"`
-	Persistent bool              `yaml:"persistent,omitempty"`
-	Cmd        []string          `yaml:"cmd,omitempty,flow"`
+	DependsOn   []string          `yaml:"dependsOn,omitempty,flow"`
+	Env         map[string]string `yaml:"env,omitempty,flow"`
+	Outputs     []string          `yaml:"outputs,omitempty"`
+	Inputs      []string          `yaml:"inputs,omitempty"`
+	Cache       bool              `yaml:"cache,omitempty"`
+	OutputMode  string            `yaml:"output_mode,omitempty"`
+	Persistent  bool              `yaml:"persistent,omitempty"`
+	Cmd         []string          `yaml:"cmd,omitempty,flow"`
+	Description string            `yaml:"description,omitempty"`
 }
 type MonospaceConfig struct {
 	GoModPrefix         string                             `yaml:"go_mod_prefix,omitempty"`

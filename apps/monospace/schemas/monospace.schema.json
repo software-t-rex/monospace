@@ -101,6 +101,12 @@
           },
           "default": []
         },
+        "description": {
+          "title": "monospace.yml: pipeline[task].description",
+          "description": "An optional description of the task.",
+          "type": "string",
+          "default": ""
+        },
         "persistent": {
           "title": "monospace.yml: pipeline[task].persistent",
           "description": "Persistent tasks are long-running process such as server, or watchers that will not exit unless manually stopped.\nIt is important to mark such tasks as persistent, doing so monospace will prevent other tasks to depend on them and will inform you of configuration problem when running in check mode",
