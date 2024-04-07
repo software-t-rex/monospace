@@ -35,8 +35,9 @@ func init() {
 }
 
 type TaskName struct {
-	Project string
-	Task    string
+	Project    string
+	Task       string
+	ConfigName string // string used in the config file
 }
 
 func (t TaskName) String() string {
@@ -67,10 +68,10 @@ func parseTaskName(name string) TaskName {
 		projectName, err = getStandardProjectName(parsedName[1]) // exit on invalid projtect name
 		if err != nil {
 			exit(fmt.Errorf("parsing taskname %s: %w", name, err).Error())
-			return TaskName{} // will never happen
+			return TaskName{ConfigName: name} // will never happen
 		}
 	}
-	return TaskName{Project: projectName, Task: parsedName[2]}
+	return TaskName{Project: projectName, Task: parsedName[2], ConfigName: name}
 }
 
 type Pipeline map[string]Task
@@ -293,7 +294,7 @@ func (t *Task) GetJobRunner(additionalArgs []string) *exec.Cmd {
 				} else if projectErr == nil {
 					return t.preparedJSPMRunCmd(projectPM.Command, additionalArgs)
 					//t.preparedCmd(projectPM.Command, "run", t.Name.Task)
-				} else if projectErr != nil && configErr != nil {
+				} else { // both pm are invalid
 					utils.PrintWarning("Can't find a package manager to execute task "+t.Name.Task+" in project "+t.Name.Project+" => skip\n", projectErr.Error(), "\n", configErr.Error())
 					return nil
 				}
