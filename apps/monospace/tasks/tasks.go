@@ -20,8 +20,8 @@ import (
 	"github.com/software-t-rex/go-jobExecutor/v2"
 	jspm "github.com/software-t-rex/js-packagemanager"
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
-	"github.com/software-t-rex/monospace/utils"
 	"github.com/software-t-rex/packageJson"
 )
 

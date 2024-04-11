@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
 // execute a git command in current directory redirecting stdin/out/err to main process

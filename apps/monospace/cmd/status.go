@@ -14,8 +14,8 @@ import (
 
 	"github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
-	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
 

@@ -8,8 +8,8 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package cmd
 
 import (
+	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
-	"github.com/software-t-rex/monospace/utils"
 
 	"github.com/spf13/cobra"
 )

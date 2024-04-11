@@ -8,7 +8,7 @@ import (
 
 	exctr "github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/gomodules/colors"
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
 func setInterleavedOutputDisplayNames(jobs exctr.JobList) {

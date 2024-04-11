@@ -12,8 +12,8 @@ import (
 	"os"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
-	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
 

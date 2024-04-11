@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
 func OriginGet(directory string) (string, error) {

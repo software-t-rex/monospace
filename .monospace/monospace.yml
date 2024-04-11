@@ -10,6 +10,7 @@ projects:
     gomodules/js-packagemanager: git@github.com:software-t-rex/js-packagemanager.git
     gomodules/packageJson: git@github.com:software-t-rex/packageJson.git
     gomodules/scaffolders: internal
+    gomodules/utils: internal
     packages/monospace: internal
 projects_aliases:
     executor: gomodules/go-jobexecutor
@@ -52,5 +53,5 @@ pipeline:
     packageJson#test:
         cmd: [test.sh]
     tidy:
-        cmd: [/bin/bash, -c, "[ -f go.mod ] && go mod tidy || echo 'no go.mod file => skipped'"]
         output_mode: grouped
+        cmd: [/bin/bash, -c, 'if [ -f go.mod ]; then go mod tidy; else echo ''no go.mod file => skipped'';fi']

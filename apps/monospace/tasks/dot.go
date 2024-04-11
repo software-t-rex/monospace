@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
 type taskNameList []*TaskName

@@ -8,6 +8,7 @@ require (
 	github.com/software-t-rex/js-packagemanager v0.0.5
 	github.com/software-t-rex/monospace/gomodules/colors v0.0.0
 	github.com/software-t-rex/monospace/gomodules/scaffolders v0.0.0
+	github.com/software-t-rex/monospace/gomodules/utils v0.0.0
 	github.com/software-t-rex/packageJson v0.0.3
 )
 
@@ -15,6 +16,7 @@ replace (
 	// github.com/software-t-rex/go-jobExecutor/v2 => ../../gomodules/go-jobexecutor
 	github.com/software-t-rex/monospace/gomodules/colors => ../../gomodules/colors
 	github.com/software-t-rex/monospace/gomodules/scaffolders => ../../gomodules/scaffolders
+	github.com/software-t-rex/monospace/gomodules/utils => ../../gomodules/utils
 )
 
 require (

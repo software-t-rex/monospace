@@ -6,7 +6,7 @@ import (
 
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/git"
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 	"gopkg.in/yaml.v3"
 )
 

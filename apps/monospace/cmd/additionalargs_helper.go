@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
 func getAdditionalArgs() []string {

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
 type GitExternalizeOptions struct {

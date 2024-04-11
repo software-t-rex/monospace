@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/tasks"
-	"github.com/software-t-rex/monospace/utils"
 	"github.com/spf13/cobra"
 )
 

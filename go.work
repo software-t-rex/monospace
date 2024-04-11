@@ -8,4 +8,5 @@ use (
 	./gomodules/js-packagemanager
 	./gomodules/packageJson
 	./gomodules/scaffolders
+	./gomodules/utils
 )

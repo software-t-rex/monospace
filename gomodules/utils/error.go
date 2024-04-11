@@ -19,6 +19,11 @@ func PrintWarning(warning ...string) {
 		fmt.Fprintln(os.Stderr, EmphasedWarning("Warning:"), Warning(warning...))
 	}
 }
+func PrintSuccess(success ...string) {
+	if len(success) > 0 && success[0] != "" {
+		fmt.Fprintln(os.Stderr, EmphasedSuccess("Success:"), Success(success...))
+	}
+}
 
 func Exit(errorMsg string) {
 	if errorMsg != "" {
