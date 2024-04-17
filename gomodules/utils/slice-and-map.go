@@ -39,9 +39,26 @@ func SliceMap[T any, V any, Mapper func(T) V](slice []T, mapper Mapper) []V {
 	return res
 }
 
+func MapMap[T any, V any, X comparable, S map[X]T, Mapper func(T, X) V](m S, mapper Mapper) map[X]V {
+	res := make(map[X]V, len(m))
+	for key, val := range m {
+		res[key] = mapper(val, key)
+	}
+	return res
+}
+
 func SliceMapAndFilter[T any, V any, Mapper func(T) (V, bool)](slice []T, mapper Mapper) (res []V) {
 	for _, val := range slice {
 		newVal, keep := mapper(val)
+		if keep {
+			res = append(res, newVal)
+		}
+	}
+	return
+}
+func SliceMapAndFilterWithIndex[T any, V any, Mapper func(T, int) (V, bool)](slice []T, mapper Mapper) (res []V) {
+	for index, val := range slice {
+		newVal, keep := mapper(val, index)
 		if keep {
 			res = append(res, newVal)
 		}
