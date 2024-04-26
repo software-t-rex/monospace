@@ -4,13 +4,12 @@ SPDX-FileType: SOURCE
 SPDX-License-Identifier: MIT
 SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 */
+
 package ui
 
 import (
 	"fmt"
 	"strings"
-
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 var defaultMaxVisibleOptions = 5
@@ -40,10 +39,13 @@ type multiSelectModel[T comparable] struct {
 	startVisibleIndex int
 	focusedIndex      int
 	errorMsg          string
-	done              bool
 	bindings          *KeyBindings[*multiSelectModel[T]]
 	singleSelect      bool
-	cleanup           bool
+	uiApi             *ComponentApi
+}
+
+func (m *multiSelectModel[T]) GetComponentApi() *ComponentApi {
+	return m.uiApi
 }
 
 //#region - handle model settings
@@ -127,7 +129,7 @@ func (m *multiSelectModel[T]) MaxVisibleOptions(nb int) *multiSelectModel[T] {
 // default to false (menu will remain visible)
 // Ignored in fallback mode.
 func (m *multiSelectModel[T]) WithCleanup(clear bool) *multiSelectModel[T] {
-	m.cleanup = clear
+	m.uiApi.cleanup = clear
 	return m
 }
 
@@ -165,7 +167,7 @@ func (m *multiSelectModel[T]) getSelected() []T {
 	return res
 }
 
-func (m *multiSelectModel[T]) Init() tea.Cmd {
+func (m *multiSelectModel[T]) Init() Cmd {
 	// if single selection mode, focus on the first selected item
 	if m.focusedIndex >= m.maxVisibleOptions {
 		// place selected option in the middle of the visible options
@@ -176,7 +178,7 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 	}
 	// if single selection mode, focus on the first selected item
 	// always return nil for convenience
-	ifSingleSelectFocusIndex := func() tea.Cmd {
+	ifSingleSelectFocusIndex := func() Cmd {
 		if m.singleSelect {
 			m.selected = make(map[int]bool, len(m.options))
 			m.selected[m.focusedIndex] = true
@@ -184,7 +186,7 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 		return nil
 	}
 	m.bindings = NewKeyBindings[*multiSelectModel[T]]().
-		AddBinding("down,j", Msgs["down"], func(m *multiSelectModel[T]) tea.Cmd {
+		AddBinding("down,j", Msgs["down"], func(m *multiSelectModel[T]) Cmd {
 			if m.focusedIndex < len(m.options)-1 {
 				m.focusedIndex++
 			}
@@ -193,7 +195,7 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 			}
 			return ifSingleSelectFocusIndex()
 		}).
-		AddBinding("up,k", Msgs["up"], func(m *multiSelectModel[T]) tea.Cmd {
+		AddBinding("up,k", Msgs["up"], func(m *multiSelectModel[T]) Cmd {
 			if m.focusedIndex > 0 {
 				m.focusedIndex--
 			}
@@ -203,7 +205,7 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 			return ifSingleSelectFocusIndex()
 		})
 	if !m.singleSelect {
-		m.bindings.AddBinding(" ,x", Msgs["select"], func(m *multiSelectModel[T]) tea.Cmd {
+		m.bindings.AddBinding(" ,x", Msgs["select"], func(m *multiSelectModel[T]) Cmd {
 			// if index is selected unselect it
 			if m.selected[m.focusedIndex] {
 				m.selected[m.focusedIndex] = false
@@ -232,7 +234,7 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 			return nil
 		})
 	}
-	m.bindings.AddBinding("enter", Msgs["confirm"], func(m *multiSelectModel[T]) tea.Cmd {
+	m.bindings.AddBinding("enter", Msgs["confirm"], func(m *multiSelectModel[T]) Cmd {
 		if m.selectionMinLen > 0 {
 			selectedCount := 0
 			for _, isSelected := range m.selected {
@@ -245,19 +247,19 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 				return nil
 			}
 		}
-		m.done = true
-		return tea.ClearScreen
+		m.uiApi.done = true
+		return nil
 	}).
 		// following bindings are not displayed in the help message
-		AddBinding("ctrl+c", "", func(m *multiSelectModel[T]) tea.Cmd {
-			return AbortTeaProgram // this will exit the program
+		AddBinding("ctrl+c", "", func(m *multiSelectModel[T]) Cmd {
+			return CmdUserAbort
 		}).
-		AddBinding("home", "", func(m *multiSelectModel[T]) tea.Cmd {
+		AddBinding("home", "", func(m *multiSelectModel[T]) Cmd {
 			m.focusedIndex = 0
 			m.startVisibleIndex = 0
 			return ifSingleSelectFocusIndex()
 		}).
-		AddBinding("end", "", func(m *multiSelectModel[T]) tea.Cmd {
+		AddBinding("end", "", func(m *multiSelectModel[T]) Cmd {
 			m.focusedIndex = len(m.options) - 1
 			m.startVisibleIndex = len(m.options) - m.maxVisibleOptions
 			if m.startVisibleIndex < 0 {
@@ -265,7 +267,7 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 			}
 			return ifSingleSelectFocusIndex()
 		}).
-		AddBinding("left,h", "", func(m *multiSelectModel[T]) tea.Cmd {
+		AddBinding("left,h,pageup", "", func(m *multiSelectModel[T]) Cmd {
 			m.focusedIndex -= m.maxVisibleOptions
 			if m.focusedIndex < 0 {
 				m.focusedIndex = 0
@@ -276,7 +278,7 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 			}
 			return ifSingleSelectFocusIndex()
 		}).
-		AddBinding("right,l", "", func(m *multiSelectModel[T]) tea.Cmd {
+		AddBinding("right,l,pagedown", "", func(m *multiSelectModel[T]) Cmd {
 			m.focusedIndex += m.maxVisibleOptions
 			if m.focusedIndex >= len(m.options) {
 				m.focusedIndex = len(m.options) - 1
@@ -291,18 +293,15 @@ func (m *multiSelectModel[T]) Init() tea.Cmd {
 }
 
 // h,j,k,l = left, down, up, right
-func (m *multiSelectModel[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	m.done = false
+func (m *multiSelectModel[T]) Update(msg Msg) Cmd {
+	m.uiApi.done = false
 	m.errorMsg = ""
 	cmd := m.bindings.Handle(m, msg)
-	if m.done {
-		return m, tea.Quit
-	}
-	return m, cmd
+	return cmd
 }
 
-func (m *multiSelectModel[T]) View() string {
-	if m.done && m.cleanup {
+func (m *multiSelectModel[T]) Render() string {
+	if m.uiApi.done && m.uiApi.cleanup {
 		return ""
 	}
 	theme := GetTheme()
@@ -345,19 +344,18 @@ func (m *multiSelectModel[T]) View() string {
 		sb.WriteString(label)
 		sb.WriteString("\n")
 	}
-	if !m.done {
-		// sb.WriteString("\n")
+	if !m.uiApi.done {
 		if m.errorMsg != "" {
+			sb.WriteString("\n")
 			sb.WriteString(theme.Error(m.errorMsg))
 		} else {
 			sb.WriteString(m.bindings.GetDescription())
 		}
-		sb.WriteString("\n")
 	}
 	return sb.String()
 }
 
-func (m *multiSelectModel[T]) Fallback() TeaModelWithFallback {
+func (m *multiSelectModel[T]) Fallback() Model {
 	var sb strings.Builder
 	// reset selected (we don't want to keep the previous selection while in fallback mode)
 	m.selected = make(map[int]bool, len(m.options))
@@ -379,7 +377,8 @@ func (m *multiSelectModel[T]) Fallback() TeaModelWithFallback {
 		m.errorMsg = ""
 	}
 	// prompt user for input
-	ints, err := ReadInts(sb.String())
+	intsMsg, err := ReadInts(sb.String())
+	ints := intsMsg.Value
 	// update the model
 	if err != nil {
 		m.errorMsg = Msgs["notANumber"]
@@ -406,6 +405,7 @@ func (m *multiSelectModel[T]) Fallback() TeaModelWithFallback {
 
 func newMultiSelect[T comparable](title string, singleSelect bool) *multiSelectModel[T] {
 	m := &multiSelectModel[T]{title: title, singleSelect: singleSelect}
+	m.uiApi = &ComponentApi{cleanup: true}
 	m.maxVisibleOptions = defaultMaxVisibleOptions
 	m.selectionMinLen = 1
 	if singleSelect {
@@ -461,5 +461,5 @@ func NewMultiSelectStrings(title string, options []string) *multiSelectModel[str
 
 // Run the multi-select model and return a slice of selected items.
 func (m *multiSelectModel[T]) Run() []T {
-	return runTeaProgram(m).getSelected()
+	return RunComponent(m).getSelected()
 }

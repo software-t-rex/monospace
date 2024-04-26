@@ -4,16 +4,13 @@ SPDX-FileType: SOURCE
 SPDX-License-Identifier: MIT
 SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 */
+
 package ui
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
-
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 // this reflects user preferences and default to true
@@ -23,107 +20,144 @@ var enabledEnhanced = true
 // try to detect if the terminal is not able to render colors or if env var NO_COLOR|ACCESSIBLE are set
 var canEnhance = true
 
-// keep trace of the running program to be able to kill it
-var killTeaProgram func()
-
-type TeaModelWithFallback interface {
-	tea.Model
-	Fallback() TeaModelWithFallback
-}
-
-//#region utility functions
-
-func CheckErr(err error) {
-	if err != nil {
-		if killTeaProgram != nil {
-			killTeaProgram()
-		}
-		os.Exit(1)
+type (
+	Msg          interface{}
+	Cmd          func() Msg
+	ComponentApi struct {
+		done    bool
+		cleanup bool
 	}
-}
-
-/** Parse a string of space separated integers into a list of integers */
-func ParseInts(str string) ([]int, error) {
-	inputs := strings.Fields(str)
-	ints := make([]int, len(inputs))
-	for k, input := range inputs {
-		i, err := strconv.Atoi(strings.TrimSpace(input))
-		if err != nil {
-			return nil, err
-		}
-		ints[k] = i
+	Model interface {
+		// set initial state of the component
+		// can return a Cmd to run some initialisation commands
+		Init() Cmd
+		// return a rendered view of the model to display on the terminal
+		Render() string
+		// update the model with a message and return an optional Cmd to run
+		// if this method returns a command it will then be executed again with the
+		// msg returned by the command until it returns nil or the done flag is set to true
+		// then the Render method will be called again to display the updated view
+		// beware that the model should not be updated concurrently
+		Update(Msg) Cmd
+		// This method is called when we fallback to the non-enhanced mode
+		// In such case there's no Render/Update loop but only a single call to Fallback
+		// For examples of fallback usage see the confirm.go file
+		Fallback() Model
+		// return the embeded component api
+		GetComponentApi() *ComponentApi
 	}
-	return ints, nil
-}
-
-//#enregion utility functions
+)
 
 // Allow to turn off colouring for all Style methods
 // Be careful: if you do string(colors.Red) + "a red string" + string(Reset)
 // it will still be rendered in red as you use colors codes directly.
-func ToggleEnhenced(enable bool) {
+func ToggleEnhanced(enable bool) {
 	enabledEnhanced = enable
 }
 
 // Returns whether enhanced rendering is enabled
-func EnhencedEnabled() bool {
+func EnhancedEnabled() bool {
 	return enabledEnhanced && canEnhance
 }
 
-func init() {
+// this mehod is used to detect if the terminal is able to render colors
+// and set the canEnhance flag accordingly
+func detectCapability(t TermIsTerminal) {
 	nocolor := os.Getenv("NO_COLOR")
 	accessible := os.Getenv("ACCESSIBLE")
-	if (nocolor != "" && nocolor != "0" && nocolor != "false") || (accessible != "" && accessible != "0" && accessible != "false") {
+	TERM := os.Getenv("TERM")
+	isTerm := t.IsTerminal()
+	canEnhance = true
+	if (nocolor != "" && nocolor != "0" && nocolor != "false") ||
+		(accessible != "" && accessible != "0" && accessible != "false") ||
+		TERM == "dumb" || !isTerm {
 		canEnhance = false
 	}
 }
 
-/** read a line from stdin */
-func Readline(prompt string) (string, error) {
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print(prompt)
-	scanner.Scan()
-	return scanner.Text(), scanner.Err()
+func printError(err error) {
+	fmt.Println("\n" + GetTheme().Error(err.Error()))
 }
-func ReadInt(prompt string) (int, error) {
-	input, err := Readline(prompt)
-	if err != nil {
-		return 0, err
-	}
-	return strconv.Atoi(input)
+
+func lineCounter(s string) int {
+	return strings.Count(s, "\n")
 }
-func ReadInts(prompt string) ([]int, error) {
-	inputs, err := Readline(prompt)
-	if err != nil {
-		return nil, err
+
+func executeCmds(m Model, cmd Cmd) {
+	for cmd != nil {
+		msg := cmd()
+		if msg == nil {
+			return
+		}
+		switch msg := msg.(type) {
+		case MsgQuit:
+			m.GetComponentApi().done = true
+		case MsgKill:
+			CmdKill()
+			return
+		default:
+			cmd = m.Update(msg)
+		}
 	}
-	return ParseInts(inputs)
+}
+
+func runComponent[M Model](m M) (M, error) {
+	cmd := m.Init()
+	executeCmds(m, cmd)
+	linesPrinted := 0
+	api := m.GetComponentApi()
+	terminal := GetTerminal()
+	for !api.done {
+		toPrint := m.Render() + "\r\n"
+		fmt.Print(toPrint)
+		// Update the number of lines printed
+		linesPrinted = lineCounter(toPrint)
+		keyMsg, err := ReadKeyPressEvent(terminal)
+		if err != nil {
+			printError(fmt.Errorf("error reading keypress event: %v", err))
+			return m, err
+		}
+		executeCmds(m, m.Update(keyMsg))
+		// Move the cursor up to the start of the list and clear the list
+		fmt.Printf("\033[0G\033[%dA\033[J", linesPrinted)
+		// last render
+		if api.done && !api.cleanup {
+			fmt.Print(m.Render() + "\r\n")
+		}
+	}
+	return m, nil
 }
 
 /** helper function to run a tea program and return the result model */
-func runTeaProgram[T TeaModelWithFallback](initModel T) T {
-	if killTeaProgram != nil {
-		panic("a program is already running")
-	}
-	if !EnhencedEnabled() { // use fallback mode
+func RunComponent[T Model](initModel T) T {
+	if !EnhancedEnabled() { // use fallback mode
 		initModel.Init()
 		return initModel.Fallback().(T)
 	}
-	p := tea.NewProgram(initModel)
-	killTeaProgram = p.Kill
-	res, err := p.Run()
-	killTeaProgram = nil
+	res, err := runComponent(initModel)
 	if err != nil {
-		CheckErr(err)
+		printError(fmt.Errorf("error while running component: %v", err))
+		return initModel.Fallback().(T)
 	}
-	return res.(T)
+	return res
 }
 
-/** helper function to call when user abort the program like with ctrl+c */
-func AbortTeaProgram() tea.Msg {
-	fmt.Printf("\n" + usedTheme.Error("User Aborted") + "\n")
-	if killTeaProgram != nil {
-		killTeaProgram()
-	}
-	return tea.Quit
+type (
+	MsgQuit struct{}
+	MsgKill struct{}
+)
+
+func CmdQuit() Msg { return MsgQuit{} }
+func CmdKill() Msg {
+	os.Exit(1)
+	return nil
+}
+func CmdUserCancel() Msg {
+	printError(fmt.Errorf("user cancelled"))
+	return MsgQuit{}
+}
+func CmdUserAbort() Msg {
+	printError(fmt.Errorf("user aborted"))
+	os.Exit(1)
+	return MsgKill{}
 }

@@ -4,6 +4,7 @@ SPDX-FileType: SOURCE
 SPDX-License-Identifier: MIT
 SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 */
+
 package ui
 
 type selectModel[T comparable] struct {

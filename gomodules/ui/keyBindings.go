@@ -4,13 +4,12 @@ SPDX-FileType: SOURCE
 SPDX-License-Identifier: MIT
 SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 */
+
 package ui
 
 import (
 	"fmt"
 	"strings"
-
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 var KeyDescriptors = map[string]string{
@@ -31,18 +30,20 @@ var KeyDescriptors = map[string]string{
 	"pgdown":    "⇟",
 }
 
-type KeyBindings[T tea.Model] struct {
-	Handlers    map[string]func(T) tea.Cmd
+type KeyBindings[T any] struct {
+	Handlers    map[string]func(T) Cmd
 	Description []string
+	cachedDesc  string
 }
 
-func NewKeyBindings[T tea.Model]() *KeyBindings[T] {
-	return &KeyBindings[T]{Handlers: make(map[string]func(T) tea.Cmd)}
+func NewKeyBindings[T any]() *KeyBindings[T] {
+	return &KeyBindings[T]{Handlers: make(map[string]func(T) Cmd)}
 }
 
 // Add a key binding to the key bindings
 // @param keysToBind multiple keys can be added separated by a comma
-func (k *KeyBindings[T]) AddBinding(keysToBind string, desc string, handler func(T) tea.Cmd) *KeyBindings[T] {
+func (k *KeyBindings[T]) AddBinding(keysToBind string, desc string, handler func(T) Cmd) *KeyBindings[T] {
+	k.cachedDesc = ""
 	theme := GetTheme()
 	keys := strings.Split(keysToBind, ",")
 	cleanKeys := []string{}
@@ -54,10 +55,13 @@ func (k *KeyBindings[T]) AddBinding(keysToBind string, desc string, handler func
 		}
 	}
 	// reset faint and bold with 22 and reenable them with 1;2
-	keySeparator := "\033[22m\033[2m" + theme.KeySeparator() + "\033[1m"
+	keySeparator := SGREscapeSequence(ResetBold, Faint) + theme.KeySeparator() + SGREscapeSequence(Bold)
+	// keySeparator := "\033[22m\033[2m" + theme.KeySeparator() + "\033[1m"
 	if desc != "" {
 		// we assume that escapes code are safe to use in description as it won't be used for fallback mode
-		k.Description = append(k.Description, fmt.Sprintf("\033[37;2;1m%s\033[0m \033[37;2m%s\033[0m", strings.Join(cleanKeys, keySeparator), desc))
+		fmtStr := SGREscapeSequence(DefaultColor.Foreground(), Faint, Bold) + "%s" + SGREscapeSequence(ResetBold, DefaultColor.Foreground(), Faint) + " %s" + sgrReset
+		k.Description = append(k.Description, fmt.Sprintf(fmtStr, strings.Join(cleanKeys, keySeparator), desc))
+		// k.Description = append(k.Description, fmt.Sprintf("\033[37;2;1m%s\033[0m \033[37;2m%s\033[0m", strings.Join(cleanKeys, keySeparator), desc))
 	}
 	for _, key := range keys {
 		k.Handlers[key] = handler
@@ -66,9 +70,9 @@ func (k *KeyBindings[T]) AddBinding(keysToBind string, desc string, handler func
 }
 
 // this method should be called from the Update method of the model to handle key bindings
-func (k *KeyBindings[T]) Handle(m T, msg tea.Msg) tea.Cmd {
+func (k *KeyBindings[T]) Handle(m T, msg Msg) Cmd {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case KeyMsg:
 		if handler, ok := k.Handlers[msg.String()]; ok {
 			return handler(m)
 		}
@@ -77,15 +81,19 @@ func (k *KeyBindings[T]) Handle(m T, msg tea.Msg) tea.Cmd {
 }
 
 func (k *KeyBindings[T]) AddToDescription(desc ...string) *KeyBindings[T] {
+	k.cachedDesc = ""
 	for _, d := range desc {
-		k.Description = append(k.Description, "\033[37;2m"+d+"\033[0m")
+		k.Description = append(k.Description, ApplyStyle(d, DefaultColor.Foreground(), Faint))
 	}
 	return k
 }
 
 // Should be called from the View method of the model to display the key bindings
 func (k *KeyBindings[T]) GetDescription() string {
-	theme := GetTheme()
-	bindingSeparator := " \033[37;2m" + theme.KeyBindingSeparator() + "\033[0m "
-	return strings.Join(k.Description, bindingSeparator)
+	if k.cachedDesc == "" {
+		theme := GetTheme()
+		bindingSeparator := ApplyStyle(" "+theme.KeyBindingSeparator()+" ", DefaultColor.Foreground(), Faint)
+		k.cachedDesc = "\n" + strings.Join(k.Description, bindingSeparator)
+	}
+	return k.cachedDesc
 }

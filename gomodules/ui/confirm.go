@@ -4,12 +4,13 @@ SPDX-FileType: SOURCE
 SPDX-License-Identifier: MIT
 SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 */
+
 package ui
 
 import (
+	"fmt"
+	"os"
 	"strings"
-
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type confirmModel struct {
@@ -17,12 +18,15 @@ type confirmModel struct {
 	bindings  *KeyBindings[*confirmModel]
 	inline    bool
 	confirmed bool
-	done      bool
-	cleanup   bool
 	help      bool
 	yesLabel  string
 	noLabel   string
 	errorMsg  string // used only in fallback mode
+	uiApi     *ComponentApi
+}
+
+func (m *confirmModel) GetComponentApi() *ComponentApi {
+	return m.uiApi
 }
 
 func (m *confirmModel) Inline() *confirmModel {
@@ -39,7 +43,7 @@ func (m *confirmModel) WithoutHelp() *confirmModel {
 // default to false (menu will remain visible)
 // Ignored in fallback mode.
 func (m *confirmModel) WithCleanup(clear bool) *confirmModel {
-	m.cleanup = clear
+	m.uiApi.cleanup = clear
 	return m
 }
 
@@ -55,42 +59,42 @@ func (m *confirmModel) SetNoLabel(label string) *confirmModel {
 	return m
 }
 
-func (m *confirmModel) Init() tea.Cmd {
+func (m *confirmModel) Init() Cmd {
 	m.bindings = NewKeyBindings[*confirmModel]().
-		AddBinding("y", "Confirm", func(m *confirmModel) tea.Cmd {
+		AddBinding("y", "Confirm", func(m *confirmModel) Cmd {
 			m.confirmed = true
-			m.done = true
-			return tea.Quit
+			m.uiApi.done = true
+			return CmdQuit
 		}).
-		AddBinding("n", "Cancel", func(m *confirmModel) tea.Cmd {
+		AddBinding("n", "Cancel", func(m *confirmModel) Cmd {
 			m.confirmed = false
-			m.done = true
-			return tea.Quit
+			m.uiApi.done = true
+			return CmdQuit
 		}).
-		AddBinding("left,right,up,down,tab,h,j,k,l", "", func(m *confirmModel) tea.Cmd {
+		AddBinding("left,right,up,down,tab,h,j,k,l", "", func(m *confirmModel) Cmd {
 			m.confirmed = !m.confirmed
 			return nil
 		}).
 		AddToDescription("Arrow/tab to switch").
-		AddBinding("enter", "Validate answer", func(m *confirmModel) tea.Cmd {
-			m.done = true
-			return tea.Quit
+		AddBinding("enter", "Validate answer", func(m *confirmModel) Cmd {
+			m.uiApi.done = true
+			return CmdQuit
 		}).
-		AddBinding("ctrl+c", "", func(m *confirmModel) tea.Cmd {
-			return AbortTeaProgram // this will exit the program
+		AddBinding("ctrl+c", "", func(m *confirmModel) Cmd {
+			return CmdKill // this will exit the program
 		})
 	return nil
 }
 
-func (m *confirmModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, m.bindings.Handle(m, msg)
+func (m *confirmModel) Update(msg Msg) Cmd {
+	return m.bindings.Handle(m, msg)
 }
 
-func (m *confirmModel) View() string {
+func (m *confirmModel) Render() string {
 	theme := GetTheme()
 	var sb strings.Builder
-	if m.done {
-		if m.cleanup {
+	if m.uiApi.done {
+		if m.uiApi.cleanup {
 			return "" // we don't want to display anything if we are in clearScreen mode
 		}
 		sb.WriteString(theme.Title(m.msg))
@@ -100,7 +104,6 @@ func (m *confirmModel) View() string {
 		} else {
 			sb.WriteString(theme.Error("No"))
 		}
-		sb.WriteString("\n")
 		return sb.String()
 	}
 	sb.WriteString(theme.Title(m.msg))
@@ -114,14 +117,14 @@ func (m *confirmModel) View() string {
 	} else {
 		sb.WriteString(theme.ButtonError(m.noLabel) + " " + theme.Button(m.yesLabel))
 	}
-	if m.help {
+	if !m.uiApi.done && m.help {
 		sb.WriteString("\n")
 		sb.WriteString(m.bindings.GetDescription())
 	}
 	return sb.String()
 }
 
-func (m *confirmModel) Fallback() TeaModelWithFallback {
+func (m *confirmModel) Fallback() Model {
 	sb := strings.Builder{}
 	if m.errorMsg != "" {
 		sb.WriteString(Msgs["errorPrefix"])
@@ -145,23 +148,26 @@ func (m *confirmModel) Fallback() TeaModelWithFallback {
 	sb.WriteString(dfltString)
 
 	input, err := Readline(sb.String())
-	if err != nil && err.Error() != "unexpected newline" {
-		CheckErr(err)
+	if err != nil {
+		os.Exit(1)
 	}
-	switch strings.ToLower(input) {
+	switch strings.ToLower(input.Value) {
 	case "y", "yes":
 		m.confirmed = true
-		m.done = true
+		m.uiApi.done = true
 	case "n", "no":
 		m.confirmed = false
-		m.done = true
+		m.uiApi.done = true
 	case "": // do nothing
-		m.done = true
+		m.uiApi.done = true
 	default:
 		m.errorMsg = Msgs["fallbackConfirmError"]
 	}
-	if !m.done {
+	if !m.uiApi.done {
 		return m.Fallback()
+	}
+	if m.uiApi.cleanup {
+		fmt.Print("\033[2K\033[1A\033[2K")
 	}
 	return m
 }
@@ -174,14 +180,22 @@ func NewConfirm(msg string, dflt bool) *confirmModel {
 		yesLabel:  theme.Underline("Y") + "es",
 		noLabel:   theme.Underline("N") + "o",
 		help:      true,
+		uiApi:     &ComponentApi{},
 	}
 }
 
 func (m *confirmModel) Run() bool {
-	return runTeaProgram(m).confirmed
+	return RunComponent(m).confirmed
 }
 
 // Shorthand for NewConfirm(msg, dflt).Run()
 func Confirm(msg string, dflt bool) bool {
 	return NewConfirm(msg, dflt).Run()
+}
+
+func ConfirmInline(msg string, dflt bool) bool {
+	return NewConfirm(msg, dflt).Inline().Run()
+}
+func ConfirmInlineNoHelp(msg string, dflt bool) bool {
+	return NewConfirm(msg, dflt).Inline().WithoutHelp().Run()
 }
