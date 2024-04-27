@@ -1,4 +1,4 @@
-go 1.21
+go 1.21.6
 
 use (
 	./apps/monospace
@@ -8,5 +8,6 @@ use (
 	./gomodules/js-packagemanager
 	./gomodules/packageJson
 	./gomodules/scaffolders
+	./gomodules/ui
 	./gomodules/utils
 )

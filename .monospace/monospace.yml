@@ -19,6 +19,7 @@ projects_aliases:
     monospace: apps/monospace
     npmpkg: packages/monospace
     packageJson: gomodules/packageJson
+    ui: gomodules/ui
 pipeline:
     root#difforigin:
         cmd: [git, diff, --name-only, origin/main]
@@ -52,6 +53,8 @@ pipeline:
     packageJson#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     packageJson#test:
+        cmd: [test.sh]
+    ui#test:
         cmd: [test.sh]
     tidy:
         output_mode: grouped
