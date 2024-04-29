@@ -86,18 +86,6 @@ func (t *ThemeConfig) Copy() ThemeConfig {
 	return *t
 }
 
-var Error = NewStyler(Red.Foreground())
-var EmphasedError = NewStyler(Red.Background(), White.Foreground(), Bold)
-
-var Success = NewStyler(Green.Foreground())
-var EmphasedSuccess = NewStyler(Green.Background(), Bold)
-
-var Warning = NewStyler(Yellow.Foreground())
-var EmphasedWarning = NewStyler(Yellow.Background(), Black.Foreground(), Bold)
-
-var Info = NewStyler(Blue.Foreground())
-var EmphasedInfo = NewStyler(Blue.Background(), White.Foreground(), Bold)
-
 func NewTheme(themeInitializer ThemeInitializer) *Theme {
 	var config ThemeConfig
 	if themeInitializer == nil {
@@ -122,7 +110,6 @@ func NewTheme(themeInitializer ThemeInitializer) *Theme {
 			title:              NewStyler(config.AccentColor.Foreground(), Bold),
 		},
 	}
-	return t
 }
 
 // @todo Check copy really copy for renderers

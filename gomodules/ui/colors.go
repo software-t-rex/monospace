@@ -25,6 +25,40 @@ var (
 	White        colorANSI8 = 7
 	ResetColor   colorANSI8 = 9
 	DefaultColor colorANSI8 = ResetColor
+
+	BlackBright   colorANSI256 = 8
+	RedBright     colorANSI256 = 9
+	GreenBright   colorANSI256 = 10
+	YellowBright  colorANSI256 = 11
+	BlueBright    colorANSI256 = 12
+	MagentaBright colorANSI256 = 13
+	CyanBright    colorANSI256 = 14
+	WhiteBright   colorANSI256 = 15
+
+	Gray1  colorANSI256 = 232
+	Gray2  colorANSI256 = 233
+	Gray3  colorANSI256 = 234
+	Gray4  colorANSI256 = 235
+	Gray5  colorANSI256 = 236
+	Gray6  colorANSI256 = 237
+	Gray7  colorANSI256 = 238
+	Gray8  colorANSI256 = 239
+	Gray9  colorANSI256 = 240
+	Gray10 colorANSI256 = 241
+	Gray11 colorANSI256 = 242
+	Gray12 colorANSI256 = 243
+	Gray13 colorANSI256 = 244
+	Gray14 colorANSI256 = 245
+	Gray15 colorANSI256 = 246
+	Gray16 colorANSI256 = 247
+	Gray17 colorANSI256 = 248
+	Gray18 colorANSI256 = 249
+	Gray19 colorANSI256 = 250
+	Gray20 colorANSI256 = 251
+	Gray21 colorANSI256 = 252
+	Gray22 colorANSI256 = 253
+	Gray23 colorANSI256 = 254
+	Gray24 colorANSI256 = 255
 )
 
 type RGB [3]int

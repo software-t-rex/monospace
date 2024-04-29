@@ -39,6 +39,7 @@ const (
 	ResetStrike     SGRParam = "29"
 	ResetForeground SGRParam = "39"
 	ResetBackground SGRParam = "49"
+	ResetAll        SGRParam = "0"
 )
 
 var resetParams = map[SGRParam]SGRParam{
@@ -115,11 +116,14 @@ func SGREscapeSequence(styles ...SGRParam) string {
 
 // Return the reset ANSI SGR escape sequence corresponding for given SGR parameters.
 // this is more computationally expensive than simply use a reset all sequence \033[0m
-// but it's more accurate as it will only reset the styles that were set.
+// but it's more accurate as it will only reset the styles that were set (waring Faint/Bold use the same reset).
 // thus allowing to embed styles in styles without having to worry about resetting them.
+//
+// If no styles are given it will return a reset all sequence.
+// If it can't determine the reset style for one of its arguments, it will return a reset all sequence.
 func SGRResetSequence(styles ...SGRParam) string {
 	if len(styles) == 0 {
-		return ""
+		return "\033[0m"
 	}
 	addedSeq := make(map[SGRParam]struct{})
 	resetSeq := []SGRParam{}
