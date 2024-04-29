@@ -58,6 +58,7 @@ func executeCmds(m Model, cmd Cmd) {
 		switch msg := msg.(type) {
 		case MsgQuit:
 			m.GetComponentApi().done = true
+			return
 		case MsgKill:
 			CmdKill()
 			return
