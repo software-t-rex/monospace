@@ -20,6 +20,7 @@ import (
 	"github.com/software-t-rex/go-jobExecutor/v2"
 	jspm "github.com/software-t-rex/js-packagemanager"
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/packageJson"
@@ -351,7 +352,7 @@ func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobEx
 			taskIds[taskId] = job.Id()
 			jobs[job.Id()] = job
 		} else if task.TaskDef.DependsOn != nil && len(task.TaskDef.DependsOn) > 0 {
-			fmt.Printf(utils.Info("%s#%s is a dummy task, will only executes its dependencies.\n"), task.Name.Project, task.Name.Task)
+			fmt.Printf(ui.GetTheme().Info("%s#%s is a dummy task, will only executes its dependencies.\n"), task.Name.Project, task.Name.Task)
 			job := e.AddJob(jobExecutor.NamedJob{Name: task.Name.String(), Job: func() (string, error) { return "", nil }})
 			taskIds[taskId] = job.Id()
 			jobs[job.Id()] = job

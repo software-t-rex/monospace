@@ -6,6 +6,7 @@ import (
 
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/git"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"gopkg.in/yaml.v3"
 )
@@ -145,7 +146,7 @@ func (s *MonospaceStateList) Restore(name string) {
 		for _, p := range uncleanProjects {
 			utils.PrintWarning(p + " is not in a clean state")
 		}
-		if !utils.Confirm("Some projects are not in a clean state. Are you sure you want to continue ?", false) {
+		if !ui.ConfirmInline("Some projects are not in a clean state. Are you sure you want to continue ?", false) {
 			utils.Exit("Aborted")
 		}
 	}
@@ -154,7 +155,7 @@ func (s *MonospaceStateList) Restore(name string) {
 		for _, p := range unknownProjects {
 			utils.PrintWarning(p + " is not part of the monospace")
 		}
-		if !utils.Confirm("Some projects in pinned state are not part of the monospace and won't be restored. Are you sure you want to continue ?", false) {
+		if !ui.ConfirmInline("Some projects in pinned state are not part of the monospace and won't be restored. Are you sure you want to continue ?", false) {
 			utils.Exit("Aborted")
 		}
 	}
@@ -163,7 +164,7 @@ func (s *MonospaceStateList) Restore(name string) {
 		for _, p := range notGitProjects {
 			utils.PrintWarning(p + " is not a git project")
 		}
-		if !utils.Confirm("Some projects in pinned state are not git projects and won't be restored. Are you sure you want to continue ?", false) {
+		if !ui.ConfirmInline("Some projects in pinned state are not git projects and won't be restored. Are you sure you want to continue ?", false) {
 			utils.Exit("Aborted")
 		}
 	}

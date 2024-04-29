@@ -10,6 +10,7 @@ import (
 	"github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/git"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
@@ -83,10 +84,11 @@ func SpaceClone(destDirectory string, repoUrl string) {
 	if err != nil {
 		utils.Exit(err.Error())
 	}
-	fmt.Println(utils.Info("Cloning root repository..."))
+	theme := ui.GetTheme()
+	fmt.Println(theme.Info("Cloning root repository..."))
 	err = git.Clone(repoUrl, destDirectory)
 	utils.CheckErr(err)
-	fmt.Println(utils.Success("Cloning done."))
+	fmt.Println(theme.Success("Cloning done."))
 	// move to the monorepo root
 	monospaceRoot = destDirectory
 	utils.CheckErr(os.Chdir(destDirectory))
@@ -98,7 +100,7 @@ cd ` + destDirectory + ` && monospace init`)
 
 	// if githooks were installed set git hooks path to .monospace/githooks
 	if utils.FileExistsNoErr(filepath.Join(monospaceRoot, app.DfltHooksDir)) {
-		fmt.Printf(utils.Info("found githooks directory, set git core.hookspath to %s\n"), app.DfltHooksDir)
+		fmt.Printf(theme.Info("found githooks directory, set git core.hookspath to %s\n"), app.DfltHooksDir)
 		utils.CheckErr(git.HooksPathSet(monospaceRoot, app.DfltHooksDir))
 	}
 
@@ -106,27 +108,27 @@ cd ` + destDirectory + ` && monospace init`)
 	config := utils.CheckErrOrReturn(app.ConfigRead(app.DfltcfgFilePath))
 	if config.Projects == nil || len(config.Projects) < 1 {
 		fmt.Println("No external projects found in the config file")
-		fmt.Println(utils.Success("Terminated with success"))
+		fmt.Println(theme.Success("Terminated with success"))
 		return
 	}
 	// proceed to clone external projects
 	projects := ProjectsAsStructs(config.Projects)
 	externals := utils.SliceFilter(projects, func(p Project) bool { return p.Kind == External })
 	if len(externals) == 0 {
-		fmt.Println(utils.Success("Terminated with success"))
+		fmt.Println(theme.Success("Terminated with success"))
 		return
 	}
-	fmt.Println(utils.Info("Cloning externals projects..."))
+	fmt.Println(theme.Info("Cloning externals projects..."))
 	jobExecutor := jobExecutor.NewExecutor().WithOngoingStatusOutput()
 	for _, project := range externals {
 		jobExecutor.AddNamedJobCmd("clone "+project.Name, exec.Command("git", "clone", project.RepoUrl, project.Path()))
 	}
 	errs := jobExecutor.Execute()
-	fmt.Println(utils.Success("Cloning done"))
+	fmt.Println(theme.Success("Cloning done"))
 	if len(errs) > 0 {
-		fmt.Println(utils.ErrorStyle("Terminated with errors" + errs.String()))
+		fmt.Println(theme.Error("Terminated with errors" + errs.String()))
 	} else {
-		fmt.Println(utils.Success("Terminated with success"))
+		fmt.Println(theme.Success("Terminated with success"))
 	}
 }
 

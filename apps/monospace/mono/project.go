@@ -12,6 +12,7 @@ import (
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/git"
 	"github.com/software-t-rex/monospace/gomodules/scaffolders"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/packageJson"
 )
@@ -56,10 +57,10 @@ type Project struct {
 }
 
 var styles = map[ProjectKind](func(s ...string) string){
-	Root:     utils.Yellow,
-	Internal: utils.Green,
-	External: utils.Blue,
-	Local:    utils.Red,
+	Root:     ui.NewStyler(ui.Yellow.Foreground()),
+	Internal: ui.NewStyler(ui.Green.Foreground()),
+	External: ui.NewStyler(ui.Blue.Foreground()),
+	Local:    ui.NewStyler(ui.Red.Foreground()),
 }
 
 func (p Project) String() string {
@@ -312,7 +313,7 @@ func ProjectCreate(projectName string, repoUrl string, projectType string) {
 		}
 	}
 
-	fmt.Println(utils.Success("project successfully added to your monospace"))
+	fmt.Println(ui.GetTheme().Success("project successfully added to your monospace"))
 }
 
 func ProjectCloneRepo(project Project) (err error) {
@@ -338,7 +339,7 @@ func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 	project := utils.CheckErrOrReturn(ProjectGetByName(projectName))
 	utils.CheckErr(app.ConfigRemoveProject(project.Name, true))
 
-	printSuccess := func() { fmt.Println(utils.Success("Project " + projectName + " successfully removed")) }
+	printSuccess := func() { fmt.Println(ui.GetTheme().Success("Project " + projectName + " successfully removed")) }
 
 	utils.CheckErr(ProjectRemoveFromGitignore(project, false))
 
@@ -346,7 +347,7 @@ func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 		printSuccess()
 		fmt.Println("You should now delete the project directory.")
 	} else {
-		if !withConfirm || utils.Confirm("Do you want to delete "+project.Name, false) {
+		if !withConfirm || ui.ConfirmInline("Do you want to delete "+project.Name, false) {
 			utils.CheckErr(utils.RmDir(project.Path()))
 		}
 		printSuccess()

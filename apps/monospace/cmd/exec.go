@@ -16,6 +16,7 @@ import (
 
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/tasks"
@@ -28,7 +29,7 @@ var execCmd = &cobra.Command{
 	Short: "execute given command in each project directory",
 	Long: `execute given command in each project directory concurrently.
 
-` + utils.Bold("execute options and command options must be separated by '--'") + `
+` + ui.ApplyStyle("execute options and command options must be separated by '--'", ui.Bold) + `
 You can restrict the command to one or more projects using flag --project-filter.`,
 	Example: `  monospace exec --project-filter modules/mymodule --project-filter modules/myothermodule -- ls -la
   # or more concise

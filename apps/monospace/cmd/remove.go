@@ -25,7 +25,7 @@ It will:
 - remove the project from the monospace .gitignore for non 'internal' projects
 - delete the corresponding directory if --rmdir or -r flag is set
 
-` + underline("First argument:") + ` is the relative path (from monospace root) of the project to remove.`,
+` + theme.Underline("First argument:") + ` is the relative path (from monospace root) of the project to remove.`,
 	Example: `  monospace remove apps/my-app`,
 	Args:    cobra.ExactArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

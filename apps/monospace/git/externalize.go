@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
@@ -18,6 +19,8 @@ type GitExternalizeOptions struct {
 	PushOrigin    bool
 	AllowStash    bool
 }
+
+var bold = ui.NewStyler(ui.Bold)
 
 // @todo Add some user confirm like commit change at the end
 // @todo handle rollback in case it doesn't go well
@@ -43,7 +46,7 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 			return fmt.Errorf("'%s' is not clean, either clean the dir or run this command in interactive mode", subDir)
 		}
 		// stash changes and restore them at the end
-		fmt.Printf(utils.Bold("Stashing changes in %s, will unstash at the end\n"), subDir)
+		fmt.Printf(bold("Stashing changes in %s, will unstash at the end\n"), subDir)
 		err = gitExec("stash", "push", "-a", "-m ", "monospace-externalizing", "--", subDir)
 		defer func() {
 			cmd := exec.Command("git", "stash", "list")
@@ -54,14 +57,14 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 			} else if len(lines) == 0 {
 				fmt.Println("nothing to unstash")
 			} else if len(lines) > 0 && strings.Contains(lines[0], "monospace-externalizing") {
-				fmt.Println(utils.Bold("Unstashing saved changes"))
+				fmt.Println(bold("Unstashing saved changes"))
 				utils.CheckErr(gitExec("stash", "pop"))
 			}
 		}()
 	}
 
 	// create a new branch containing the wanted files
-	fmt.Println(utils.Bold("Create subtree branch", tmpBranchName))
+	fmt.Println(bold("Create subtree branch", tmpBranchName))
 	err = gitExec("subtree", "split", "-P", subDir, "--branch", tmpBranchName)
 	if err != nil {
 		return err
@@ -69,24 +72,24 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 	// don't forget to remove the newly created branch
 	defer func() {
 		if err != nil {
-			fmt.Println(utils.Info("Files from", subDir, "can be recovered from branch", tmpBranchName))
+			fmt.Println(ui.GetTheme().Info("Files from", subDir, "can be recovered from branch", tmpBranchName))
 			return
 		}
 		if os.Chdir(monoRootDir) == nil {
-			fmt.Println(utils.Bold("delete temporary subtree branch", tmpBranchName))
+			fmt.Println(bold("delete temporary subtree branch", tmpBranchName))
 			utils.CheckErr(gitExec("branch", "-D", tmpBranchName))
 		}
 	}()
 
 	// clean up the project directory
-	fmt.Println(utils.Bold("clean project directory", subDir))
+	fmt.Println(bold("clean project directory", subDir))
 	err = gitExec("rm", "-rf", subDir)
 	if err != nil {
 		return err
 	}
 
 	// init the new repo
-	fmt.Println(utils.Bold("init git in project directory", subDir))
+	fmt.Println(bold("init git in project directory", subDir))
 	if opts.InitialBranch != "" {
 		err = gitExec("init", subDir, "--initial-branch", opts.InitialBranch)
 	} else {
@@ -97,7 +100,7 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 	}
 
 	// add parent as remote and merge the branch
-	fmt.Println(utils.Bold("Add parent as temporary remote and merge", tmpBranchName))
+	fmt.Println(bold("Add parent as temporary remote and merge", tmpBranchName))
 	err = gitExec("-C", subDir, "remote", "add", "remoteMonospace", monoRootDir)
 	if err != nil {
 		// @todo => perform a reset --hard to restore the original directory
@@ -113,7 +116,7 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 		// @todo => perform a reset --hard to restore the original directory
 		return
 	}
-	fmt.Println(utils.Bold("Merge done, remove parent from remotes"))
+	fmt.Println(bold("Merge done, remove parent from remotes"))
 	err = gitExec("-C", subDir, "remote", "remove", "remoteMonospace")
 	if err != nil {
 		return
@@ -121,13 +124,13 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 
 	// add origin if any
 	if opts.Origin != "" {
-		fmt.Println(utils.Bold("add project origin", opts.Origin))
+		fmt.Println(bold("add project origin", opts.Origin))
 		err = gitExec("-C", subDir, "remote", "add", "origin", opts.Origin)
 		if err != nil {
 			return
 		}
 		if opts.PushOrigin {
-			fmt.Println(utils.Bold("push to", opts.Origin))
+			fmt.Println(bold("push to", opts.Origin))
 			notImportantErr := gitExec("-C", subDir, "push", "-u", "origin")
 			if notImportantErr != nil {
 				utils.PrintWarning("Error while pushing to origin", notImportantErr.Error())
@@ -136,7 +139,7 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 	}
 
 	// add project as external in the monospace
-	fmt.Println(utils.Bold("add project to monospace gitignore and set it as external"))
+	fmt.Println(bold("add project to monospace gitignore and set it as external"))
 	err = utils.FileAppend(filepath.Join(monoRootDir, "/.gitignore"), subDir)
 	if err != nil {
 		return err
@@ -151,7 +154,7 @@ func GitExternalize(monoRootDir string, subDir string, opts GitExternalizeOption
 	}
 
 	// stage modified files
-	fmt.Println(utils.Bold("Stage changed files"))
+	fmt.Println(bold("Stage changed files"))
 	err = gitExec("add", ".gitignore", app.DfltcfgFilePath)
 	if err == nil {
 		fmt.Println("You can review the changes before committing")

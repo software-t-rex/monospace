@@ -9,6 +9,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ given revision. This will leave your repositories in a detached head state.
 
 Local projects will be ignored and left as is.
 
-` + utils.EmphasedWarning("This is highly experimental, any feedback will be greatly appreciated!"),
+` + ui.ApplyStyle(">> This is highly experimental, any feedback will be greatly appreciated! <<", ui.YellowBright.Background(), ui.Black.Foreground()),
 	Example: `  # pin the current state of the monospace
   monospace state pin myState
   # restore a previously pinned state

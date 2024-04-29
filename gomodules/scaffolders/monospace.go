@@ -26,7 +26,7 @@ func Monospace() error {
 	}
 
 	fmt.Println("try to detect installed js package manager")
-	pmCmds := []string{"pnpmxxx", "yarnxxx", "npmxxx"}
+	pmCmds := []string{"pnpm", "yarn", "npm"}
 	jspm := os.Getenv("MONOSPACE_JSPM")
 	foundJSPM := false
 	for _, pmCmd := range pmCmds {

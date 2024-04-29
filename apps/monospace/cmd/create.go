@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/mono"
 
 	"github.com/spf13/cobra"
@@ -23,18 +23,18 @@ var createCmd = &cobra.Command{
 	Short: "Create a new internal or local project",
 	Long: `Create a 'local' or 'internal' project:
 
-` + underline("First argument:") + bold(" MUST") + ` be 'internal' or 'local':
+` + ui.ApplyStyle("First argument:", ui.Underline) + ui.ApplyStyle(" MUST", ui.Bold) + ` be 'internal' or 'local':
 - internal will embed the project in the monospace repository.
 - local will init a new git repository within the monospace repository
   You will have to set a remote later to make it an external project instead
 
-` + underline("Second argument:") + ` 'ProjectName' is the relative path to the project from the root
+` + ui.ApplyStyle("Second argument:", ui.Underline) + ` 'ProjectName' is the relative path to the project from the root
 of the monospace repository. Example for a new application: apps/my-new-app.
 It should only contain letters, numbers, underscores, slashes and hyphens
 and each path part must start with a letter or an underscore.
 
-If you want to ` + bold(`import`) + ` an existing ` + bold("'external'") + ` git repository into the monospace
-you should look at the ` + italic("monospace import") + ` command instead`,
+If you want to ` + ui.ApplyStyle(`import`, ui.Bold) + ` an existing ` + ui.ApplyStyle("'external'", ui.Bold) + ` git repository into the monospace
+you should look at the ` + ui.ApplyStyle("monospace import", ui.Italic) + ` command instead`,
 	Example: `  monospace create local apps/my-new-app
   monospace create local apps/my-new-js-app --type=js
   monospace create local gomodules/my-go-module -t go`,
@@ -45,10 +45,10 @@ you should look at the ` + italic("monospace import") + ` command instead`,
 			return err
 		}
 		if args[0] != "internal" && args[0] != "local" {
-			return errors.New("you must specify either " + colors.Error("'internal'") + " or " + colors.Error("'local'") + " as first argument")
+			return errors.New("you must specify either " + theme.Error("'internal'") + " or " + theme.Error("'local'") + " as first argument")
 		}
 		if !mono.ProjectIsValidName(args[1]) {
-			return fmt.Errorf(colors.Error("'%s'")+" is not a valid project name", args[1])
+			return fmt.Errorf(theme.Error("'%s'")+" is not a valid project name", args[1])
 		}
 		return nil
 	},

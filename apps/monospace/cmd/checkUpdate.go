@@ -62,7 +62,7 @@ var checkUpdateCmd = &cobra.Command{
 
 		latest := utils.CheckErrOrReturn(getLatestRelease())
 		if "v"+app.Version == latest.Name {
-			fmt.Println(utils.Success("You already have the latest monospace version."))
+			fmt.Println(theme.Success("You already have the latest monospace version."))
 		} else {
 			fmt.Printf("A new monospace version is available: %s\n\n%s\n\nDownload it from: %s\n", latest.Name, latest.Body, latest.HtmlURL)
 			binPath, err := os.Executable()
@@ -78,7 +78,7 @@ var checkUpdateCmd = &cobra.Command{
 					}
 				}
 				if updateCmd != "" {
-					fmt.Printf("\nSeems like you have installed monospace using a package manager.\nYou can update it using this command: %s\n", utils.Bold(updateCmd))
+					fmt.Printf("\nSeems like you have installed monospace using a package manager.\nYou can update it using this command: %s\n", theme.Bold(updateCmd))
 				}
 			}
 		}

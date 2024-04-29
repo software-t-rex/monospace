@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/software-t-rex/monospace/git"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 	"github.com/spf13/cobra"
@@ -39,9 +40,9 @@ Here what this command will really do:
 
 You can then review changes in the monospace root repository and commit them.
 
-` + utils.Warning(`> Beware that the operation will remove all files in the project directory
+` + ui.ApplyStyle(`> Beware that the operation will remove all files in the project directory
 > before re-creating them. You should check that there's no untracked files
-> before proceeding as they will be lost.`),
+> before proceeding as they will be lost.`, ui.Yellow.Foreground()),
 	Example: `monospace externalize packages/osslib
 monospace externalize packages/osslib git@github.com:user/osslib.git --push --initial-branch=main --commit
 `,
@@ -54,7 +55,6 @@ monospace externalize packages/osslib git@github.com:user/osslib.git --push --in
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-
 		CheckConfigFound(true)
 		monoRoot := mono.SpaceGetRoot()
 		projectName := args[0]
@@ -83,9 +83,9 @@ monospace externalize packages/osslib git@github.com:user/osslib.git --push --in
 			if noConfirm {
 				opts.AllowStash = true
 			} else {
-				fmt.Println(utils.Warning("This project directory is not clean, monospace will stash the directory"))
-				fmt.Println(utils.Warning("and attempt to restore it afterwards, but this can lead to data lost."))
-				opts.AllowStash = utils.Confirm("are you sure you want to continue ?", false)
+				fmt.Println(theme.Warning("This project directory is not clean, monospace will stash the directory"))
+				fmt.Println(theme.Warning("and attempt to restore it afterwards, but this can lead to data lost."))
+				opts.AllowStash = ui.ConfirmInline("are you sure you want to continue ?", false)
 				if !opts.AllowStash {
 					fmt.Println("Exiting on user request")
 					os.Exit(0)
@@ -94,7 +94,7 @@ monospace externalize packages/osslib git@github.com:user/osslib.git --push --in
 		}
 		utils.CheckErr(git.GitExternalize(monoRoot, projectName, opts))
 
-		fmt.Println(utils.Success("Externalization done"))
+		fmt.Println(theme.Success("Externalization done"))
 	},
 }
 

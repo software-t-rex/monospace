@@ -16,6 +16,7 @@ import (
 	jspm "github.com/software-t-rex/js-packagemanager"
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/git"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 	"github.com/software-t-rex/monospace/tasks"
@@ -69,6 +70,7 @@ won't change the exit status of the command.
 won't change the exit status of the command.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		boldUnderline := ui.NewStyler(ui.Bold, ui.Underline)
 		CheckConfigFound(true)
 		utils.CheckErr(mono.SpaceChdir())
 		monoRoot := mono.SpaceGetRoot()
@@ -76,19 +78,19 @@ won't change the exit status of the command.
 		hasFilter := cmd.Flags().Changed("project-filter")
 		filteredProjects := FlagGetFilteredProjects(cmd)
 		interactive := FlagGetBool(cmd, "interactive")
-		successIndicator := utils.Green("✔")
-		failureIndicator := utils.Red("✘")
-		unknwonIndicator := utils.Yellow("�")
+		successIndicator := theme.Success("✔")
+		failureIndicator := theme.Error("✘")
+		unknwonIndicator := theme.Warning("�")
 		fix := FlagGetBool(cmd, "fix")
 		exitStatus := 0
 
 		printCheckHeader := func(p mono.Project, warningMsg ...string) {
 			if len(warningMsg) < 1 {
-				fmt.Printf(utils.Bold("%s %s\n"), successIndicator, p.StyledString())
+				fmt.Printf(theme.Bold("%s %s\n"), successIndicator, p.StyledString())
 				return
 			}
 			exitStatus = 1
-			fmt.Printf(utils.Bold("%s %s\n"), failureIndicator, p.StyledString())
+			fmt.Printf(theme.Bold("%s %s\n"), failureIndicator, p.StyledString())
 			utils.PrintWarning(warningMsg...)
 		}
 
@@ -100,7 +102,7 @@ won't change the exit status of the command.
 
 		// check package manager version
 		checkJSPMVersion := func() error {
-			fmt.Println(utils.Bold(utils.Underline("checking js_package_manager config:")))
+			fmt.Println(boldUnderline("checking js_package_manager config:"))
 			var pm *jspm.PackageManager
 			var err error
 			var version string
@@ -108,30 +110,30 @@ won't change the exit status of the command.
 			config := utils.CheckErrOrReturn(app.ConfigGet())
 			pm, err = jspm.GetPackageManagerFromString(config.JSPM)
 			if err != nil {
-				fmt.Println(failureIndicator + " " + utils.Warning(err.Error()))
+				fmt.Println(failureIndicator + " " + theme.Warning(err.Error()))
 				return err
 			}
 			version, err = pm.GetVersion()
 			if err != nil {
-				fmt.Println(failureIndicator + " " + utils.Warning(err.Error()))
+				fmt.Println(failureIndicator + " " + theme.Warning(err.Error()))
 				return err
 			}
 			if version == "" {
-				fmt.Println(unknwonIndicator + " " + utils.Warning("unable to get installed package manager version"))
+				fmt.Println(unknwonIndicator + " " + theme.Warning("unable to get installed package manager version"))
 				return nil
 			}
 			if strings.HasSuffix(config.JSPM, version) {
-				fmt.Println(successIndicator + " " + utils.Success(pm.Slug+" at version "+version))
+				fmt.Println(successIndicator + " " + theme.Success(pm.Slug+" at version "+version))
 				return nil
 			}
 			versionConfig := "^" + pm.Slug + "@" + version
 			if fix {
 				updateVersion = true
-			} else if interactive && utils.Confirm(fmt.Sprintf("Do you want to update js_package_manager config from %s to %s ?", config.JSPM, versionConfig), true) {
+			} else if interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to update js_package_manager config from %s to %s ?", config.JSPM, versionConfig), true) {
 				updateVersion = true
 			}
 			if !updateVersion {
-				fmt.Printf(failureIndicator+" "+utils.Warning("js_package_manager config (%s) is not up to date with installed version (%s)\n"), config.JSPM, version)
+				fmt.Printf(failureIndicator+" "+theme.Warning("js_package_manager config (%s) is not up to date with installed version (%s)\n"), config.JSPM, version)
 			} else {
 				config.JSPM = versionConfig
 				utils.CheckErr(config.Save())
@@ -140,7 +142,7 @@ won't change the exit status of the command.
 			return nil
 		}
 
-		fmt.Println(utils.Bold(utils.Underline("checking projects repositories:")))
+		fmt.Println(boldUnderline("checking projects repositories:"))
 		if len(filteredProjects) < 1 {
 			fmt.Println("no project to check")
 		}
@@ -156,9 +158,9 @@ won't change the exit status of the command.
 					if fix {
 						setInternal(p)
 					} else if interactive {
-						if utils.Confirm(fmt.Sprintf("Do you want to set %s as internal ?", p.StyledString()), true) {
+						if ui.ConfirmInline(fmt.Sprintf("Do you want to set %s as internal ?", p.StyledString()), true) {
 							setInternal(p)
-						} else if utils.Confirm("Do you want to init a git repo ?", true) {
+						} else if ui.ConfirmInline("Do you want to init a git repo ?", true) {
 							fmt.Println("initializing a git repo...")
 							git.Init(p.Path(), true)
 							utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, p.RepoUrl, true))
@@ -173,10 +175,10 @@ won't change the exit status of the command.
 				}
 				if origin != "" {
 					printCheckHeader(p, fmt.Sprintf("origin is set to %s for local project %s", origin, p.StyledString()))
-					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to set %s as external(%s)?", p.StyledString(), origin), true)) {
+					if fix || (interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to set %s as external(%s)?", p.StyledString(), origin), true)) {
 						fmt.Println("setting project as external...")
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
-					} else if interactive && utils.Confirm(fmt.Sprintf("Do you want to remove %s origin?", p.StyledString()), false) {
+					} else if interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to remove %s origin?", p.StyledString()), false) {
 						fmt.Println("removing origin...")
 						utils.CheckErr(git.OriginRemove(p.Path()))
 					}
@@ -185,7 +187,7 @@ won't change the exit status of the command.
 			case mono.External:
 				if isdir, _ := utils.IsDir(p.Path()); !isdir { // unexisting directory
 					printCheckHeader(p, fmt.Sprintf("project %s does not exist", p.StyledString()))
-					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to clone %s to %s ?", p.RepoUrl, p.StyledString()), true)) {
+					if fix || (interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to clone %s to %s ?", p.RepoUrl, p.StyledString()), true)) {
 						fmt.Println("cloning...")
 						utils.CheckErr(git.Clone(p.RepoUrl, p.Path()))
 					}
@@ -193,7 +195,7 @@ won't change the exit status of the command.
 				}
 				if !git.IsRepoRootDir(p.Path()) { // just normal directory
 					printCheckHeader(p, fmt.Sprintf("%s is not a git repository", p.StyledString()))
-					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to set %s as internal ?", p.StyledString()), true)) {
+					if fix || (interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to set %s as internal ?", p.StyledString()), true)) {
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, "internal", true))
 						utils.FileRemoveLine(monoIgnore, p.Name)
 					}
@@ -207,10 +209,10 @@ won't change the exit status of the command.
 						fmt.Println("updating config...")
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
 					} else if interactive {
-						if utils.Confirm(fmt.Sprintf("Do you want to update %s config from %s to %s ?", p.StyledString(), p.RepoUrl, origin), true) {
+						if ui.ConfirmInline(fmt.Sprintf("Do you want to update %s config from %s to %s ?", p.StyledString(), p.RepoUrl, origin), true) {
 							fmt.Println("updating config...")
 							utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
-						} else if utils.Confirm(fmt.Sprintf("Do you want to set %s remote origin to %s ?", p.StyledString(), p.RepoUrl), true) {
+						} else if ui.ConfirmInline(fmt.Sprintf("Do you want to set %s remote origin to %s ?", p.StyledString(), p.RepoUrl), true) {
 							fmt.Println("setting remote origin...")
 							utils.CheckErr(git.OriginSet(p.Path(), p.RepoUrl))
 						}
@@ -220,7 +222,7 @@ won't change the exit status of the command.
 			case mono.Internal:
 				if isdir, _ := utils.IsDir(p.Path()); !isdir { // unexisting directory fix: remove
 					printCheckHeader(p, fmt.Sprintf("project %s does not exist", p.StyledString()))
-					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to remove %s project ?", p.StyledString()), true)) {
+					if fix || (interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to remove %s project ?", p.StyledString()), true)) {
 						fmt.Println("removing project...")
 						utils.CheckErr(app.ConfigRemoveProject(p.Name, true))
 					}
@@ -229,10 +231,10 @@ won't change the exit status of the command.
 				if git.IsRepoRootDir(p.Path()) {
 					printCheckHeader(p, fmt.Sprintf("internal project %s is a git repository", p.StyledString()))
 					origin := utils.CheckErrOrReturn(git.OriginGet(p.Path()))
-					if fix || (interactive && utils.Confirm(fmt.Sprintf("Do you want to set %s as external(%s)?", p.StyledString(), origin), true)) {
+					if fix || (interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to set %s as external(%s)?", p.StyledString(), origin), true)) {
 						fmt.Println("setting project as external...")
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, origin, true))
-					} else if interactive && utils.Confirm(fmt.Sprintf("Do you want to set %s as internal ?\n(this is a destructive action)", p.StyledString()), false) {
+					} else if interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to set %s as internal ?\n(this is a destructive action)", p.StyledString()), false) {
 						fmt.Println("setting project as internal...")
 						utils.CheckErr(app.ConfigAddOrUpdateProject(p.Name, "internal", true))
 						utils.CheckErr(utils.FileRemoveLine(monoIgnore, p.Name))
@@ -247,19 +249,19 @@ won't change the exit status of the command.
 		// following checks are not performed when filter is in use
 		if !hasFilter {
 			// check Pipeline config is correct
-			fmt.Println(utils.Bold(utils.Underline("checking pipeline:")))
+			fmt.Println(boldUnderline("checking pipeline:"))
 			tasks.GetStandardizedPipeline(false).IsAcyclic(true)
 			fmt.Println(successIndicator + " pipeline ok")
 
 			// check githooks path is correctly set
 			if utils.FileExistsNoErr(filepath.Join(monoRoot, app.DfltHooksDir)) {
-				fmt.Printf(utils.Bold(utils.Underline("found %s checking git core.hookspath:\n")), app.DfltHooksDir)
+				fmt.Printf(boldUnderline("found %s checking git core.hookspath:\n"), app.DfltHooksDir)
 				hookspath, err := git.HooksPathGet(monoRoot)
 				if err == nil {
 					if hookspath == app.DfltHooksDir {
 						fmt.Println(successIndicator + " git core.hookspath set to " + app.DfltHooksDir)
 					} else {
-						fmt.Println(failureIndicator + " " + utils.Warning("git core.hookspath is not set to "+app.DfltHooksDir))
+						fmt.Println(failureIndicator + " " + theme.Warning("git core.hookspath is not set to "+app.DfltHooksDir))
 						fmt.Println("You can either remove this directory or set your git config to use it:")
 						fmt.Printf("git -C %s config core.hookspath %s\n", monoRoot, app.DfltHooksDir)
 					}
@@ -273,7 +275,7 @@ won't change the exit status of the command.
 		if exitStatus != 0 && !fix && !interactive {
 			os.Exit(exitStatus)
 		}
-		fmt.Println(utils.Success("All good!"))
+		fmt.Println(theme.Success("All good!"))
 	},
 }
 

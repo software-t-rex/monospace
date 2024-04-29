@@ -15,6 +15,7 @@ import (
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/git"
 	"github.com/software-t-rex/monospace/gomodules/scaffolders"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 	"github.com/spf13/cobra"
@@ -83,12 +84,12 @@ each of these steps won't overwrite existing files if any`,
 			utils.CheckErr(git.HooksPathSet("./", app.DfltHooksDir))
 		}
 
-		if noInteractive || utils.Confirm("Do you want to commit changes ?", true) {
+		if noInteractive || ui.ConfirmInline("Do you want to commit changes ?", true) {
 			utils.CheckErr(git.ExecDir("./", "add", "."))
 			utils.CheckErr(git.ExecDir("./", "commit", "-m", "initialize monospace"))
 		}
 
-		fmt.Println(utils.Success("Monospace successfully initialized."))
+		fmt.Println(theme.Success("Monospace successfully initialized."))
 		if len(args) == 1 {
 			fmt.Printf("%s is ready for work\n", args[0])
 		}

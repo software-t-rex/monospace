@@ -19,7 +19,8 @@ import (
 
 	"github.com/software-t-rex/monospace/cmd"
 
-	"github.com/software-t-rex/monospace/utils"
+	"github.com/software-t-rex/monospace/gomodules/ui"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/spf13/cobra/doc"
 )
 
@@ -110,6 +111,6 @@ func main() {
 			docDirs[2],
 		))
 	}
-	fmt.Println(utils.Success("Documentation generated successfully"))
+	fmt.Println(ui.GetTheme().Success("Documentation generated successfully"))
 
 }

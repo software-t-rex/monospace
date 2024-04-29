@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 )
 
 //go:embed templates/*
@@ -18,7 +18,7 @@ func cmdAvailable(cmd string) bool {
 	return err == nil
 }
 
-var warningStyle = colors.Style(colors.Yellow)
+var warningStyle = ui.NewStyler(ui.Yellow.Foreground())
 
 func printWarning(msg string) {
 	fmt.Println(warningStyle(msg))
@@ -77,26 +77,5 @@ func Confirm(msg string, dflt bool) bool {
 	if noInteractive == "1" || noInteractive == "true" {
 		return dflt
 	}
-	var response string
-	dfltString := " [y/N]: "
-	if dflt {
-		dfltString = " [Y/n]: "
-	}
-	fmt.Print(msg + dfltString)
-	_, err := fmt.Scanln(&response)
-	if err != nil && err.Error() != "unexpected newline" {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	switch strings.ToLower(response) {
-	case "y", "yes":
-		return true
-	case "n", "no":
-		return false
-	case "":
-		return dflt
-	default:
-		fmt.Println("Please type (y)es or (n)o and then press enter:")
-		return Confirm(msg, dflt)
-	}
+	return ui.ConfirmInline(msg, dflt)
 }

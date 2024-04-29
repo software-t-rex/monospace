@@ -9,22 +9,21 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/software-t-rex/monospace/app"
-	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 )
 
 // flags for the application
 var flagRootDisableColorOutput bool
-
-var bold = utils.Bold
-var underline = utils.Underline
-var italic = utils.Italic
+var theme *ui.Theme
 
 // command that require the config must call this method before continuing execution
 func CheckConfigFound(exitOnError bool) bool {
@@ -42,14 +41,17 @@ var RootCmd = &cobra.Command{
 	Version: app.Version,
 	Use:     "monospace",
 	Short:   "monospace is not monorepo",
-	Long: utils.BrightBlue(`
+	Long: ui.ApplyStyle(`
    _    __     ___   _  _    ___   ____ _ _     __ _   ___  ___
-`) + utils.Green(`  | '_ ' _ \  / _ \ | '_ \  / _ \ / __|| '_ \  / _' | / __|/ _ \
-`) + utils.Yellow(`  | | | | | || (_) || | | || (_) |\__ \| |_) || (_| || (__|  __/
-`) + utils.Red(`  |_| |_| |_| \___/ |_| |_| \___/ |___/| .__/  \__,_| \___|\___|
+`, ui.Blue.Foreground()) +
+		ui.ApplyStyle(`  | '_ ' _ \  / _ \ | '_ \  / _ \ / __|| '_ \  / _' | / __|/ _ \
+`, ui.Green.Foreground()) +
+		ui.ApplyStyle(`  | | | | | || (_) || | | || (_) |\__ \| |_) || (_| || (__|  __/
+`, ui.Yellow.Foreground()) +
+		ui.ApplyStyle(`  |_| |_| |_| \___/ |_| |_| \___/ |___/| .__/  \__,_| \___|\___|
                                        | |
                                        |_| v`+app.Version+`
-`) + `
+`, ui.Red.Foreground()) + `
 Monospace try to bring you best of monorepo and polyrepo paradigms
 You'll enjoy work in a monorepo fashion while keeping advantages of polyrepo.
 
@@ -75,9 +77,21 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-	initConfig()
+	// this is a trick to disable color output when in completion mode
+	completionMode := false
+	for _, arg := range os.Args {
+		if arg == "__complete" || arg == "completion" {
+			completionMode = true
+			break
+		}
+	}
+	// cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().BoolVarP(&flagRootDisableColorOutput, "no-color", "C", false, "Disable color output mode (you can also use env var NO_COLOR)")
+	ui.ToggleEnhanced(!completionMode && !flagRootDisableColorOutput)
+	theme = ui.SetTheme(ui.ThemeMonoSpace)
+	app.ConfigInit(mono.SpaceGetConfigPath())
+}
+
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -8,6 +8,7 @@ import (
 
 	exctr "github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 )
 
@@ -30,17 +31,11 @@ func setInterleavedOutputDisplayNames(jobs exctr.JobList) {
 func NewExecutor(outputMode string) *exctr.JobExecutor {
 	e := exctr.NewExecutor()
 	startTime := time.Now()
-	var bold, success, failure, reset string
-	successIndicator := utils.Green("✔")
-	failureIndicator := utils.Red("✘")
-	if colors.ColorEnabled() {
-		bold = string(colors.Bold)
-		success = string(colors.BrightGreen)
-		failure = string(colors.BrightRed)
-		reset = string(colors.Reset)
-	}
+	theme := ui.GetTheme()
+	successIndicator := theme.Success("✔")
+	failureIndicator := theme.Error("✘")
 	e.OnJobsStart(func(jobs exctr.JobList) {
-		fmt.Printf(bold+"Starting %d tasks...\n"+reset, len(jobs))
+		fmt.Printf(theme.Bold("Starting %d tasks...\n"), len(jobs))
 	})
 	switch outputMode { //grouped,interleaved,status-only,errors-only,none
 	case "none": // do nothing
@@ -68,7 +63,7 @@ func NewExecutor(outputMode string) *exctr.JobExecutor {
 							pw.Write([]byte(res))
 						}
 						if err != nil {
-							pw.Write([]byte(utils.ErrorStyle(err.Error())))
+							pw.Write([]byte(theme.Error(err.Error())))
 						}
 						return res, err
 					}
@@ -110,11 +105,11 @@ func NewExecutor(outputMode string) *exctr.JobExecutor {
 				verb = "succeed"
 				indicator = successIndicator
 			}
-			statusLine := fmt.Sprintf("%s %s %s in %v\n", indicator, bold+job.Name()+reset, verb, job.Duration)
+			statusLine := fmt.Sprintf("%s %s %s in %v\n", indicator, theme.Bold(job.Name()), verb, job.Duration)
 			err := ""
 			res := ""
 			if job.Err != nil {
-				err = utils.Indent(utils.ErrorStyle(job.Err.Error()), "  ")
+				err = utils.Indent(theme.Error(job.Err.Error()), "  ")
 			}
 			if job.Res != "" {
 				res = utils.Indent(job.Res, "  ")
@@ -137,15 +132,28 @@ func NewExecutor(outputMode string) *exctr.JobExecutor {
 		if succeed == len(jobs) {
 			allGreenIndicator = successIndicator
 		}
-		fmt.Print(bold + "Tasks: " + allGreenIndicator + " " + bold)
+		sb := strings.Builder{}
+		if ui.EnhancedEnabled() {
+			sb.WriteString(ui.SGREscapeSequence(ui.Bold))
+		}
+		sb.WriteString("Tasks: ")
+		sb.WriteString(allGreenIndicator)
+		sb.WriteString(" ")
 		if succeed > 0 {
-			fmt.Printf(success+"%d succeed"+reset+bold+" / ", succeed)
+			sb.WriteString(theme.Success(fmt.Sprintf("%d succeed", succeed)))
+			sb.WriteString(" / ")
 		}
 		if failed > 0 {
-			fmt.Printf(failure+"%d failed"+reset+bold+" / ", failed)
+			sb.WriteString(theme.Error(fmt.Sprintf("%d failed", failed)))
+			sb.WriteString(" / ")
 		}
-		fmt.Printf("%d total"+reset+"\n", len(jobs))
-		fmt.Printf(bold+"total time: %v\n"+reset, elapsed)
+		sb.WriteString(fmt.Sprintf("%d total", len(jobs)))
+		if ui.EnhancedEnabled() {
+			sb.WriteString(ui.SGRResetSequence())
+		}
+		sb.WriteString("\n")
+		sb.WriteString(theme.Bold(fmt.Sprintf("total time: %v\n", elapsed)))
+		fmt.Print(sb.String())
 	})
 	return e
 }

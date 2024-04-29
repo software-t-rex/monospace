@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/software-t-rex/monospace/gomodules/utils"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/mono"
 
 	"github.com/spf13/cobra"
@@ -34,9 +34,8 @@ into it.`,
 			destDirectory = args[1]
 			repoUrl = args[0]
 			if strings.HasSuffix(destDirectory, ".git") && !strings.HasSuffix(repoUrl, ".git") {
-				utils.PrintWarning("Seems like you inverted the arguments,")
-				fmt.Println("Should we use " + destDirectory + " as your repository url")
-				if utils.Confirm("and "+repoUrl+" as the destination directory ?", true) {
+				fmt.Println(theme.Warning("Seems like you inverted the arguments,"))
+				if ui.ConfirmInline(fmt.Sprintf("Should we use %s as your repository url\nand %s as the destination directory ?", destDirectory, repoUrl), true) {
 					destDirectory = args[0]
 					repoUrl = args[1]
 				}
@@ -46,7 +45,7 @@ into it.`,
 			repoUrl = args[0]
 			destDirectory = regexp.MustCompile(`([^/]+)\.git$`).FindStringSubmatch(repoUrl)[1]
 			if destDirectory == "" {
-				fmt.Println(utils.ErrorStyle("can't detect destination directory"))
+				fmt.Println(theme.Error("can't detect destination directory"))
 				cmd.Help()
 				os.Exit(1)
 			}

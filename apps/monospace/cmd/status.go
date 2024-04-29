@@ -14,6 +14,7 @@ import (
 
 	"github.com/software-t-rex/go-jobExecutor/v2"
 	"github.com/software-t-rex/monospace/gomodules/colors"
+	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 	"github.com/spf13/cobra"
@@ -45,7 +46,7 @@ You can pass args to git status by separating them with double hyphen '--'`,
 		}
 
 		isShort := utils.SliceContains(args, "--short") || utils.SliceContains(args, "--porcelain")
-		nameStyle := utils.Bold
+		nameStyle := ui.NewStyler(ui.Bold)
 		projects := mono.ProjectsGetAll()
 		internals := []string{}
 		executor := jobExecutor.NewExecutor().WithProgressBarOutput(

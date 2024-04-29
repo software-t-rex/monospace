@@ -57,7 +57,7 @@ will update the monospace gitignore and .monospace.yml files accordingly.`,
 
 		utils.CheckErr(os.Rename(oldName, newName))
 
-		fmt.Println(utils.Success("Done"))
+		fmt.Println(theme.Success("Done"))
 	},
 }
 
