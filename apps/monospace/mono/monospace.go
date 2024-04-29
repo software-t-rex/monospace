@@ -23,6 +23,8 @@ func SpaceGetRoot() string {
 	return SpaceGetRootNoCache()
 }
 
+// update internal cache or the monospace root and returns it
+// an empty strings signifies that root could not be found
 func SpaceGetRootNoCache() string {
 	path, err := os.Getwd()
 	utils.CheckErr(err)
@@ -32,14 +34,14 @@ func SpaceGetRootNoCache() string {
 
 func SpaceGetRootForPath(absPath string) string {
 	absPath = filepath.ToSlash(absPath)
-
 	for absPath != "" && absPath != "." {
 		if utils.FileExistsNoErr(filepath.Join(absPath, app.DfltcfgFilePath)) {
 			return absPath
 		}
 		// go up one dir
+		lastVisted := absPath
 		absPath = filepath.Clean(filepath.Join(absPath, "../"))
-		if absPath == "/home" || absPath == "." || absPath == "/" {
+		if lastVisted == absPath { // we are at the root
 			break
 		}
 	}
@@ -47,6 +49,7 @@ func SpaceGetRootForPath(absPath string) string {
 	return ""
 }
 
+// change the current working directory to the monospace root
 func SpaceChdir() error {
 	root := SpaceGetRoot()
 	if root == "" {
