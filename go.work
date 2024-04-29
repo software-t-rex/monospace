@@ -3,7 +3,6 @@ go 1.21.6
 use (
 	./apps/monospace
 	./gomodules/colors
-	./gomodules/dag
 	./gomodules/go-jobexecutor
 	./gomodules/js-packagemanager
 	./gomodules/packageJson

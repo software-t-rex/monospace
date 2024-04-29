@@ -5,7 +5,5 @@ coverage
 gomodules/go-jobexecutor
 gomodules/js-packagemanager
 gomodules/packageJson
-gomodules/dag
-examples
 *.old
 .env
