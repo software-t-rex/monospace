@@ -13,13 +13,6 @@ import (
 	"strings"
 )
 
-// this reflects user preferences and default to true
-var enabledEnhanced = true
-
-// this reflects the ability to enhance the rendering
-// try to detect if the terminal is not able to render colors or if env var NO_COLOR|ACCESSIBLE are set
-var canEnhance = true
-
 type (
 	Msg          interface{}
 	Cmd          func() Msg
@@ -48,35 +41,8 @@ type (
 	}
 )
 
-// Allow to turn off colouring for all Style methods
-// Be careful: if you do string(colors.Red) + "a red string" + string(Reset)
-// it will still be rendered in red as you use colors codes directly.
-func ToggleEnhanced(enable bool) {
-	enabledEnhanced = enable
-}
-
-// Returns whether enhanced rendering is enabled
-func EnhancedEnabled() bool {
-	return enabledEnhanced && canEnhance
-}
-
-// this mehod is used to detect if the terminal is able to render colors
-// and set the canEnhance flag accordingly
-func detectCapability(t TermIsTerminal) {
-	nocolor := os.Getenv("NO_COLOR")
-	accessible := os.Getenv("ACCESSIBLE")
-	TERM := os.Getenv("TERM")
-	isTerm := t.IsTerminal()
-	canEnhance = true
-	if (nocolor != "" && nocolor != "0" && nocolor != "false") ||
-		(accessible != "" && accessible != "0" && accessible != "false") ||
-		TERM == "dumb" || !isTerm {
-		canEnhance = false
-	}
-}
-
 func printError(err error) {
-	fmt.Println("\n" + GetTheme().Error(err.Error()))
+	fmt.Fprintln(os.Stderr, "\n"+GetTheme().Error(err.Error()))
 }
 
 func lineCounter(s string) int {

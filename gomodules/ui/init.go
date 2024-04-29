@@ -11,5 +11,4 @@ func init() {
 	terminal, _ := NewTerminal(nil)
 	SetTerminal(terminal)
 	detectCapability(usedTerm)
-	SetTheme(ThemeDefault)
 }

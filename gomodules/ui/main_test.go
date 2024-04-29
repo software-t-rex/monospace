@@ -22,16 +22,16 @@ func TestDetectCapability(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Setenv("TERM", c.term)
+		env_term = c.term
 		if c.noColor {
-			t.Setenv("NO_COLOR", "1")
+			env_nocolor = "1"
 		} else {
-			t.Setenv("NO_COLOR", "")
+			env_nocolor = ""
 		}
 		if c.accessible {
-			t.Setenv("ACCESSIBLE", "1")
+			env_accessible = "1"
 		} else {
-			t.Setenv("ACCESSIBLE", "")
+			env_accessible = ""
 		}
 		mockTerm.setIsTerm(c.isTerm) // rerun detectCapability with new values
 		if canEnhance != c.want {

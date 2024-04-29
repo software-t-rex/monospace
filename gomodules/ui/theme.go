@@ -47,8 +47,8 @@ type (
 		emphasedError      func(...string) string
 		success            func(...string) string
 		emphasedSuccess    func(...string) string
-		warnings           func(...string) string
-		emphasedWarnings   func(...string) string
+		warning            func(...string) string
+		emphasedWarning    func(...string) string
 		info               func(...string) string
 		emphasedInfo       func(...string) string
 		title              func(...string) string
@@ -68,8 +68,9 @@ var usedTheme *Theme
 
 // Set the global theme to use in the whole application
 // if theme is nil it will use the default theme
-func SetTheme(theme ThemeInitializer) {
+func SetTheme(theme ThemeInitializer) *Theme {
 	usedTheme = NewTheme(theme)
+	return usedTheme
 }
 
 // Get the global theme to use in the whole application
@@ -104,7 +105,7 @@ func NewTheme(themeInitializer ThemeInitializer) *Theme {
 	} else {
 		config = themeInitializer()
 	}
-	t := &Theme{
+	return &Theme{
 		isDefined: true,
 		Config:    config,
 		renderers: themePrebuiltRenderers{
@@ -114,8 +115,8 @@ func NewTheme(themeInitializer ThemeInitializer) *Theme {
 			emphasedError:      NewStyler(config.ErrorColor.Background(), config.ErrorText.Foreground(), Bold),
 			success:            NewStyler(config.SuccessColor.Foreground()),
 			emphasedSuccess:    NewStyler(config.SuccessColor.Background(), config.SuccessText.Foreground(), Bold),
-			warnings:           NewStyler(config.WarningColor.Foreground()),
-			emphasedWarnings:   NewStyler(config.WarningColor.Background(), config.WarningText.Foreground(), Bold),
+			warning:            NewStyler(config.WarningColor.Foreground()),
+			emphasedWarning:    NewStyler(config.WarningColor.Background(), config.WarningText.Foreground(), Bold),
 			info:               NewStyler(config.InfoColor.Foreground()),
 			emphasedInfo:       NewStyler(config.InfoColor.Background(), config.InfoText.Foreground(), Bold),
 			title:              NewStyler(config.AccentColor.Foreground(), Bold),
@@ -163,8 +164,8 @@ func (t *Theme) Error(s ...string) string              { return t.renderers.erro
 func (t *Theme) EmphasedError(s ...string) string      { return t.renderers.emphasedError(s...) }
 func (t *Theme) Success(s ...string) string            { return t.renderers.success(s...) }
 func (t *Theme) EmphasedSuccess(s ...string) string    { return t.renderers.emphasedSuccess(s...) }
-func (t *Theme) Warnings(s ...string) string           { return t.renderers.warnings(s...) }
-func (t *Theme) EmphasedWarnings(s ...string) string   { return t.renderers.emphasedWarnings(s...) }
+func (t *Theme) Warning(s ...string) string            { return t.renderers.warning(s...) }
+func (t *Theme) EmphasedWarning(s ...string) string    { return t.renderers.emphasedWarning(s...) }
 func (t *Theme) Info(s ...string) string               { return t.renderers.info(s...) }
 func (t *Theme) EmphasedInfo(s ...string) string       { return t.renderers.emphasedInfo(s...) }
 

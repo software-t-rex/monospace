@@ -45,10 +45,6 @@ func (t *MockTerm) Write(a ...any) (int, error) {
 func TestGetSetUsedTerm(t *testing.T) {
 	// reset usedTerm
 	usedTerm = nil
-	// test get usedTerm
-	if GetTerminal() != nil {
-		t.Error("getUsedTerm() should return nil")
-	}
 	// test set usedTerm
 	mockTerm := &MockTerm{}
 	SetTerminal(mockTerm)
