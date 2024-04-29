@@ -50,13 +50,13 @@ func Test_parseTaskName(t *testing.T) {
 		want       TaskName
 		shouldExit bool
 	}{
-		{"should set project to * if unspecified", args{name: "task"}, TaskName{Task: "task", Project: "*"}, false},
-		{"should set project to * if blank", args{name: "#task"}, TaskName{Task: "task", Project: "*"}, false},
-		{"should exit on invalid task name", args{name: "inc#"}, TaskName{}, true},
-		{"should correctly separate project and name", args{name: "apps/internalapp#task"}, TaskName{Task: "task", Project: "apps/internalapp"}, false},
-		{"should replace  alias with project name", args{name: "int#task"}, TaskName{Task: "task", Project: "apps/internalapp"}, false},
-		{"should exit on invalid project", args{name: "unknown#task"}, TaskName{}, true},
-		{"should exit on invalid alias", args{name: "invalid#task"}, TaskName{}, true},
+		{"should set project to * if unspecified", args{name: "task"}, TaskName{Task: "task", Project: "*", ConfigName: "task"}, false},
+		{"should set project to * if blank", args{name: "#task"}, TaskName{Task: "task", Project: "*", ConfigName: "#task"}, false},
+		{"should exit on invalid task name", args{name: "inc#"}, TaskName{ConfigName: "inc#"}, true},
+		{"should correctly separate project and name", args{name: "apps/internalapp#task"}, TaskName{Task: "task", Project: "apps/internalapp", ConfigName: "apps/internalapp#task"}, false},
+		{"should replace  alias with project name", args{name: "int#task"}, TaskName{Task: "task", Project: "apps/internalapp", ConfigName: "int#task"}, false},
+		{"should exit on invalid project", args{name: "unknown#task"}, TaskName{ConfigName: "unknown#task"}, true},
+		{"should exit on invalid alias", args{name: "invalid#task"}, TaskName{ConfigName: "invalid#task"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -68,7 +68,7 @@ func Test_parseTaskName(t *testing.T) {
 				}
 			}()
 			if got := parseTaskName(tt.args.name); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseTaskName() = %v, want %v", got, tt.want)
+				t.Errorf("parseTaskName() = %#v, want %#v", got, tt.want)
 			}
 		})
 	}
@@ -81,25 +81,25 @@ func Test_getStandardizedPipeline(t *testing.T) {
 	}{
 		{"should return standardized pipeline", Pipeline{
 			"*#task": Task{
-				Name: TaskName{Task: "task", Project: "*"},
+				Name: TaskName{Task: "task", Project: "*", ConfigName: "task"},
 			},
 			"*#build": Task{
-				Name: TaskName{Task: "build", Project: "*"},
+				Name: TaskName{Task: "build", Project: "*", ConfigName: "build"},
 				TaskDef: app.MonospaceConfigPipeline{
 					DependsOn: []string{"*#test", "*#task"},
 				},
 			},
 			"*#test": Task{
-				Name: TaskName{Task: "test", Project: "*"},
+				Name: TaskName{Task: "test", Project: "*", ConfigName: "test"},
 				TaskDef: app.MonospaceConfigPipeline{
 					DependsOn: []string{"apps/internalapp#task", "apps/localapp#test"},
 				},
 			},
 			"apps/localapp#test": Task{
-				Name: TaskName{Task: "test", Project: "apps/localapp"},
+				Name: TaskName{Task: "test", Project: "apps/localapp", ConfigName: "apps/localapp#test"},
 			},
 			"apps/internalapp#task": Task{
-				Name: TaskName{Task: "task", Project: "apps/internalapp"},
+				Name: TaskName{Task: "task", Project: "apps/internalapp", ConfigName: "int#task"},
 				TaskDef: app.MonospaceConfigPipeline{
 					DependsOn: []string{"apps/localapp#test"},
 				},
@@ -109,7 +109,7 @@ func Test_getStandardizedPipeline(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GetStandardizedPipeline(true); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getStandardizedPipeline() = %v, want %v", got, tt.want)
+				t.Errorf("getStandardizedPipeline() = %#v, want %#v", got, tt.want)
 			}
 		})
 	}
