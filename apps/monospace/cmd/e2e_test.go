@@ -70,6 +70,9 @@ func TestCmd_Suite(t *testing.T) {
 	monospaceDir := filepath.Join(dirname(), "../")
 	tmpDir := fs.NewDir(t, "mstest-build")
 	monospaceBin := filepath.Join(tmpDir.Path(), "monospace-test")
+	if runtime.GOOS == "windows" {
+		monospaceBin += ".exe"
+	}
 	icmd.RunCmd(icmd.Command(
 		"go", "build", "-cover", "-o", monospaceBin, "main.go",
 	), icmd.Dir(monospaceDir)).
@@ -296,10 +299,15 @@ func TestCmd_Suite(t *testing.T) {
 	runStep(t, "ls", func(t *testing.T) {
 		skipOrContinue(t, "ls")
 		longOutput := "apps/myapp (local)\nmodules/renamed (file:///home/malko/git/T-REx/monospace/gomodules/js-packagemanager)\npackages/jslib (internal)"
+		cloneOutput := "apps/myapp\nmodules/external\npackages/golib\npackages/jslib\npackages/mylib"
 		tests := []testCase{
 			{"should return the list of projects", []string{"ls", "-C"}, icmd.Expected{ExitCode: 0, Out: "apps/myapp\nmodules/renamed\npackages/jslib"}, nil, ""},
 			{"should add detail with -long flag", []string{"ls", "-C", "--long"}, icmd.Expected{ExitCode: 0, Out: longOutput}, nil, ""},
 			{"should support list alias", []string{"list", "-C", "-l"}, icmd.Expected{ExitCode: 0, Out: longOutput}, nil, ""},
+			{"should support monospaceRoot as argument", []string{"ls", filepath.Join(cloneDir.Path(), "clonedRepo")}, icmd.Expected{ExitCode: 0, Out: cloneOutput}, nil, ""},
+			{"should support a monospace subdir path as argument", []string{"ls", filepath.Join(cloneDir.Path(), "clonedRepo/modules/")}, icmd.Expected{ExitCode: 0, Out: cloneOutput}, nil, ""},
+			{"should print an error with a dir which is not a monospace as argument", []string{"ls", filepath.Join(cloneDir.Path(), "rocketchat-jira-hook")}, icmd.Expected{ExitCode: 1}, nil, "not part of a monospace"},
+			{"should print an error with a dir which doesn't exists as argument", []string{"ls", filepath.Join(cloneDir.Path(), "notexists")}, icmd.Expected{ExitCode: 1}, nil, "no such file or directory"},
 		}
 		t.Log("ls")
 		runTestCases(initDir.Path())(t, tests)

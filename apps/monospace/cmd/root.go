@@ -92,10 +92,15 @@ func init() {
 	app.ConfigInit(mono.SpaceGetConfigPath())
 }
 
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	colors.Toggle(!flagRootDisableColorOutput)
-	app.ConfigInit(mono.SpaceGetConfigPath())
+// utility function to force reload of monospace config from a given directory
+// exit on error
+func forceReloadFromDir(dir string) {
+	dir = utils.CheckErrOrReturn(filepath.Abs(dir))
+	utils.CheckErr(os.Chdir(dir))
+	// force reload of monospace config
+	rootDir := mono.SpaceGetRootNoCache()
+	if rootDir == "" {
+		utils.Exit(fmt.Sprintf("%s is not part of a monospace", dir))
+	}
+	app.ConfigInitNoCheck(mono.SpaceGetConfigPath()) // force reload of monospace config
 }

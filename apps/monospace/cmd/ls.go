@@ -9,7 +9,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/software-t-rex/monospace/gomodules/utils"
@@ -29,9 +28,7 @@ var lsCmd = &cobra.Command{
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 1 {
-			utils.CheckErr(os.Chdir(args[0]))
-			mono.SpaceGetRootNoCache()
-			initConfig() // force reload of monospace config
+			forceReloadFromDir(args[0]) // may exit on error
 		}
 		CheckConfigFound(true)
 		projects := mono.ProjectsGetAll()

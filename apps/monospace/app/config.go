@@ -114,15 +114,19 @@ func ConfigRead(configPath string) (*MonospaceConfig, error) {
 	return config, err
 }
 
-func ConfigInit(configPath string) error {
-	if ConfigIsLoaded() {
-		return errors.New("config already loaded")
-	}
+func ConfigInitNoCheck(configPath string) error {
 	config, err := ConfigRead(configPath)
 	if err == nil {
 		configSet(config)
 	}
 	return err
+}
+
+func ConfigInit(configPath string) error {
+	if ConfigIsLoaded() {
+		return errors.New("config already loaded")
+	}
+	return ConfigInitNoCheck(configPath)
 }
 
 func ConfigSave() error {
