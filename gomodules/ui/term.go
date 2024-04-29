@@ -55,6 +55,7 @@ func NewTerminal(tty *os.File) (*Terminal, error) {
 	} else {
 		file, err := openTTY()
 		if err != nil {
+			terminal.bgChecked = true
 			return terminal, err
 		}
 		terminal.tty = file
@@ -115,5 +116,8 @@ func SetTerminal(t TermInterface) {
 	usedTerm = t
 }
 func GetTerminal() TermInterface {
+	if usedTerm == nil {
+		usedTerm, _ = NewTerminal(nil)
+	}
 	return usedTerm
 }
