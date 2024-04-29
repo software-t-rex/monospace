@@ -13,7 +13,7 @@ builds:
     binary: monospace-next
     env:
       - CGO_ENABLED=1
-    ldflags: -s -w -X github.com/software-t-rex/monospace/app.Version="{{.Version}}"
+    ldflags: -X github.com/software-t-rex/monospace/app.Version="{{.Version}}"
     flags: [-race, -tags=dev, -v]
     no_unique_dist_dir: true
     hooks:
