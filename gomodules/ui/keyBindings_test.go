@@ -76,6 +76,6 @@ func TestGetDescription(t *testing.T) {
 	desc := kb.GetDescription()
 	expected := "\n\x1b[39;2;1ma\x1b[22;39;2m test\x1b[0m\x1b[39;2m " + theme.KeyBindingSeparator() + " \x1b[22m\x1b[39;2;1mctrl+c\x1b[22;39;2m exit\x1b[0m"
 	if desc != expected {
-		t.Errorf("GetDescription() failed, expected %#v, got %#v", expected, desc)
+		t.Errorf("GetDescription() failed:\nexpected %#v\ngot      %#v", expected, desc)
 	}
 }

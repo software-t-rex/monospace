@@ -48,8 +48,9 @@ You can pass args to git status by separating them with double hyphen '--'`,
 		nameStyle := ui.NewStyler(ui.Bold)
 		projects := mono.ProjectsGetAll()
 		internals := []string{}
+		barBg := ui.AdaptiveColor{Dark: ui.Black, Light: ui.White}.Background()
 		executor := jobExecutor.NewExecutor().WithProgressBarOutput(
-			40, false, ui.SGREscapeSequence(ui.Black.Background(), ui.GreenBright.Foreground()),
+			40, false, ui.SGREscapeSequence(barBg, theme.Config.AccentColor.Foreground()),
 		)
 		executor.AddNamedJobCmd(mono.RootProject.StyledString(), getStatusCommand("", args))
 		for _, p := range projects {

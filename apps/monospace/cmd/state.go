@@ -32,7 +32,7 @@ given revision. This will leave your repositories in a detached head state.
 
 Local projects will be ignored and left as is.
 
-` + ui.ApplyStyle(">> This is highly experimental, any feedback will be greatly appreciated! <<", ui.YellowBright.Background(), ui.Black.Foreground()),
+` + ui.ApplyStyle(">> This is highly experimental, any feedback will be greatly appreciated! <<", ui.BrightYellow.Background(), ui.Black.Foreground()),
 	Example: `  # pin the current state of the monospace
   monospace state pin myState
   # restore a previously pinned state

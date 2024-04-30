@@ -14,8 +14,8 @@ func TestAdaptiveColor(t *testing.T) {
 		expectedDark  SGRParam
 		expectedLight SGRParam
 	}{
-		{AdaptiveColor{Dark: "#eee", Light: "#111"}, "238;238;238", "17;17;17"},
-		{AdaptiveColor{Dark: "#222", Light: "#aaa"}, "34;34;34", "170;170;170"},
+		{AdaptiveColor{Dark: Color("#eee"), Light: Color("#111")}, "238;238;238", "17;17;17"},
+		{AdaptiveColor{Dark: Color("#222"), Light: Color("#aaa")}, "34;34;34", "170;170;170"},
 	}
 
 	for _, test := range tests {

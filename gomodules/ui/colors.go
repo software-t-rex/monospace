@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-var (
+const (
 	Black        colorANSI8 = 0
 	Red          colorANSI8 = 1
 	Green        colorANSI8 = 2
@@ -26,15 +26,16 @@ var (
 	ResetColor   colorANSI8 = 9
 	DefaultColor colorANSI8 = ResetColor
 
-	BlackBright   colorANSI256 = 8
-	RedBright     colorANSI256 = 9
-	GreenBright   colorANSI256 = 10
-	YellowBright  colorANSI256 = 11
-	BlueBright    colorANSI256 = 12
-	MagentaBright colorANSI256 = 13
-	CyanBright    colorANSI256 = 14
-	WhiteBright   colorANSI256 = 15
+	BrightBlack   colorANSI256 = 8
+	BrightRed     colorANSI256 = 9
+	BrightGreen   colorANSI256 = 10
+	BrightYellow  colorANSI256 = 11
+	BrightBlue    colorANSI256 = 12
+	BrightMagenta colorANSI256 = 13
+	BrightCyan    colorANSI256 = 14
+	BrightWhite   colorANSI256 = 15
 
+	// grayscale 1-24 from dark to light
 	Gray1  colorANSI256 = 232
 	Gray2  colorANSI256 = 233
 	Gray3  colorANSI256 = 234
@@ -59,6 +60,11 @@ var (
 	Gray22 colorANSI256 = 253
 	Gray23 colorANSI256 = 254
 	Gray24 colorANSI256 = 255
+
+	// aliases
+	DarkGrey  colorANSI256 = Gray2
+	MidGrey   colorANSI256 = Gray13
+	LightGrey colorANSI256 = Gray23
 )
 
 type RGB [3]int
@@ -122,11 +128,11 @@ func (c colorANSI256) Background() SGRParam {
 }
 
 type AdaptiveColor struct {
-	Light Color
-	Dark  Color
+	Dark  ColorInterface
+	Light ColorInterface
 }
 
-func (c AdaptiveColor) Color() Color {
+func (c AdaptiveColor) Color() ColorInterface {
 	var terminal TermWithBackground = GetTerminal()
 	if !EnhancedEnabled() {
 		return c.Dark

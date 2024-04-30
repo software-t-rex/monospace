@@ -32,8 +32,8 @@ func ThemeDefault() ThemeConfig {
 		KeyBindingSeparator:        "•",
 
 		ButtonStyler: NewStyler(
-			AdaptiveColor{Light: "251", Dark: "236"}.Background(),
-			AdaptiveColor{Light: "233", Dark: "254"}.Foreground(),
+			AdaptiveColor{Light: colorANSI256(251), Dark: colorANSI256(236)}.Background(),
+			AdaptiveColor{Light: colorANSI256(233), Dark: colorANSI256(254)}.Foreground(),
 		),
 		ButtonAccentuatedStyler: NewStyler(Magenta.Background(), Magenta.Foreground()),
 	}
@@ -41,24 +41,24 @@ func ThemeDefault() ThemeConfig {
 
 func ThemeMonoSpace() ThemeConfig {
 	var (
-		monoAccentColor  = AdaptiveColor{Light: "#f2804a", Dark: "#f2804a"}
-		monoAccentText   = AdaptiveColor{Light: "0", Dark: "0"}
-		monoSuccessColor = AdaptiveColor{Light: "2", Dark: "10"}
-		monoErrorColor   = AdaptiveColor{Light: "9", Dark: "9"}
-		monoMoreColor    = AdaptiveColor{Light: "245", Dark: "245"}
+		monoAccentColor  = Color("#f2804a")
+		monoAccentText   = Black
+		monoSuccessColor = AdaptiveColor{Light: Green, Dark: BrightGreen}
+		monoErrorColor   = BrightRed
+		monoMoreColor    = MidGrey
 	)
 
 	return ThemeConfig{
 		AccentColor:  monoAccentColor,
 		AccentText:   monoAccentText,
 		ErrorColor:   monoErrorColor,
-		ErrorText:    AdaptiveColor{Light: "15", Dark: "15"},
+		ErrorText:    BrightWhite,
 		SuccessColor: monoSuccessColor,
-		SuccessText:  AdaptiveColor{Light: "233", Dark: "233"},
-		WarningColor: AdaptiveColor{Light: "11", Dark: "11"},
-		WarningText:  AdaptiveColor{Light: "233", Dark: "233"},
-		InfoColor:    AdaptiveColor{Light: "12", Dark: "12"},
-		InfoText:     AdaptiveColor{Light: "233", Dark: "233"},
+		SuccessText:  DarkGrey,
+		WarningColor: BrightYellow,
+		WarningText:  DarkGrey,
+		InfoColor:    BrightBlue,
+		InfoText:     DarkGrey,
 
 		successIndicatorString:     ApplyStyle("✔", monoSuccessColor.Foreground(), Bold),
 		failureIndicatorString:     ApplyStyle("✘", monoErrorColor.Foreground(), Bold),
@@ -72,8 +72,8 @@ func ThemeMonoSpace() ThemeConfig {
 		KeyBindingSeparator:        "•",
 
 		ButtonStyler: NewStyler(
-			AdaptiveColor{Light: "251", Dark: "236"}.Background(),
-			AdaptiveColor{Light: "233", Dark: "254"}.Foreground(),
+			AdaptiveColor{Light: Gray20, Dark: Gray5}.Background(),
+			AdaptiveColor{Light: DarkGrey, Dark: LightGrey}.Foreground(),
 		),
 		ButtonAccentuatedStyler: NewStyler(monoAccentColor.Background(), monoAccentText.Foreground()),
 	}
