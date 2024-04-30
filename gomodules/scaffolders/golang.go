@@ -57,18 +57,19 @@ func Golang() error {
 		return err
 	}
 
-	//@todo propose to add to go.work
 	monoRoot := os.Getenv("MONOSPACE_ROOT")
 	projectPath := os.Getenv("MONOSPACE_PROJECT_PATH")
 
 	if monoRoot == "" || projectPath == "" {
 		return err
 	}
-	cmd2 := exec.Command("go", "work", "edit", "-use", "./"+projectPath)
-	cmd2.Dir = monoRoot
-	cmd2.Stdin = os.Stdin
-	cmd2.Stdout = os.Stdout
-	cmd2.Stderr = os.Stderr
-	return cmd2.Run()
-
+	if Confirm("Do you want to add project to monospace go.work?", true) {
+		cmd2 := exec.Command("go", "work", "edit", "-use", "./"+projectPath)
+		cmd2.Dir = monoRoot
+		cmd2.Stdin = os.Stdin
+		cmd2.Stdout = os.Stdout
+		cmd2.Stderr = os.Stderr
+		return cmd2.Run()
+	}
+	return nil
 }

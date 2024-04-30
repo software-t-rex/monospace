@@ -352,18 +352,33 @@ func ProjectRemoveFromGitignore(project Project, silent bool) (err error) {
 func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 	project := utils.CheckErrOrReturn(ProjectGetByName(projectName))
 	utils.CheckErr(app.ConfigRemoveProject(project.Name, true))
+	root := SpaceGetRoot()
+	theme := ui.GetTheme()
 
-	printSuccess := func() { fmt.Println(ui.GetTheme().Success("Project " + projectName + " successfully removed")) }
+	successMsg := fmt.Sprintf("Project %s successfully removed", projectName)
 
 	utils.CheckErr(ProjectRemoveFromGitignore(project, false))
 
+	// check for go.work file and optionally remove project from it
+	if utils.FileExistsNoErr(filepath.Join(root, "go.work")) && project.IsGolangProject() {
+		if (withConfirm && ui.ConfirmInline("Do you want to remove "+project.Name+" from go.work", false)) ||
+			(!withConfirm && rmdir) {
+			err := SpaceGoWorkDropUse(project.Name)
+			if err != nil {
+				fmt.Printf("%s Error while removing project from go.work\n%s\n", theme.FailureIndicator(), err.Error())
+			} else {
+				fmt.Printf("%s Project removed from go.work\n", theme.SuccessIndicator())
+			}
+		}
+	}
+
 	if !rmdir {
-		printSuccess()
-		fmt.Println("You should now delete the project directory.")
+		utils.PrintSuccess(successMsg)
+		fmt.Println("You can now remove the project directory.")
 	} else {
 		if !withConfirm || ui.ConfirmInline("Do you want to delete "+project.Name, false) {
 			utils.CheckErr(utils.RmDir(project.Path()))
 		}
-		printSuccess()
+		utils.PrintSuccess(successMsg)
 	}
 }

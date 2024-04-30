@@ -58,6 +58,16 @@ func SpaceChdir() error {
 	return os.Chdir(root)
 }
 
+// execute a command in the monospace root directory
+func SpaceExec(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = SpaceGetRoot()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	return cmd.Run()
+}
+
 func SpaceGetConfigPath() string {
 	return filepath.Join(SpaceGetRoot(), "/", app.DfltcfgFilePath)
 }
@@ -76,6 +86,13 @@ func SpaceHasProject(projectName string) bool {
 
 func SpaceAddProjectToGitignore(projectName string) error {
 	return utils.FileAppend(filepath.Join(SpaceGetRoot(), "/.gitignore"), projectName)
+}
+
+func SpaceGoWorkUse(projectName string) error {
+	return SpaceExec("go", "work", "edit", "-use", projectName)
+}
+func SpaceGoWorkDropUse(projectName string) error {
+	return SpaceExec("go", "work", "edit", "-dropuse", projectName)
 }
 
 /* exit on error */

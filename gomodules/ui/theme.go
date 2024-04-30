@@ -25,6 +25,9 @@ type (
 		InfoColor    ColorInterface
 		InfoText     ColorInterface
 
+		successIndicatorString string
+		failureIndicatorString string
+
 		SelectedIndicatorString    string
 		UnSelectedIndicatorString  string
 		FocusItemIndicatorString   string
@@ -156,6 +159,8 @@ func (t *Theme) EmphasedWarning(s ...string) string    { return t.renderers.emph
 func (t *Theme) Info(s ...string) string               { return t.renderers.info(s...) }
 func (t *Theme) EmphasedInfo(s ...string) string       { return t.renderers.emphasedInfo(s...) }
 
+func (t *Theme) SuccessIndicator() string    { return t.Config.successIndicatorString }
+func (t *Theme) FailureIndicator() string    { return t.Config.failureIndicatorString }
 func (t *Theme) SelectedIndicator() string   { return t.Config.SelectedIndicatorString }
 func (t *Theme) UnSelectedIndicator() string { return t.Config.UnSelectedIndicatorString }
 func (t *Theme) ConditionalSelectedIndicator(selected bool) string {

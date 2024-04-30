@@ -20,6 +20,8 @@ func ThemeDefault() ThemeConfig {
 		InfoColor:    Blue,
 		InfoText:     White,
 
+		successIndicatorString:     ApplyStyle("✔", Green.Foreground(), Bold),
+		failureIndicatorString:     ApplyStyle("✘", Red.Foreground(), Bold),
 		SelectedIndicatorString:    ApplyStyle("✔", Green.Foreground(), Bold),
 		UnSelectedIndicatorString:  "∙",
 		FocusItemIndicatorString:   ApplyStyle(">", Magenta.Foreground(), Bold),
@@ -42,13 +44,14 @@ func ThemeMonoSpace() ThemeConfig {
 		monoAccentColor  = AdaptiveColor{Light: "#f2804a", Dark: "#f2804a"}
 		monoAccentText   = AdaptiveColor{Light: "0", Dark: "0"}
 		monoSuccessColor = AdaptiveColor{Light: "2", Dark: "10"}
+		monoErrorColor   = AdaptiveColor{Light: "9", Dark: "9"}
 		monoMoreColor    = AdaptiveColor{Light: "245", Dark: "245"}
 	)
 
 	return ThemeConfig{
 		AccentColor:  monoAccentColor,
 		AccentText:   monoAccentText,
-		ErrorColor:   AdaptiveColor{Light: "9", Dark: "9"},
+		ErrorColor:   monoErrorColor,
 		ErrorText:    AdaptiveColor{Light: "15", Dark: "15"},
 		SuccessColor: monoSuccessColor,
 		SuccessText:  AdaptiveColor{Light: "233", Dark: "233"},
@@ -57,6 +60,8 @@ func ThemeMonoSpace() ThemeConfig {
 		InfoColor:    AdaptiveColor{Light: "12", Dark: "12"},
 		InfoText:     AdaptiveColor{Light: "233", Dark: "233"},
 
+		successIndicatorString:     ApplyStyle("✔", monoSuccessColor.Foreground(), Bold),
+		failureIndicatorString:     ApplyStyle("✘", monoErrorColor.Foreground(), Bold),
 		SelectedIndicatorString:    ApplyStyle("✔", monoSuccessColor.Foreground(), Bold),
 		UnSelectedIndicatorString:  "∙",
 		FocusItemIndicatorString:   ApplyStyle(">", monoAccentColor.Foreground(), Bold),
