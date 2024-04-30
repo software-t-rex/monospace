@@ -56,7 +56,7 @@ func TestConfigInitAndSave(t *testing.T) {
 	testConfig.configPath = configPath
 	testConfig.root = filepath.Dir(filepath.Dir(configPath))
 
-	err := ConfigInit(configPath)
+	err := ConfigLoad(configPath)
 	if err == nil {
 		t.Errorf("ConfigInit(): should error on unexisiting config file")
 	}
@@ -97,7 +97,7 @@ projects_aliases:
 	if err == nil || got != nil {
 		t.Fatalf("ConfigGet(): should not return a config at this point")
 	}
-	err = ConfigInit(configPath)
+	err = ConfigLoad(configPath)
 	if err != nil {
 		t.Fatalf("ConfigInit(): failed to load config: %v", err)
 	}

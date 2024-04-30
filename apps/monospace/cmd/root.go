@@ -89,7 +89,7 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&flagRootDisableColorOutput, "no-color", "C", false, "Disable color output mode (you can also use env var NO_COLOR)")
 	ui.ToggleEnhanced(!completionMode && !flagRootDisableColorOutput)
 	theme = ui.SetTheme(ui.ThemeMonoSpace)
-	app.ConfigInit(mono.SpaceGetConfigPath())
+	app.ConfigLoad(mono.SpaceGetConfigPath())
 }
 
 // utility function to force reload of monospace config from a given directory
@@ -102,5 +102,5 @@ func forceReloadFromDir(dir string) {
 	if rootDir == "" {
 		utils.Exit(fmt.Sprintf("%s is not part of a monospace", dir))
 	}
-	app.ConfigInitNoCheck(mono.SpaceGetConfigPath()) // force reload of monospace config
+	app.ConfigLoadNoCheck(mono.SpaceGetConfigPath()) // force reload of monospace config
 }

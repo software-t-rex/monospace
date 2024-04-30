@@ -18,15 +18,15 @@ import (
 )
 
 type MonospaceConfigPipeline struct {
+	Description string            `yaml:"description,omitempty"`
+	Cmd         []string          `yaml:"cmd,omitempty,flow"`
 	DependsOn   []string          `yaml:"dependsOn,omitempty,flow"`
 	Env         map[string]string `yaml:"env,omitempty,flow"`
-	Outputs     []string          `yaml:"outputs,omitempty"`
-	Inputs      []string          `yaml:"inputs,omitempty"`
-	Cache       bool              `yaml:"cache,omitempty"`
-	OutputMode  string            `yaml:"output_mode,omitempty"`
 	Persistent  bool              `yaml:"persistent,omitempty"`
-	Cmd         []string          `yaml:"cmd,omitempty,flow"`
-	Description string            `yaml:"description,omitempty"`
+	OutputMode  string            `yaml:"output_mode,omitempty"`
+	Cache       bool              `yaml:"cache,omitempty"`
+	Inputs      []string          `yaml:"inputs,omitempty"`
+	Outputs     []string          `yaml:"outputs,omitempty"`
 }
 type MonospaceConfig struct {
 	GoModPrefix         string                             `yaml:"go_mod_prefix,omitempty"`
@@ -114,7 +114,7 @@ func ConfigRead(configPath string) (*MonospaceConfig, error) {
 	return config, err
 }
 
-func ConfigInitNoCheck(configPath string) error {
+func ConfigLoadNoCheck(configPath string) error {
 	config, err := ConfigRead(configPath)
 	if err == nil {
 		configSet(config)
@@ -122,11 +122,11 @@ func ConfigInitNoCheck(configPath string) error {
 	return err
 }
 
-func ConfigInit(configPath string) error {
+func ConfigLoad(configPath string) error {
 	if ConfigIsLoaded() {
 		return errors.New("config already loaded")
 	}
-	return ConfigInitNoCheck(configPath)
+	return ConfigLoadNoCheck(configPath)
 }
 
 func ConfigSave() error {
