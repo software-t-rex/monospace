@@ -1,6 +1,6 @@
 # UI package
 
-this package uses bubbletea and lipgloss to power some reusable components for your _non bubbletea_ cli application. This is useful when you have a cli application that you want to enhance but don't want to wrap all the logic in a bubbletea program.
+this package takes inspiration from bubbletea and lipgloss to power some reusable components for your _non bubbletea_ cli application. This is useful when you have a cli application that you want to enhance but don't want to wrap all the logic in a bubbletea program. Also this package depends only on standards go package.
 
 ## Provided components
 This are the components included in the package
@@ -57,9 +57,20 @@ confirm := ui.NewSelect("Choose an option", options).
 ```
 
 ## How to create your own components
-components are basically bubbletea application, so if you are already familiar with bubbletea you should already know most of what to do.
+If you come from bubbletea, you will be familiar with most of what to do here. If not I encourage you to look at existing components for better understanding. Don't hesitate to contact me for more in depth knowledge.
 
-### keybindings
+### The ComponentApi
+your component should implement the ModelInterface  which means it also has to implement a ```GetComponentApi() *ComponentApi``` method where component api looks like:
+```golang
+type ComponentApi struct {
+	done    bool
+	cleanup bool
+}
+```
+manipulating this api from your model will tell the system when it's time to stop and if it should cleanup or refresh the view when done.
+
+
+### keybindings helpers
 In order to ease the use of key bindings and automatically generate the help string you should defined keybindings in your model Init method
 like this:
 ```golang
@@ -89,7 +100,7 @@ Reading this you should have noticed the use of the ui.Msgs instead of raw strin
 of components. To localize components it's up to you to detect language and replace strings in ui.Msgs to sweets your needs (at least for now this may change in the future).
 So you are encouraged to use predefined messages in your components when there's already one available for your use case.
 
-Defining your keybindings this way will allow you to easily handle keys in your Update method and to generate an help message in your View method like this:
+Defining your keybindings this way will allow you to easily handle keys in your Update method and to generate an help message in your Render method like this:
 ```golang
 
 func (m *model[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -100,7 +111,7 @@ func (m *model[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *model[T]) View() string {
+func (m *model[T]) Render() string {
 	theme := GetTheme() // use theme defined method for consistency more on theme later
 	var sb strings.Builder
 	sb.WriteString(theme.Title(m.title) + "\n")
@@ -113,7 +124,7 @@ func (m *model[T]) View() string {
 ```
 
 ### the FallBack method
-In addition to Init, Update, and View components in this package MUST define a FallBack method. 
+In addition to Init, Update, and Render components in this package MUST define a FallBack method. 
 The Fallback method will be used when NO_COLOR or ASSIST env variables are set or when ```ui.ToggleEnhenced(false)``` have been called
 
 This should be a less appealing version of your component, with no formatting and simple readline for user input. When used the Update method

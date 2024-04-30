@@ -58,7 +58,6 @@ type (
 	}
 
 	Theme struct {
-		isDefined bool
 		Config    ThemeConfig
 		renderers themePrebuiltRenderers
 	}
@@ -79,7 +78,7 @@ func SetTheme(theme ThemeInitializer) *Theme {
 // Get the global theme to use in the whole application
 // if theme is not set it will set theme to the default theme
 func GetTheme() *Theme {
-	if !usedTheme.isDefined {
+	if usedTheme == nil {
 		SetTheme(nil)
 	}
 	return usedTheme
@@ -97,8 +96,7 @@ func NewTheme(themeInitializer ThemeInitializer) *Theme {
 		config = themeInitializer()
 	}
 	return &Theme{
-		isDefined: true,
-		Config:    config,
+		Config: config,
 		renderers: themePrebuiltRenderers{
 			accentuated:        NewStyler(config.AccentColor.Foreground()),
 			reverseAccentuated: NewStyler(config.AccentColor.Background(), config.AccentText.Foreground()),
