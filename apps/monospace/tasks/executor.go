@@ -7,7 +7,6 @@ import (
 	"time"
 
 	exctr "github.com/software-t-rex/go-jobExecutor/v2"
-	"github.com/software-t-rex/monospace/gomodules/colors"
 	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 )
@@ -15,15 +14,15 @@ import (
 func setInterleavedOutputDisplayNames(jobs exctr.JobList) {
 	for i, job := range jobs {
 		nameParts := strings.Split(job.Name(), "/")
-		if !colors.ColorEnabled() {
+		if !ui.EnhancedEnabled() {
 			job.SetDisplayName(nameParts[len(nameParts)-1])
 		} else {
-			colorId := (i + 1) % 7
-			color := "\033[39m"
-			if colorId != 0 {
-				color = fmt.Sprintf("\033[3%dm", colorId)
+			colorId := fmt.Sprintf("%d", (i+1)%7)
+			if colorId == "0" {
+				job.SetDisplayName(nameParts[len(nameParts)-1])
+			} else {
+				job.SetDisplayName(ui.ApplyStyle(nameParts[len(nameParts)-1], ui.Color(colorId).Foreground()))
 			}
-			job.SetDisplayName(color + nameParts[len(nameParts)-1] + string(colors.Reset))
 		}
 	}
 }

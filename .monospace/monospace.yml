@@ -19,9 +19,8 @@ projects_aliases:
     npmpkg: packages/monospace
     packageJson: gomodules/packageJson
     ui: gomodules/ui
+    utils: gomodules/utils
 pipeline:
-    root#difforigin:
-        cmd: [git, diff, --name-only, origin/main]
     executor#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     executor#test:
@@ -38,8 +37,6 @@ pipeline:
     monospace#buildnext:
         cmd: [goreleaser, build, --config, ./.goreleaser-next.yaml, --id, monospace-next, --snapshot, --clean, --single-target]
         output_mode: interleaved
-    monospace#difforigin:
-        cmd: [git, diff, --name-only, origin/main]
     monospace#doc:
         cmd: [./gendoc.sh, -md, -man]
     monospace#test:
@@ -53,8 +50,10 @@ pipeline:
         cmd: [git, diff, --name-only, origin/main]
     packageJson#test:
         cmd: [test.sh]
-    ui#test:
-        cmd: [test.sh]
+    root#difforigin:
+        cmd: [git, diff, --name-only, origin/main]
     tidy:
         output_mode: grouped
         cmd: [/bin/bash, -c, 'if [ -f go.mod ]; then go mod tidy; else echo ''no go.mod file => skipped'';fi']
+    ui#test:
+        cmd: [test.sh]

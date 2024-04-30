@@ -10,7 +10,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/software-t-rex/monospace/gomodules/colors"
 	"github.com/software-t-rex/monospace/mono"
 
 	"github.com/spf13/cobra"
@@ -31,7 +30,7 @@ it will clone a remote 'external' repository into the current monospace.`,
 			return err
 		}
 		if !mono.ProjectIsValidName(args[0]) {
-			return fmt.Errorf(colors.Error("'%s'")+" is not a valid project name", args[0])
+			return fmt.Errorf(theme.Error("'%s'")+" is not a valid project name", args[0])
 		}
 		return nil
 	},

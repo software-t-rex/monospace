@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
-	"github.com/software-t-rex/monospace/gomodules/colors"
 	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
@@ -56,7 +55,7 @@ You can restrict the command to one or more projects using flag --project-filter
 		if cmdBin != "" && cmdBin[0] == '.' { // make relative path relative to projects
 			cmdBin = filepath.Join(utils.CheckErrOrReturn(os.Getwd()), cmdBin)
 		}
-		if cmdBin == "git" && colors.ColorEnabled() { // add colors to git commands if color is enabled
+		if cmdBin == "git" && ui.EnhancedEnabled() { // add colors to git commands if color is enabled
 			cmdArgs = append([]string{"-c", "color.ui=always"}, cmdArgs...)
 		}
 

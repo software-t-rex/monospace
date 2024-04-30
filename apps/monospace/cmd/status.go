@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/software-t-rex/go-jobExecutor/v2"
-	"github.com/software-t-rex/monospace/gomodules/colors"
 	"github.com/software-t-rex/monospace/gomodules/ui"
 	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
@@ -50,7 +49,7 @@ You can pass args to git status by separating them with double hyphen '--'`,
 		projects := mono.ProjectsGetAll()
 		internals := []string{}
 		executor := jobExecutor.NewExecutor().WithProgressBarOutput(
-			10, false, string(colors.BgBlack+colors.BrightGreen),
+			40, false, ui.SGREscapeSequence(ui.Black.Background(), ui.GreenBright.Foreground()),
 		)
 		executor.AddNamedJobCmd(mono.RootProject.StyledString(), getStatusCommand("", args))
 		for _, p := range projects {
@@ -84,7 +83,7 @@ func init() {
 
 func getStatusCommand(path string, args []string) *exec.Cmd {
 	args = append([]string{"status"}, args...)
-	if colors.ColorEnabled() {
+	if ui.EnhancedEnabled() {
 		args = append([]string{"-c", "color.ui=always"}, args...)
 	}
 	cmd := exec.Command("git", args...)
