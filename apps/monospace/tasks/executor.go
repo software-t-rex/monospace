@@ -31,8 +31,8 @@ func NewExecutor(outputMode string) *exctr.JobExecutor {
 	e := exctr.NewExecutor()
 	startTime := time.Now()
 	theme := ui.GetTheme()
-	successIndicator := theme.Success("✔")
-	failureIndicator := theme.Error("✘")
+	successIndicator := theme.SuccessIndicator()
+	failureIndicator := theme.FailureIndicator()
 	e.OnJobsStart(func(jobs exctr.JobList) {
 		fmt.Printf(theme.Bold("Starting %d tasks...\n"), len(jobs))
 	})

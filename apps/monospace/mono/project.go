@@ -147,9 +147,10 @@ func ProjectExists(name string) (exists bool) {
 func ProjectsGetAliasesNameOnly() (res []string) {
 	config, _ := app.ConfigGet()
 	if config.Aliases != nil {
-		return utils.MapGetKeys(config.Aliases)
+		res = utils.MapGetKeys(config.Aliases)
+		sort.Strings(res)
 	}
-	return []string{}
+	return
 }
 
 /* return all project names declared in the monospace.yml */

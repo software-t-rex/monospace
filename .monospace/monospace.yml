@@ -39,7 +39,7 @@ pipeline:
     monospace#doc:
         cmd: [./gendoc.sh, -md, -man]
     monospace#test:
-        dependsOn: [packageJson#test, executor#test, jspm#test]
+        dependsOn: [packageJson#test, executor#test, jspm#test, ui#test]
         cmd: [test.sh]
         output_mode: status-only
     npmpkg#build: {}
