@@ -89,7 +89,31 @@ func (p Project) HasPackageJson() bool {
 	return utils.FileExistsNoErr(filepath.Join(p.Path(), "package.json"))
 }
 func (p Project) GetPackageJson() (*packageJson.PackageJSON, error) {
+	if !p.HasPackageJson() {
+		return nil, fmt.Errorf("project %s has no package.json", p.Name)
+	}
 	return packageJson.Read(filepath.Join(p.Path(), "package.json"))
+}
+func (p Project) IsGolangProject() bool {
+	return utils.FileExistsNoErr(filepath.Join(p.Path(), "go.mod"))
+}
+func (p Project) IsJsProject() bool {
+	return p.HasPackageJson()
+}
+func (p Project) IsPythonProject() bool {
+	return utils.FileExistsNoErr(filepath.Join(p.Path(), "requirements.txt"))
+}
+func (p Project) IsJavaProject() bool {
+	return utils.FileExistsNoErr(filepath.Join(p.Path(), "pom.xml"))
+}
+func (p Project) IsPhpProject() bool {
+	return utils.FileExistsNoErr(filepath.Join(p.Path(), "composer.json"))
+}
+func (p Project) IsRubyProject() bool {
+	return utils.FileExistsNoErr(filepath.Join(p.Path(), "Gemfile"))
+}
+func (p Project) IsRustProject() bool {
+	return utils.FileExistsNoErr(filepath.Join(p.Path(), "Cargo.toml"))
 }
 
 func getProjectsMap() (map[string]string, error) {
@@ -187,16 +211,6 @@ func ProjectAsStruct(name string, repoUrl string) (res Project) {
 		res.Kind = External
 	}
 	return
-}
-
-func ProjectDetectMainLang(name string) string {
-	projectPath := ProjectGetPath(name)
-	if utils.FileExistsNoErr(filepath.Join(projectPath, "go.mod")) {
-		return "golang"
-	} else if utils.FileExistsNoErr(filepath.Join(projectPath, "package.json")) {
-		return "js"
-	}
-	return "unknown"
 }
 
 func ProjectGetByAlias(alias string) (Project, error) {
