@@ -4,7 +4,6 @@ js_package_manager: ^pnpm@8.14.3
 preferred_output_mode: grouped
 projects:
     apps/monospace: internal
-    gomodules/colors: internal
     gomodules/go-jobexecutor: git@github.com:software-t-rex/go-jobExecutor.git
     gomodules/js-packagemanager: git@github.com:software-t-rex/js-packagemanager.git
     gomodules/packageJson: git@github.com:software-t-rex/packageJson.git
