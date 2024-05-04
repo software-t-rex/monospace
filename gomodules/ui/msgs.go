@@ -15,6 +15,7 @@ var Msgs = map[string]string{
 	"cancel":                         "Cancel",
 	"userCanceled":                   "Canceled by user",
 	"limitReached":                   "Selection limit reached",
+	"selectAllToggle":                "Select/Deselect all",
 	"errorPrefix":                    "Error: ",
 	"fallbackMultiSelectPrompt":      "Select items by entering corresponding numbers: (eg: 1 2 3) ",
 	"fallbackSelectPrompt":           "Select one item entering corresponding number: ",

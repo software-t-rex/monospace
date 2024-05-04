@@ -30,18 +30,19 @@ type SelectOption[T comparable] struct {
 }
 
 type multiSelectModel[T comparable] struct {
-	title             string
-	options           []SelectOption[T]
-	selected          map[int]bool
-	selectionMaxLen   int
-	selectionMinLen   int // will default to 1
-	maxVisibleOptions int
-	startVisibleIndex int
-	focusedIndex      int
-	errorMsg          string
-	bindings          *KeyBindings[*multiSelectModel[T]]
-	singleSelect      bool
-	uiApi             *ComponentApi
+	title                  string
+	options                []SelectOption[T]
+	selected               map[int]bool
+	selectionMaxLen        int
+	selectionMinLen        int // will default to 1
+	maxVisibleOptions      int
+	startVisibleIndex      int
+	focusedIndex           int
+	errorMsg               string
+	bindings               *KeyBindings[*multiSelectModel[T]]
+	singleSelect           bool
+	selectAllToggleBinding string
+	uiApi                  *ComponentApi
 }
 
 func (m *multiSelectModel[T]) GetComponentApi() *ComponentApi {
@@ -132,6 +133,13 @@ func (m *multiSelectModel[T]) WithCleanup(clear bool) *multiSelectModel[T] {
 	m.uiApi.Cleanup = clear
 	return m
 }
+
+// Set the key binding to toggle select all options
+// if binding is empty then toggle select all is disabled
+// default to empty
+// usage: WithSelectAll("a,ctrl+a")
+func (m *multiSelectModel[T]) WithSelectAll(binding string) *multiSelectModel[T] {
+	m.selectAllToggleBinding = binding
 	return m
 }
 
@@ -183,6 +191,9 @@ func multiSelectAddBindings[T comparable](m *multiSelectModel[T]) {
 		AddBinding("down,j", Msgs["down"], func(m *multiSelectModel[T]) Cmd {
 			if m.focusedIndex < len(m.options)-1 {
 				m.focusedIndex++
+			} else {
+				m.focusedIndex = 0
+				m.startVisibleIndex = 0
 			}
 			if (m.focusedIndex - m.startVisibleIndex) >= m.maxVisibleOptions {
 				m.startVisibleIndex++
@@ -192,6 +203,12 @@ func multiSelectAddBindings[T comparable](m *multiSelectModel[T]) {
 		AddBinding("up,k", Msgs["up"], func(m *multiSelectModel[T]) Cmd {
 			if m.focusedIndex > 0 {
 				m.focusedIndex--
+			} else {
+				m.focusedIndex = len(m.options) - 1
+				m.startVisibleIndex = len(m.options) - m.maxVisibleOptions
+				if m.startVisibleIndex < 0 {
+					m.startVisibleIndex = 0
+				}
 			}
 			if m.focusedIndex >= 0 && m.focusedIndex < m.startVisibleIndex {
 				m.startVisibleIndex = m.focusedIndex
@@ -225,6 +242,26 @@ func multiSelectAddBindings[T comparable](m *multiSelectModel[T]) {
 			}
 			// mark focus item as selected
 			m.selected[m.focusedIndex] = true
+			return nil
+		})
+	}
+	if m.selectAllToggleBinding != "" {
+		m.bindings.AddBinding(m.selectAllToggleBinding, Msgs["selectAllToggle"], func(m *multiSelectModel[T]) Cmd {
+			// are all options selected
+			allSelected := true
+			for i := range m.options {
+				if !m.selected[i] {
+					allSelected = false
+					break
+				}
+			}
+			if allSelected {
+				m.selected = make(map[int]bool, len(m.options))
+			} else {
+				for i := range m.options {
+					m.selected[i] = true
+				}
+			}
 			return nil
 		})
 	}
