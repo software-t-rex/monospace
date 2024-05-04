@@ -9,6 +9,7 @@ package ui
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 
@@ -24,6 +25,7 @@ type (
 	TermWithRawMode interface {
 		MakeRaw() (*term.State, error)
 		Restore(*term.State) error
+		HandleState(bool) (func(), error)
 	}
 	TermWithBackground interface {
 		HasDarkBackground() (bool, error)
@@ -90,6 +92,32 @@ func (t *Terminal) Restore(state *term.State) error {
 	}
 	return term.Restore(t.fd, state)
 }
+
+// put terminal in raw mode and return a restore function and an error if any
+//
+// Usage:
+//
+//	restore, err := handleTerminalState(terminal)
+//	defer restore()
+func (t *Terminal) HandleState(hideCursor bool) (func(), error) {
+	restore := func() {}
+	state, err := t.MakeRaw()
+	if errors.Is(err, ErrNOTERM) {
+		return restore, err
+	}
+	tty := t.Tty()
+	if hideCursor && err == nil {
+		fmt.Fprint(tty, "\033[?25l")
+	}
+	restore = func() {
+		t.Restore(state)
+		if hideCursor && err == nil {
+			fmt.Fprint(tty, "\033[?25h")
+		}
+	}
+	return restore, err
+}
+
 func (t *Terminal) Tty() *os.File {
 	return t.tty
 }

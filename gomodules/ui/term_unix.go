@@ -20,7 +20,7 @@ import (
 )
 
 func openTTY() (*os.File, error) {
-	return os.OpenFile("/dev/tty", os.O_RDONLY, 0)
+	return os.OpenFile("/dev/tty", os.O_RDWR, 0)
 }
 
 func makeRaw(fd int) (*term.State, error) {

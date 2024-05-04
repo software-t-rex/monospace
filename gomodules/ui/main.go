@@ -95,6 +95,16 @@ func runComponent[M Model](m M) (M, error) {
 		var msg Msg
 		var err error
 		switch api.InputReader {
+		case LineReader:
+			fmt.Print(toPrint)
+			msg, err = ReadLineEnhanced(terminal, m)
+			if err != nil {
+				printError(fmt.Errorf("error reading input event: %v", err))
+				return m, err
+			}
+		case PasswordReader:
+			fmt.Print(toPrint)
+			msg, err = ReadPassword(terminal)
 		case KeyReader:
 			fmt.Print(toPrint + "\r\n")
 			linesPrinted++

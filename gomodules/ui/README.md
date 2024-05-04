@@ -63,8 +63,9 @@ If you come from bubbletea, you will be familiar with most of what to do here. I
 your component should implement the ModelInterface  which means it also has to implement a ```GetComponentApi() *ComponentApi``` method where component api looks like:
 ```golang
 type ComponentApi struct {
-	done    bool
-	cleanup bool
+	Done    bool // if true will stop to wait for user input
+	Cleanup bool // if true will remove component from ouput when done
+	InputReader inputReader // select user input type you want to listen to
 }
 ```
 manipulating this api from your model will tell the system when it's time to stop and if it should cleanup or refresh the view when done.
@@ -74,24 +75,24 @@ manipulating this api from your model will tell the system when it's time to sto
 In order to ease the use of key bindings and automatically generate the help string you should defined keybindings in your model Init method
 like this:
 ```golang
-func (m *model[T]) Init() tea.Cmd {
+func (m *model[T]) Init() ui.Cmd {
 	m.bindings = NewKeyBindings[*model[T]]()
   // (only the first key specified will appear in the helper message)
-	m.bindings.AddBinding("up,k", ui.Msgs["up"], func(m *model[T]) tea.Cmd {
+	m.bindings.AddBinding("up,k", ui.Msgs["up"], func(m *model[T]) ui.Cmd {
 		if m.focusedIndex > 0 {
 			m.focusedIndex--
 		}
 		return nil
 	})
-	m.bindings.AddBinding("down,j", ui.Msgs["down"], func(m *model[T]) tea.Cmd {
+	m.bindings.AddBinding("down,j", ui.Msgs["down"], func(m *model[T]) ui.Cmd {
 		if m.focusedIndex < len(m.options)-1 {
 			m.focusedIndex++
 		}
 		return nil
 	})
   // if description is "" then the key binding won't appear in the helper message
-	m.bindings.AddBinding("ctrl+c", "", func(m *model[T]) tea.Cmd {
-    return tea.Quit
+	m.bindings.AddBinding("ctrl+c", "", func(m *model[T]) ui.Cmd {
+    return ui.CmdKill
 	})
 	return nil
 }
@@ -103,10 +104,10 @@ So you are encouraged to use predefined messages in your components when there's
 Defining your keybindings this way will allow you to easily handle keys in your Update method and to generate an help message in your Render method like this:
 ```golang
 
-func (m *model[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *model[T]) Update(msg ui.Msg) (ui.Model, ui.Cmd) {
 	cmd := m.bindings.Handle(m, msg)
 	if m.done {
-		return m, tea.Quit
+		return m, ui.CmdQuit
 	}
 	return m, cmd
 }

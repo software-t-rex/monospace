@@ -9,7 +9,8 @@ package ui
 
 // SequenceKeysMap is a map of sequence keys to their corresponding key names.
 // This map is used to convert escape sequences to key names.
-// here are some volountary ignored keys and the reason why:
+//
+// Here are some volountary ignored keys and the reason why:
 // - ctrl+h: is detected as backspace
 // - ctrl+i: is detected as tab
 // - ctrl+j: is detected as enter
@@ -19,35 +20,47 @@ package ui
 // - ctrl+h: is detected as backspace
 // - f10 is unreachable on my computer and not tested
 // - f11 is full screen on some terminals
+// - find, select keys which are not present on my keyboard and not tested
+//
 // For other keys to be added you can propose a PR with the key.
 // there's some tools to help you to get the key sequence in the tools directory
-
-var KeyNames = map[string]string{
+//
+// some reference:
+//
+// - https://en.wikipedia.org/wiki/ANSI_escape_code
+// - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+// - https://learn.microsoft.com/fr-fr/windows/console/console-virtual-terminal-sequences
+var SequenceKeysMap = map[string]string{
 	"\x1b": "esc",
-	"\n":   "enter", // (wanted "\n", got "\r") (windows wanted "\r", got "\n")
+	"\n":   "enter",
 	"\r":   "enter",
 	"\t":   "tab",
 	"\x7f": "backspace",
-	"\b":   "backspace", // (wanted "\b", got "\x7f")
+	"\b":   "backspace",
 
-	"\x1b[A":  "up",
-	"\x1bOA":  "up", // (windows wanted "\x1bOA", got "\x1b[A")
-	"\x1b[B":  "down",
-	"\x1bOB":  "down", // (windows wanted "\x1bOB", got "\x1b[B")
-	"\x1b[C":  "right",
-	"\x1bOC":  "right",    // (wanted "\x1bOC", got "\x1b[C")
-	"\x1b[D":  "left",     // (windows wanted "\x1bOD", got "\x1b[D")
-	"\x1bOD":  "left",     // (wanted "\x1bOD", got "\x1b[D")
-	"\x1b[1~": "home",     // Some terminals like xterm (wanted "\x1b[1~", got "\x1b[H") ( windows wanted "\x1b[1~", got "\x1b[H")
-	"\x1b[H":  "home",     // Some terminals like iTerm2, Linux console (mycomputer even windows terminal)
-	"\x1bOH":  "home",     // Some terminals in application keypad mode(wanted "\x1bOH", got "\x1b[H")
-	"\x1b[7~": "home",     // rxvt (wanted "\x1b[7~", got "\x1b[H") (windows wanted "\x1b[7~", got "\x1b[H")
-	"\x1b[4~": "end",      // Some terminals like xterm (wanted "\x1b[4~", got "\x1b[F") (windows wanted "\x1b[4~", got "\x1b[F")
-	"\x1b[F":  "end",      // Some terminals like iTerm2, Linux console
-	"\x1bOF":  "end",      // Some terminals in application keypad mode (wanted "\x1bOF", got "\x1b[F")  (windows wanted "\x1bOF", got "\x1b[F")
-	"\x1b[8~": "end",      // rxvt (wanted "\x1b[8~", got "\x1b[F") (windows wanted "\x1b[8~", got "\x1b[F")
-	"\x1b[5~": "pageup",   // Linux console
-	"\x1b[6~": "pagedown", // Linux console
+	"\x1b[A": "up",    // normal mode
+	"\x1b[B": "down",  // normal mode
+	"\x1b[C": "right", // normal mode
+	"\x1b[D": "left",  // normal mode
+	"\x1b[H": "home",  // normal mode
+	"\x1b[F": "end",   // normal mode
+
+	"\x1bOA": "up",    // application mode
+	"\x1bOB": "down",  // application mode
+	"\x1bOC": "right", // application mode
+	"\x1bOD": "left",  // application mode
+	"\x1bOH": "home",  // application mode
+	"\x1bOF": "end",   // application mode
+
+	"\x1b[2~": "insert",
+	"\x1b[3~": "delete",
+	"\x1b[5~": "pageup",
+	"\x1b[6~": "pagedown",
+	"\x1b[7~": "home",
+	"\x1b[8~": "end",
+
+	"\x1b[3;5~": "ctrl+delete",
+	"\x1b[3;3~": "alt+delete",
 
 	"\x01": "ctrl+a",
 	"\x02": "ctrl+b",
@@ -66,26 +79,24 @@ var KeyNames = map[string]string{
 	"\x13": "ctrl+s",
 	"\x14": "ctrl+t",
 	"\x15": "ctrl+u", // kill line
-	"\x18": "ctrl+x",
 	"\x17": "ctrl+w", // delete previous word
+	"\x18": "ctrl+x",
 	"\x19": "ctrl+y",
 
-	"\x1b[2~":  "insert",
-	"\x1b[3~":  "delete",
-	"\x1b[11~": "f1", //(wanted "\x1b[11~", got "\x1bOP") (windows wanted "\x1b[11~", got "\x1bOP")
-	"\x1bOP":   "f1",
-	"\x1b[12~": "f2", //(wanted "\x1b[12~", got "\x1bOQ")
-	"\x1bOQ":   "f2", // windows
-	"\x1b[13~": "f3", // (wanted "\x1b[13~", got "\x1bOR")
-	"\x1bOR":   "f3",
-	"\x1b[14~": "f4",
-	"\x1bOS":   "f4", //windows,  (linux wanted "\x1b[14~", got "\x1bOS")
-	"\x1b[15~": "f5",
-	"\x1b[17~": "f6",
-	"\x1b[18~": "f7",
-	"\x1b[19~": "f8",
-	"\x1b[20~": "f9",
-	"\x1b[24~": "f12",
+	"\x1b[11~": "F1", //(wanted "\x1b[11~", got "\x1bOP") (windows wanted "\x1b[11~", got "\x1bOP")
+	"\x1bOP":   "F1",
+	"\x1b[12~": "F2", //(wanted "\x1b[12~", got "\x1bOQ")
+	"\x1bOQ":   "F2", // windows
+	"\x1b[13~": "F3", // (wanted "\x1b[13~", got "\x1bOR")
+	"\x1bOR":   "F3",
+	"\x1b[14~": "F4",
+	"\x1bOS":   "F4", //windows,  (linux wanted "\x1b[14~", got "\x1bOS")
+	"\x1b[15~": "F5",
+	"\x1b[17~": "F6",
+	"\x1b[18~": "F7",
+	"\x1b[19~": "F8",
+	"\x1b[20~": "F9",
+	"\x1b[24~": "F12",
 
 	"\x1b[1;2A": "shift+up",
 	"\x1b[1;2B": "shift+down",

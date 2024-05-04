@@ -21,6 +21,9 @@ func (t *MockTerm) MakeRaw() (*term.State, error) {
 	return nil, nil
 }
 func (t *MockTerm) Restore(*term.State) error { return nil }
+func (t *MockTerm) HandleState(bool) (func(), error) {
+	return nil, nil
+}
 func (t *MockTerm) IsTerminal() bool {
 	return t.isTerm
 }
