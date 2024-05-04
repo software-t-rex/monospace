@@ -15,6 +15,8 @@ import (
 	"golang.org/x/term"
 )
 
+var ErrNOTERM = fmt.Errorf("not a terminal")
+
 type (
 	TermIsTerminal interface {
 		IsTerminal() bool
@@ -63,7 +65,7 @@ func NewTerminal(tty *os.File) (*Terminal, error) {
 	terminal.fd = int(terminal.tty.Fd())
 	terminal.isTerm = term.IsTerminal(terminal.fd)
 	if !terminal.isTerm {
-		return terminal, fmt.Errorf("file descriptor %d is not a terminal", terminal.fd)
+		return terminal, fmt.Errorf("file descriptor %d is %w", terminal.fd, ErrNOTERM)
 	}
 	return terminal, nil
 }
@@ -73,13 +75,13 @@ func (t *Terminal) IsTerminal() bool {
 }
 func (t *Terminal) MakeRaw() (*term.State, error) {
 	if !t.isTerm {
-		return nil, fmt.Errorf("trying to make raw a non terminal file descriptor %d", t.fd)
+		return nil, fmt.Errorf("MakeRaw: %w", ErrNOTERM)
 	}
 	return makeRaw(t.fd)
 }
 func (t *Terminal) Restore(state *term.State) error {
 	if !t.isTerm {
-		return fmt.Errorf("trying to restore a non terminal file descriptor %d", t.fd)
+		return fmt.Errorf("Restore: %w", ErrNOTERM)
 	}
 	return term.Restore(t.fd, state)
 }
@@ -99,7 +101,7 @@ func (t *Terminal) NewReader() *bufio.Reader {
 // background color after a change.
 func (t *Terminal) HasDarkBackground() (bool, error) {
 	if !t.isTerm {
-		return true, fmt.Errorf("trying to get the background color of a non terminal file descriptor %d", t.fd)
+		return true, fmt.Errorf("HasDarkBackground: %w", ErrNOTERM)
 	}
 	if !t.bgChecked {
 		t.hasDarkBg = terminalHasDarkBackground(t)

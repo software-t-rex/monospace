@@ -17,8 +17,8 @@ type (
 	Msg          interface{}
 	Cmd          func() Msg
 	ComponentApi struct {
-		done    bool
-		cleanup bool
+		Done        bool
+		Cleanup     bool
 	}
 	Model interface {
 		// set initial state of the component

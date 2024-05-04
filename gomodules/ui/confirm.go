@@ -43,7 +43,7 @@ func (m *confirmModel) WithoutHelp() *confirmModel {
 // default to false (menu will remain visible)
 // Ignored in fallback mode.
 func (m *confirmModel) WithCleanup(clear bool) *confirmModel {
-	m.uiApi.cleanup = clear
+	m.uiApi.Cleanup = clear
 	return m
 }
 
@@ -63,12 +63,12 @@ func (m *confirmModel) Init() Cmd {
 	m.bindings = NewKeyBindings[*confirmModel]().
 		AddBinding("y", "Confirm", func(m *confirmModel) Cmd {
 			m.confirmed = true
-			m.uiApi.done = true
+			m.uiApi.Done = true
 			return CmdQuit
 		}).
 		AddBinding("n", "Cancel", func(m *confirmModel) Cmd {
 			m.confirmed = false
-			m.uiApi.done = true
+			m.uiApi.Done = true
 			return CmdQuit
 		}).
 		AddBinding("left,right,up,down,tab,h,j,k,l", "", func(m *confirmModel) Cmd {
@@ -77,7 +77,7 @@ func (m *confirmModel) Init() Cmd {
 		}).
 		AddToDescription("Arrow/tab to switch").
 		AddBinding("enter", "Validate answer", func(m *confirmModel) Cmd {
-			m.uiApi.done = true
+			m.uiApi.Done = true
 			return CmdQuit
 		}).
 		AddBinding("ctrl+c", "", func(m *confirmModel) Cmd {
@@ -93,8 +93,8 @@ func (m *confirmModel) Update(msg Msg) Cmd {
 func (m *confirmModel) Render() string {
 	theme := GetTheme()
 	var sb strings.Builder
-	if m.uiApi.done {
-		if m.uiApi.cleanup {
+	if m.uiApi.Done {
+		if m.uiApi.Cleanup {
 			return "" // we don't want to display anything if we are in clearScreen mode
 		}
 		sb.WriteString(theme.Title(m.msg))
@@ -117,7 +117,7 @@ func (m *confirmModel) Render() string {
 	} else {
 		sb.WriteString(theme.ButtonError(m.noLabel) + " " + theme.Button(m.yesLabel))
 	}
-	if !m.uiApi.done && m.help {
+	if !m.uiApi.Done && m.help {
 		sb.WriteString("\n")
 		sb.WriteString(m.bindings.GetDescription())
 	}
@@ -154,19 +154,19 @@ func (m *confirmModel) Fallback() Model {
 	switch strings.ToLower(input.Value) {
 	case "y", "yes":
 		m.confirmed = true
-		m.uiApi.done = true
+		m.uiApi.Done = true
 	case "n", "no":
 		m.confirmed = false
-		m.uiApi.done = true
+		m.uiApi.Done = true
 	case "": // do nothing
-		m.uiApi.done = true
+		m.uiApi.Done = true
 	default:
 		m.errorMsg = Msgs["fallbackConfirmError"]
 	}
-	if !m.uiApi.done {
+	if !m.uiApi.Done {
 		return m.Fallback()
 	}
-	if m.uiApi.cleanup {
+	if m.uiApi.Cleanup {
 		fmt.Print("\033[2K\033[1A\033[2K")
 	}
 	return m

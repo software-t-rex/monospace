@@ -35,7 +35,6 @@ func terminalHasDarkBackground(terminal interface {
 	state, _ := terminal.MakeRaw()
 	defer terminal.Restore(state)
 	fmt.Print("\033]11;?\a")
-
 	reader := terminal.NewReader()
 	responseChan := make(chan string, 1)
 	go func() {

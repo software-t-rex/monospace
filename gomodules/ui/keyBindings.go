@@ -48,8 +48,8 @@ func (k *KeyBindings[T]) AddBinding(keysToBind string, desc string, handler func
 	keys := strings.Split(keysToBind, ",")
 	cleanKeys := []string{}
 	for _, key := range keys {
-		if desc, ok := KeyDescriptors[key]; ok {
-			cleanKeys = append(cleanKeys, desc)
+		if descriptor, ok := KeyDescriptors[key]; ok {
+			cleanKeys = append(cleanKeys, descriptor)
 		} else {
 			cleanKeys = append(cleanKeys, key)
 		}
@@ -72,7 +72,7 @@ func (k *KeyBindings[T]) AddBinding(keysToBind string, desc string, handler func
 // this method should be called from the Update method of the model to handle key bindings
 func (k *KeyBindings[T]) Handle(m T, msg Msg) Cmd {
 	switch msg := msg.(type) {
-	case KeyMsg:
+	case MsgKey:
 		if handler, ok := k.Handlers[msg.String()]; ok {
 			return handler(m)
 		}

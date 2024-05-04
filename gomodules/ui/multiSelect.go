@@ -129,7 +129,9 @@ func (m *multiSelectModel[T]) MaxVisibleOptions(nb int) *multiSelectModel[T] {
 // default to false (menu will remain visible)
 // Ignored in fallback mode.
 func (m *multiSelectModel[T]) WithCleanup(clear bool) *multiSelectModel[T] {
-	m.uiApi.cleanup = clear
+	m.uiApi.Cleanup = clear
+	return m
+}
 	return m
 }
 
@@ -167,15 +169,7 @@ func (m *multiSelectModel[T]) getSelected() []T {
 	return res
 }
 
-func (m *multiSelectModel[T]) Init() Cmd {
-	// if single selection mode, focus on the first selected item
-	if m.focusedIndex >= m.maxVisibleOptions {
-		// place selected option in the middle of the visible options
-		m.startVisibleIndex = m.focusedIndex - m.maxVisibleOptions/2 + 1
-		if m.startVisibleIndex > len(m.options)-m.maxVisibleOptions {
-			m.startVisibleIndex = len(m.options) - m.maxVisibleOptions
-		}
-	}
+func multiSelectAddBindings[T comparable](m *multiSelectModel[T]) {
 	// if single selection mode, focus on the first selected item
 	// always return nil for convenience
 	ifSingleSelectFocusIndex := func() Cmd {
@@ -247,7 +241,7 @@ func (m *multiSelectModel[T]) Init() Cmd {
 				return nil
 			}
 		}
-		m.uiApi.done = true
+		m.uiApi.Done = true
 		return nil
 	}).
 		// following bindings are not displayed in the help message
@@ -289,19 +283,30 @@ func (m *multiSelectModel[T]) Init() Cmd {
 			}
 			return ifSingleSelectFocusIndex()
 		})
+}
+func (m *multiSelectModel[T]) Init() Cmd {
+	// ensure focus is in the visible area
+	if m.focusedIndex >= m.maxVisibleOptions {
+		// place selected option in the middle of the visible options
+		m.startVisibleIndex = m.focusedIndex - m.maxVisibleOptions/2 + 1
+		if m.startVisibleIndex > len(m.options)-m.maxVisibleOptions {
+			m.startVisibleIndex = len(m.options) - m.maxVisibleOptions
+		}
+	}
+	multiSelectAddBindings(m)
 	return nil
 }
 
 // h,j,k,l = left, down, up, right
 func (m *multiSelectModel[T]) Update(msg Msg) Cmd {
-	m.uiApi.done = false
+	m.uiApi.Done = false
 	m.errorMsg = ""
 	cmd := m.bindings.Handle(m, msg)
 	return cmd
 }
 
 func (m *multiSelectModel[T]) Render() string {
-	if m.uiApi.done && m.uiApi.cleanup {
+	if m.uiApi.Done && m.uiApi.Cleanup {
 		return ""
 	}
 	theme := GetTheme()
@@ -344,7 +349,7 @@ func (m *multiSelectModel[T]) Render() string {
 		sb.WriteString(label)
 		sb.WriteString("\n")
 	}
-	if !m.uiApi.done {
+	if !m.uiApi.Done {
 		if m.errorMsg != "" {
 			sb.WriteString("\n")
 			sb.WriteString(theme.Error(m.errorMsg))
@@ -405,7 +410,7 @@ func (m *multiSelectModel[T]) Fallback() Model {
 
 func newMultiSelect[T comparable](title string, singleSelect bool) *multiSelectModel[T] {
 	m := &multiSelectModel[T]{title: title, singleSelect: singleSelect}
-	m.uiApi = &ComponentApi{cleanup: true}
+	m.uiApi = &ComponentApi{Cleanup: true}
 	m.maxVisibleOptions = defaultMaxVisibleOptions
 	m.selectionMinLen = 1
 	if singleSelect {

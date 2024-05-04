@@ -50,15 +50,15 @@ func TestHandle(t *testing.T) {
 	kb := NewKeyBindings[MockModel]()
 	kb.AddBinding("a,space", "test", nilHandler)
 	kb.AddBinding("ctrl+c", "exit", quitHandler)
-	kb.Handle(model, KeyMsg{Value: "a"})
+	kb.Handle(model, MsgKey{Value: "a"})
 	if (nilCalls != 1) || (quitCalls != 0) {
 		t.Errorf("Handle() failed, expected nilCalls=1, quitCalls=0, got nilCalls=%v, quitCalls=%v", nilCalls, quitCalls)
 	}
-	kb.Handle(model, KeyMsg{Value: "space"})
+	kb.Handle(model, MsgKey{Value: "space"})
 	if (nilCalls != 2) || (quitCalls != 0) {
 		t.Errorf("Handle() failed, expected nilCalls=2, quitCalls=0, got nilCalls=%v, quitCalls=%v", nilCalls, quitCalls)
 	}
-	cmd := kb.Handle(model, KeyMsg{Value: "ctrl+c"})
+	cmd := kb.Handle(model, MsgKey{Value: "ctrl+c"})
 	if quitCalls != 1 {
 		t.Errorf("Handle() failed, expected quitHandler to have been called")
 	}
