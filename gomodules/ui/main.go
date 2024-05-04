@@ -74,9 +74,7 @@ func runComponent[M Model](m M) (M, error) {
 	linesPrinted := 0
 	api := m.GetComponentApi()
 	terminal := GetTerminal()
-	for !api.done {
-		toPrint := m.Render() + "\r\n"
-		fmt.Print(toPrint)
+	for !api.Done {
 		// Update the number of lines printed
 		linesPrinted = lineCounter(toPrint)
 		keyMsg, err := ReadKeyPressEvent(terminal)
@@ -88,7 +86,7 @@ func runComponent[M Model](m M) (M, error) {
 		// Move the cursor up to the start of the list and clear the list
 		fmt.Printf("\033[0G\033[%dA\033[J", linesPrinted)
 		// last render
-		if api.done && !api.cleanup {
+		if api.Done && !api.Cleanup {
 			fmt.Print(m.Render() + "\r\n")
 		}
 	}
