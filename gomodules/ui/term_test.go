@@ -3,6 +3,7 @@ package ui
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"testing"
 
 	"golang.org/x/term"
@@ -38,8 +39,15 @@ func (t *MockTerm) setIsDarkBg(isDarkBg bool) *MockTerm {
 func (t *MockTerm) NewReader() *bufio.Reader {
 	return t.reader
 }
+func (t *MockTerm) NewScanner() *bufio.Scanner {
+	return bufio.NewScanner(t.reader)
+}
 func (t *MockTerm) Write(a ...any) (int, error) {
 	return fmt.Fprint(t.writer, a...)
+}
+
+func (t *MockTerm) Tty() *os.File {
+	return nil
 }
 
 func TestGetSetUsedTerm(t *testing.T) {

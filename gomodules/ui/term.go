@@ -30,12 +30,17 @@ type (
 	}
 	TermWithReader interface {
 		NewReader() *bufio.Reader
+		NewScanner() *bufio.Scanner
+	}
+	TTYFileDescriptor interface {
+		Tty() *os.File
 	}
 	TermInterface interface {
 		TermIsTerminal
 		TermWithRawMode
 		TermWithBackground
 		TermWithReader
+		TTYFileDescriptor
 	}
 )
 
@@ -85,10 +90,16 @@ func (t *Terminal) Restore(state *term.State) error {
 	}
 	return term.Restore(t.fd, state)
 }
+func (t *Terminal) Tty() *os.File {
+	return t.tty
+}
 
 // you should have checked that the terminal is a terminal before calling this function.
 func (t *Terminal) NewReader() *bufio.Reader {
 	return bufio.NewReader(t.tty)
+}
+func (t *Terminal) NewScanner() *bufio.Scanner {
+	return bufio.NewScanner(t.tty)
 }
 
 // WARNING: you should have checked that the terminal is a terminal before calling this function.

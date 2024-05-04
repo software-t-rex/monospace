@@ -13,12 +13,23 @@ import (
 	"strings"
 )
 
+type inputReader int
+
+const (
+	KeyReader inputReader = iota // this is the default reader
+	LineReader
+	PasswordReader
+	IntReader
+	IntsReader
+)
+
 type (
 	Msg          interface{}
 	Cmd          func() Msg
 	ComponentApi struct {
 		Done        bool
 		Cleanup     bool
+		InputReader inputReader
 	}
 	Model interface {
 		// set initial state of the component
@@ -49,22 +60,25 @@ func lineCounter(s string) int {
 	return strings.Count(s, "\n")
 }
 
+func handleMsgs(m Model, msg Msg) Cmd {
+	switch msg.(type) {
+	case MsgQuit:
+		m.GetComponentApi().Done = true
+		return nil
+	case MsgKill:
+		CmdKill()
+		return nil
+	default:
+		return m.Update(msg)
+	}
+}
 func executeCmds(m Model, cmd Cmd) {
 	for cmd != nil {
 		msg := cmd()
 		if msg == nil {
 			return
 		}
-		switch msg := msg.(type) {
-		case MsgQuit:
-			m.GetComponentApi().done = true
-			return
-		case MsgKill:
-			CmdKill()
-			return
-		default:
-			cmd = m.Update(msg)
-		}
+		cmd = handleMsgs(m, msg)
 	}
 }
 
@@ -75,22 +89,37 @@ func runComponent[M Model](m M) (M, error) {
 	api := m.GetComponentApi()
 	terminal := GetTerminal()
 	for !api.Done {
+		toPrint := m.Render()
 		// Update the number of lines printed
 		linesPrinted = lineCounter(toPrint)
-		keyMsg, err := ReadKeyPressEvent(terminal)
+		var msg Msg
+		var err error
+		switch api.InputReader {
+		case KeyReader:
+			fmt.Print(toPrint + "\r\n")
+			linesPrinted++
+			msg, err = ReadKeyPressEvent(terminal)
+		}
 		if err != nil {
-			printError(fmt.Errorf("error reading keypress event: %v", err))
+			printError(fmt.Errorf("error reading input event: %v", err))
 			return m, err
 		}
-		executeCmds(m, m.Update(keyMsg))
+		executeCmds(m, handleMsgs(m, msg))
 		// Move the cursor up to the start of the list and clear the list
-		fmt.Printf("\033[0G\033[%dA\033[J", linesPrinted)
+		EraseNLines(linesPrinted)
 		// last render
 		if api.Done && !api.Cleanup {
 			fmt.Print(m.Render() + "\r\n")
 		}
 	}
 	return m, nil
+}
+
+func EraseNLines(n int) {
+	fmt.Printf("\033[0G\033[%dA\033[J", n)
+}
+func EraseText(text string) {
+	EraseNLines(lineCounter(text))
 }
 
 /** helper function to run a tea program and return the result model */
