@@ -22,7 +22,7 @@ func init() {
 				"int":     "apps/internalapp",
 				"invalid": "apps/unknown",
 			},
-			Pipeline: map[string]app.MonospaceConfigPipeline{
+			Pipeline: map[string]app.MonospaceConfigTask{
 				"task": {},
 				"build": {
 					DependsOn: []string{"test", "task"},
@@ -85,13 +85,13 @@ func Test_getStandardizedPipeline(t *testing.T) {
 			},
 			"*#build": Task{
 				Name: TaskName{Task: "build", Project: "*", ConfigName: "build"},
-				TaskDef: app.MonospaceConfigPipeline{
+				TaskDef: app.MonospaceConfigTask{
 					DependsOn: []string{"*#test", "*#task"},
 				},
 			},
 			"*#test": Task{
 				Name: TaskName{Task: "test", Project: "*", ConfigName: "test"},
-				TaskDef: app.MonospaceConfigPipeline{
+				TaskDef: app.MonospaceConfigTask{
 					DependsOn: []string{"apps/internalapp#task", "apps/localapp#test"},
 				},
 			},
@@ -100,15 +100,17 @@ func Test_getStandardizedPipeline(t *testing.T) {
 			},
 			"apps/internalapp#task": Task{
 				Name: TaskName{Task: "task", Project: "apps/internalapp", ConfigName: "int#task"},
-				TaskDef: app.MonospaceConfigPipeline{
+				TaskDef: app.MonospaceConfigTask{
 					DependsOn: []string{"apps/localapp#test"},
 				},
 			},
 		}},
 	}
+	config, _ := configGet()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetStandardizedPipeline(true); !reflect.DeepEqual(got, tt.want) {
+			got, _ := GetStandardizedPipeline(config, true)
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getStandardizedPipeline() = %#v, want %#v", got, tt.want)
 			}
 		})
@@ -116,7 +118,8 @@ func Test_getStandardizedPipeline(t *testing.T) {
 }
 
 func TestPipeline_TaskLookup(t *testing.T) {
-	pipeline := GetStandardizedPipeline(true)
+	config, _ := configGet()
+	pipeline, _ := GetStandardizedPipeline(config, true)
 	topTask := pipeline["*#task"]
 	topBuild := pipeline["*#build"]
 	localTest := pipeline["apps/localapp#test"]
@@ -160,7 +163,8 @@ func TestPipeline_TaskLookup(t *testing.T) {
 }
 
 func TestTaskList_ResolveDeps(t *testing.T) {
-	pipeline := GetStandardizedPipeline(true)
+	config, _ := configGet()
+	pipeline, _ := GetStandardizedPipeline(config, true)
 	taskTLTask := pipeline.TaskLookup("task", "*")
 	// taskTLBuild := pipeline.TaskLookup("build", "*")
 	taskInernalBuild := pipeline.TaskLookup("build", "apps/internalapp")

@@ -17,7 +17,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type MonospaceConfigPipeline struct {
+type MonospaceConfigTask struct {
 	Description string            `yaml:"description,omitempty"`
 	Cmd         []string          `yaml:"cmd,omitempty,flow"`
 	DependsOn   []string          `yaml:"dependsOn,omitempty,flow"`
@@ -29,12 +29,12 @@ type MonospaceConfigPipeline struct {
 	Outputs     []string          `yaml:"outputs,omitempty"`
 }
 type MonospaceConfig struct {
-	GoModPrefix         string                             `yaml:"go_mod_prefix,omitempty"`
-	JSPM                string                             `yaml:"js_package_manager,omitempty"`
-	PreferredOutputMode string                             `yaml:"preferred_output_mode,omitempty"`
-	Projects            map[string]string                  `yaml:"projects,omitempty"`
-	Aliases             map[string]string                  `yaml:"projects_aliases,omitempty"`
-	Pipeline            map[string]MonospaceConfigPipeline `yaml:"pipeline,omitempty"`
+	GoModPrefix         string                         `yaml:"go_mod_prefix,omitempty"`
+	JSPM                string                         `yaml:"js_package_manager,omitempty"`
+	PreferredOutputMode string                         `yaml:"preferred_output_mode,omitempty"`
+	Projects            map[string]string              `yaml:"projects,omitempty"`
+	Aliases             map[string]string              `yaml:"projects_aliases,omitempty"`
+	Pipeline            map[string]MonospaceConfigTask `yaml:"pipeline,omitempty"`
 	configPath          string
 	root                string
 }

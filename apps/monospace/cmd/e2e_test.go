@@ -324,16 +324,16 @@ func TestCmd_Suite(t *testing.T) {
 		}
 		sayOk := []string{"echo", "ok"}
 		sayHello := []string{"echo", "hello"}
-		config.Pipeline = make(map[string]app.MonospaceConfigPipeline)
+		config.Pipeline = make(map[string]app.MonospaceConfigTask)
 		delete(config.Projects, "apps/myapp") // avoid error on local project
 		config.Aliases["golib"] = "packages/golib"
 		config.Aliases["mylib"] = "packages/mylib"
-		config.Pipeline["list"] = app.MonospaceConfigPipeline{Cmd: []string{"ls"}}
-		config.Pipeline["jslib#sayok"] = app.MonospaceConfigPipeline{Cmd: sayOk}
-		config.Pipeline["golib#sayok"] = app.MonospaceConfigPipeline{Cmd: sayOk}
-		config.Pipeline["mylib#sayhello"] = app.MonospaceConfigPipeline{Cmd: sayHello, DependsOn: []string{"golib#sayok"}}
-		config.Pipeline["unknown#sayok"] = app.MonospaceConfigPipeline{Cmd: sayOk}
-		config.Pipeline["sayhellofromroot"] = app.MonospaceConfigPipeline{Cmd: []string{"echo", "hello from root"}}
+		config.Pipeline["list"] = app.MonospaceConfigTask{Cmd: []string{"ls"}}
+		config.Pipeline["jslib#sayok"] = app.MonospaceConfigTask{Cmd: sayOk}
+		config.Pipeline["golib#sayok"] = app.MonospaceConfigTask{Cmd: sayOk}
+		config.Pipeline["mylib#sayhello"] = app.MonospaceConfigTask{Cmd: sayHello, DependsOn: []string{"golib#sayok"}}
+		config.Pipeline["unknown#sayok"] = app.MonospaceConfigTask{Cmd: sayOk}
+		config.Pipeline["sayhellofromroot"] = app.MonospaceConfigTask{Cmd: []string{"echo", "hello from root"}}
 		// os.Remove(initDir.Join(".monospace/monospace.yml"))
 		saveConfig()
 

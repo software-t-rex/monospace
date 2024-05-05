@@ -72,6 +72,7 @@ won't change the exit status of the command.
 	Run: func(cmd *cobra.Command, args []string) {
 		boldUnderline := ui.NewStyler(ui.Bold, ui.Underline)
 		CheckConfigFound(true)
+		config := utils.CheckErrOrReturn(app.ConfigGet())
 		utils.CheckErr(mono.SpaceChdir())
 		monoRoot := mono.SpaceGetRoot()
 		monoIgnore := filepath.Join(monoRoot, ".gitignore")
@@ -107,7 +108,6 @@ won't change the exit status of the command.
 			var err error
 			var version string
 			var updateVersion bool
-			config := utils.CheckErrOrReturn(app.ConfigGet())
 			pm, err = jspm.GetPackageManagerFromString(config.JSPM)
 			if err != nil {
 				fmt.Println(failureIndicator + " " + theme.Warning(err.Error()))
@@ -250,7 +250,7 @@ won't change the exit status of the command.
 		if !hasFilter {
 			// check Pipeline config is correct
 			fmt.Println(boldUnderline("checking pipeline:"))
-			tasks.GetStandardizedPipeline(false).IsAcyclic(true)
+			utils.CheckErrOrReturn(tasks.GetStandardizedPipeline(config, false)).IsAcyclic(true)
 			fmt.Println(successIndicator + " pipeline ok")
 
 			// check githooks path is correctly set
