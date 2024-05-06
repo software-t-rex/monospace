@@ -51,7 +51,7 @@ func (m *InputTextModel) SetPrompt(prompt string) *InputTextModel {
 	return m
 }
 
-func (m *InputTextModel) GetValue() string {
+func (m *InputTextModel) GetReadlineValue() string {
 	return m.value
 }
 func (m *InputTextModel) Init() Cmd {

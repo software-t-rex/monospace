@@ -9,9 +9,6 @@ package ui
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -32,6 +29,12 @@ type (
 	}
 	MsgInts struct {
 		Value []int
+	}
+	readlineValueProvider interface {
+		ReadlineValue() string
+	}
+	readlinekeyHandlerProvider interface {
+		ReadlineKeyHandler(string) (Msg, error)
 	}
 )
 
@@ -127,7 +130,7 @@ func readLineEnhanced(terminal interface {
 	TermWithRawMode
 	TermWithReader
 	TTYFileDescriptor
-}, valProvider any, hiddenInput bool) (Msg, error) {
+}, provider any, hiddenInput bool) (Msg, error) {
 
 	restore, err := terminal.HandleState(hiddenInput)
 	defer restore()
@@ -136,10 +139,13 @@ func readLineEnhanced(terminal interface {
 	}
 	tty := terminal.Tty()
 	line := NewLineEditor(tty, !hiddenInput)
-	if valProvider != nil {
-		valProvider, ok := any(valProvider).(interface{ GetValue() string })
-		if ok {
-			line.value = valProvider.GetValue()
+	var keyHandlerProvider readlinekeyHandlerProvider
+	var haskeyHandlerProvider bool
+	if provider != nil {
+		valProvider, hasValProvider := any(provider).(readlineValueProvider)
+		keyHandlerProvider, haskeyHandlerProvider = any(provider).(readlinekeyHandlerProvider)
+		if hasValProvider {
+			line.value = valProvider.ReadlineValue()
 			line.cursorPos = line.len()
 		}
 	}
@@ -147,6 +153,12 @@ func readLineEnhanced(terminal interface {
 		key, err := readKeyPressEvent(terminal)
 		if err != nil {
 			return MsgLine{Value: line.value}, err
+		}
+		if haskeyHandlerProvider {
+			msg, err := keyHandlerProvider.ReadlineKeyHandler(key.Value)
+			if msg != nil || err != nil {
+				return msg, err
+			}
 		}
 		// unknown sequence are just appended to the line
 		if !key.IsSeq { // @TODO should we ignore unknown sequences?
@@ -200,9 +212,23 @@ func readLineEnhanced(terminal interface {
 // It requires a terminal which supports raw mode and is a tty to work.
 // Most common keyboard shortcuts should be supported for navigation and editing.
 //
+// The provider can be nil or an object that implements one or more of the
+// following interfaces:
+//   - readlineValueProvider to provide a value to the line editor
+//   - readlineKeyHandlerProvider to provide custom key bindings
+//
 // Providing a value to edit is possible by providing an object that implements
-// interface{GetValue() string}. If the given object does not implement this interface
-// the value will be ignored.
+// interface{ReadlineValue() string}. If the given object does not implement
+// this interface the value will be ignored.
+//
+// The provider can also implements interface{ReadlineKeyHandler() ui.Msg}
+// to provide custom key bindings. it will be called for each key press with the
+// key as argument.
+// The method should return a ui.Msg (can be any value) if the key was handled
+// and nil if the default behavior should be executed.
+// If ReadlineKeyHandler returns a ui.Msg it will be returned by ReadLineEnhanced.
+// If ReadlineKeyHandler returns nil the default behavior will be executed and the
+// editor will continue to wait for input.
 //
 // Note: this function is made public for advanced usage only.
 // You shouldn't need to use it directly in most cases but simply define a model
@@ -212,8 +238,8 @@ func ReadLineEnhanced(terminal interface {
 	TermWithRawMode
 	TermWithReader
 	TTYFileDescriptor
-}, valProvider any) (Msg, error) {
-	return readLineEnhanced(terminal, valProvider, false)
+}, provider any) (Msg, error) {
+	return readLineEnhanced(terminal, provider, false)
 }
 
 // This is an advanced version of ReadLine which don't print to output.
