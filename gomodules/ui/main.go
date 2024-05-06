@@ -60,17 +60,22 @@ func lineCounter(s string) int {
 	return strings.Count(s, "\n")
 }
 
-func handleMsgs(m Model, msg Msg) Cmd {
+func handleSpecialMsgs(m Model, msg Msg) bool {
 	switch msg.(type) {
 	case MsgQuit:
 		m.GetComponentApi().Done = true
-		return nil
+		return true
 	case MsgKill:
 		CmdKill()
-		return nil
-	default:
+		return true
+	}
+	return false
+}
+func handleMsgs(m Model, msg Msg) Cmd {
+	if !handleSpecialMsgs(m, msg) {
 		return m.Update(msg)
 	}
+	return nil
 }
 func executeCmds(m Model, cmd Cmd) {
 	for cmd != nil {
@@ -99,6 +104,13 @@ func runComponent[M Model](m M) (M, error) {
 			fmt.Print(toPrint)
 			msg, err = ReadLineEnhanced(terminal, m)
 			if err != nil {
+				if errors.Is(err, ErrSIGINT) || errors.Is(err, ErrEOF) {
+					if api.Cleanup {
+						EraseNLines(linesPrinted)
+					}
+					handleSpecialMsgs(m, msg)
+					return m, nil
+				}
 				printError(fmt.Errorf("error reading input event: %v", err))
 				return m, err
 			}

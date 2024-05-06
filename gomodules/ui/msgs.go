@@ -13,6 +13,7 @@ var Msgs = map[string]string{
 	"select":                         "Select",
 	"confirm":                        "Confirm",
 	"cancel":                         "Cancel",
+	"submit":                         "Submit",
 	"userCanceled":                   "Canceled by user",
 	"limitReached":                   "Selection limit reached",
 	"selectAllToggle":                "Select/Deselect all",

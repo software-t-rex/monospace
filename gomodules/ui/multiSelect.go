@@ -265,7 +265,7 @@ func multiSelectAddBindings[T comparable](m *multiSelectModel[T]) {
 			return nil
 		})
 	}
-	m.bindings.AddBinding("enter", Msgs["confirm"], func(m *multiSelectModel[T]) Cmd {
+	m.bindings.AddBinding("enter", Msgs["submit"], func(m *multiSelectModel[T]) Cmd {
 		if m.selectionMinLen > 0 {
 			selectedCount := 0
 			for _, isSelected := range m.selected {
