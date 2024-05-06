@@ -106,8 +106,7 @@ func runComponent[M Model](m M) (M, error) {
 			fmt.Print(toPrint)
 			msg, err = ReadPassword(terminal)
 		case KeyReader:
-			fmt.Print(toPrint + "\r\n")
-			linesPrinted++
+			fmt.Print(toPrint)
 			msg, err = ReadKeyPressEvent(terminal)
 		}
 		if err != nil {
@@ -115,18 +114,30 @@ func runComponent[M Model](m M) (M, error) {
 			return m, err
 		}
 		executeCmds(m, handleMsgs(m, msg))
-		// Move the cursor up to the start of the list and clear the list
+		// Move the cursor up to the start of last render and erase from here
 		EraseNLines(linesPrinted)
-		// last render
+		// optional last render
 		if api.Done && !api.Cleanup {
-			fmt.Print(m.Render() + "\r\n")
+			// ensure we have a newline at the end of the last render
+			view := m.Render()
+			if !strings.HasSuffix(view, "\n") {
+				view += "\r\n"
+			}
+			fmt.Print(view)
 		}
 	}
 	return m, nil
 }
 
 func EraseNLines(n int) {
-	fmt.Printf("\033[0G\033[%dA\033[J", n)
+	if n > 0 {
+		// \033[0G move the cursor to the start of the line
+		// \033[%dA move the cursor up n lines
+		// \033[J clear the screen from the cursor to the end
+		fmt.Printf("\033[0G\033[%dA\033[J", n)
+	} else {
+		fmt.Printf("\033[0G\033[J")
+	}
 }
 func EraseText(text string) {
 	EraseNLines(lineCounter(text))
