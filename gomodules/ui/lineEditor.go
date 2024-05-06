@@ -10,29 +10,25 @@ package ui
 import (
 	"fmt"
 	"io"
-	"log"
-	"os"
+	"unicode"
 )
 
 type lineEditor struct {
-	value         string
-	cursorPos     int
-	visualEdition bool
-	out           io.Writer
-	debugLogger   *log.Logger
+	value            string
+	cursorPos        int
+	visualEdition    bool
+	out              io.Writer
+	completing       bool
+	compStart        int
+	compSuggests     []string
+	compSuggestIndex int
 }
 
 func NewLineEditor(out io.Writer, visualEdition bool) *lineEditor {
-	logFile, err := os.OpenFile("debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-	debugLogger := log.New(logFile, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
-	return &lineEditor{out: out, visualEdition: visualEdition, debugLogger: debugLogger}
+	return &lineEditor{out: out, visualEdition: visualEdition}
 }
 
-func (l *lineEditor) GetValue() string { return l.value }
-func (l *lineEditor) len() int         { return len(l.value) }
+func (l *lineEditor) len() int { return len(l.value) }
 func (l *lineEditor) insert(s string) {
 	remain := s + l.value[l.cursorPos:]
 	l.value = l.value[:l.cursorPos] + remain
@@ -204,19 +200,69 @@ func (l *lineEditor) visualCursorMoveRight(n int) {
 func (l *lineEditor) findWordBoundary(direction string) int {
 	pos := l.cursorPos
 	if direction == "left" {
-		for pos > 0 && l.value[pos-1] == ' ' {
+		for pos > 0 && unicode.IsSpace(rune(l.value[pos-1])) {
 			pos--
 		}
-		for pos > 0 && l.value[pos-1] != ' ' {
+		for pos > 0 && !unicode.IsSpace(rune(l.value[pos-1])) {
 			pos--
 		}
 	} else if direction == "right" {
-		for pos < l.len() && l.value[pos] == ' ' {
+		for pos < l.len() && unicode.IsSpace(rune(l.value[pos])) {
 			pos++
 		}
-		for pos < l.len() && l.value[pos] != ' ' {
+		for pos < l.len() && !unicode.IsSpace(rune(l.value[pos])) {
 			pos++
 		}
 	}
 	return pos
+}
+
+// it should return the word to complete (the string between last space and cursor position)
+func (l *lineEditor) completionStart() string {
+	l.completing = true
+	start := l.findWordBoundary("left")
+	l.compStart = start
+	return l.value[start:l.cursorPos]
+}
+
+// sets the completion suggestions and complete with the first one if any
+func (l *lineEditor) completionSuggests(suggestions []string) *lineEditor {
+	l.compSuggests = suggestions
+	l.compSuggestIndex = -1
+	l.completionNext()
+	return l
+}
+
+// end the completion mode
+func (l *lineEditor) completionEnd() *lineEditor {
+	l.completing = false
+	l.compStart = 0
+	l.compSuggestIndex = -1
+	l.compSuggests = nil
+	return l
+}
+
+// complete with the next suggestion
+func (l *lineEditor) completionNext() {
+	if !l.completing || len(l.compSuggests) == 0 {
+		return
+	}
+	l.compSuggestIndex++
+	if l.compSuggestIndex >= len(l.compSuggests) {
+		l.compSuggestIndex = 0
+	}
+	l.complete(l.compSuggests[l.compSuggestIndex])
+}
+
+// replace current word with given completion
+func (l *lineEditor) complete(completion string) {
+	remain := l.value[l.cursorPos:]
+	l.value = l.value[:l.compStart] + completion + remain
+	if l.visualEdition {
+		l.visualCursorMoveLeft(l.cursorPos - l.compStart)
+		l.visualClearToEnd()
+		fmt.Fprintf(l.out, "%s", completion+remain)
+		l.visualCursorMoveLeft(len(remain))
+	}
+	l.cursorPos = l.compStart + len(completion)
 }

@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/software-t-rex/monospace/gomodules/ui"
 )
 
 func main() {
 	theme := ui.SetTheme(ui.ThemeMonoSpace)
-	res := ui.NewInputText("Enter your name").
+	res := ui.NewInputText("Enter your name (you can try to autocomplete)").
 		// WithCleanup().
 		WithValidator(func(str string) error {
 			if str == "" {
@@ -19,6 +20,38 @@ func main() {
 				return fmt.Errorf("name must be at least 3 characters long")
 			}
 			return nil
+		}).
+		WithCompletion(func(str string) ([]string, error) {
+			knownNames := []string{
+				"Adrien", "Adele", "Alice",
+				"Bob", "Brenda",
+				"Carlos", "Carol", "Cecil", "Charlie",
+				"David", "Deborah", "Derek", "Diane", "Don",
+				"Edward", "Eric", "Eve", "Eva", "Evans", "Ezra",
+				"Fiona", "Frank", "Fred", "Frederic",
+				"Grace", "George", "Gina",
+				"Heidi", "Howard",
+				"Ivan",
+				"Jack", "James", "Jane", "Janet", "Jason", "John", "Judy",
+				"Kevin", "Karen", "Kirk",
+				"Larry", "Linda", "Lionel", "Liz", "Lloyd", "Lucy", "Luke", "Lynn",
+				"Mallory", "Megan",
+				"Nancy", "Nathan", "Nina", "Nuno",
+				"Olivia", "Oliver", "Oscar",
+				"Pam", "Paul", "Peter", "Philip", "Peggy",
+				"Quentin", "Quill",
+				"Richard", "Romeo",
+				"Sally", "Steve", "Sybil",
+				"Trent", "Tom", "Thomas",
+				"Ursula", "Victor", "Vince", "Vincent", "Walter", "Xavier", "Yvonne", "Zach", "Zelda",
+			}
+			res := []string{}
+			for _, name := range knownNames {
+				if str == "" || len(str) >= 1 && strings.HasPrefix(strings.ToLower(name), strings.ToLower(str)) {
+					res = append(res, name)
+				}
+			}
+			return res, nil
 		}).
 		Run()
 	ui.Println(fmt.Sprintf("Hello %s!", theme.Bold(res)), ui.BrightBlue.Foreground())

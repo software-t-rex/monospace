@@ -13,13 +13,14 @@ import (
 )
 
 type InputTextModel struct {
-	msg       string
-	value     string
-	validator func(string) error
-	errorMsg  string
-	inline    bool
-	prompt    string
-	uiApi     *ComponentApi
+	msg           string
+	value         string
+	validator     func(string) error
+	errorMsg      string
+	inline        bool
+	prompt        string
+	compSuggester func(string) ([]string, error)
+	uiApi         *ComponentApi
 }
 
 func (m *InputTextModel) GetComponentApi() *ComponentApi {
@@ -36,6 +37,12 @@ func (m *InputTextModel) Inline() *InputTextModel {
 // the user will then be asked to enter a new value
 func (m *InputTextModel) WithValidator(validator func(string) error) *InputTextModel {
 	m.validator = validator
+	return m
+}
+
+// Allow to set a function to suggest completion for the input
+func (m *InputTextModel) WithCompletion(compSuggester func(string) ([]string, error)) *InputTextModel {
+	m.compSuggester = compSuggester
 	return m
 }
 
@@ -125,6 +132,18 @@ func (m *InputTextModel) Fallback() Model {
 	}
 	m.value = line.Value
 	return m
+}
+
+func (m *InputTextModel) ReadlineValue() string {
+	return m.value
+}
+
+// ReadlineCompletion is called by the ReadlineEnhanced function to get completion suggestions
+func (m *InputTextModel) ReadlineCompletion(word string) ([]string, error) {
+	if m.compSuggester != nil {
+		return m.compSuggester(word)
+	}
+	return nil, nil
 }
 
 func (m *InputTextModel) Run() string {

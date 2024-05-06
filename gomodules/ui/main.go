@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -100,9 +101,13 @@ func runComponent[M Model](m M) (M, error) {
 		var msg Msg
 		var err error
 		switch api.InputReader {
-		case LineReader:
+		case LineReader, PasswordReader:
 			fmt.Print(toPrint)
-			msg, err = ReadLineEnhanced(terminal, m)
+			if api.InputReader == LineReader {
+				msg, err = ReadLineEnhanced(terminal, m)
+			} else if api.InputReader == PasswordReader {
+				msg, err = ReadPassword(terminal) //, m)
+			}
 			if err != nil {
 				if errors.Is(err, ErrSIGINT) || errors.Is(err, ErrEOF) {
 					if api.Cleanup {
@@ -114,9 +119,6 @@ func runComponent[M Model](m M) (M, error) {
 				printError(fmt.Errorf("error reading input event: %v", err))
 				return m, err
 			}
-		case PasswordReader:
-			fmt.Print(toPrint)
-			msg, err = ReadPassword(terminal)
 		case KeyReader:
 			fmt.Print(toPrint)
 			msg, err = ReadKeyPressEvent(terminal)

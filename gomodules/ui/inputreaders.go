@@ -36,6 +36,9 @@ type (
 	readlinekeyHandlerProvider interface {
 		ReadlineKeyHandler(string) (Msg, error)
 	}
+	readlineCompletionProvider interface {
+		ReadlineCompletion(string) ([]string, error)
+	}
 )
 
 func (k MsgKey) String() string  { return k.Value }
@@ -43,6 +46,7 @@ func (k MsgLine) String() string { return k.Value }
 
 var ErrSIGINT = fmt.Errorf("SIGINT")
 var ErrEOF = fmt.Errorf("EOF")
+var ErrComp = fmt.Errorf("completion error")
 
 // you MUST already have a terminal with activated raw mode
 func readKeyPressEvent(terminal interface {
@@ -141,9 +145,12 @@ func readLineEnhanced(terminal interface {
 	line := NewLineEditor(tty, !hiddenInput)
 	var keyHandlerProvider readlinekeyHandlerProvider
 	var haskeyHandlerProvider bool
+	var hasCompletionProvider bool
+	var completionProvider readlineCompletionProvider
 	if provider != nil {
 		valProvider, hasValProvider := any(provider).(readlineValueProvider)
 		keyHandlerProvider, haskeyHandlerProvider = any(provider).(readlinekeyHandlerProvider)
+		completionProvider, hasCompletionProvider = any(provider).(readlineCompletionProvider)
 		if hasValProvider {
 			line.value = valProvider.ReadlineValue()
 			line.cursorPos = line.len()
@@ -159,6 +166,9 @@ func readLineEnhanced(terminal interface {
 			if msg != nil || err != nil {
 				return msg, err
 			}
+		}
+		if line.completing && key.Value != "tab" {
+			line.completionEnd()
 		}
 		// unknown sequence are just appended to the line
 		if !key.IsSeq { // @TODO should we ignore unknown sequences?
@@ -200,7 +210,26 @@ func readLineEnhanced(terminal interface {
 				line.moveWordLeft()
 			case "alt+f", "ctrl+right", "alt+right": // move to next word
 				line.moveWordRight()
-				// case "tab": //@fixme tab we need to handle completion or to insert a tab
+			case "tab":
+				if !hasCompletionProvider {
+					fmt.Fprint(tty, "\a") // terminal bell
+				} else {
+					if !line.completing { // start completing
+						suggestions, err := completionProvider.ReadlineCompletion(line.completionStart())
+						if err != nil {
+							line.completionEnd()
+							return MsgLine{Value: line.value}, fmt.Errorf("%w: %w", ErrComp, err)
+						}
+						if len(suggestions) > 0 {
+							line.completionSuggests(suggestions)
+						} else {
+							line.completionEnd()
+							fmt.Fprint(tty, "\a") // terminal bell
+						}
+					} else {
+						line.completionNext()
+					}
+				}
 			}
 
 		}
