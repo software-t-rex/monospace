@@ -113,7 +113,6 @@ func NewTheme(themeInitializer ThemeInitializer) *Theme {
 	}
 }
 
-// @todo Check copy really copy for renderers
 func (t *Theme) Copy() Theme { return *t }
 
 // beware that Bold also reset the Faint style

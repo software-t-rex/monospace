@@ -8,8 +8,6 @@ SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 package ui
 
 import (
-	"fmt"
-	"os"
 	"strings"
 )
 
@@ -124,7 +122,7 @@ func (m *confirmModel) Render() string {
 	return sb.String()
 }
 
-func (m *confirmModel) Fallback() Model {
+func (m *confirmModel) Fallback() (Model, error) {
 	sb := strings.Builder{}
 	if m.errorMsg != "" {
 		sb.WriteString(Msgs["errorPrefix"])
@@ -149,9 +147,9 @@ func (m *confirmModel) Fallback() Model {
 
 	input, err := Readline(sb.String())
 	if err != nil {
-		os.Exit(1)
+		return m, err
 	}
-	switch strings.ToLower(input.Value) {
+	switch strings.ToLower(input.Value()) {
 	case "y", "yes":
 		m.confirmed = true
 		m.uiApi.Done = true
@@ -166,10 +164,7 @@ func (m *confirmModel) Fallback() Model {
 	if !m.uiApi.Done {
 		return m.Fallback()
 	}
-	if m.uiApi.Cleanup {
-		fmt.Print("\033[2K\033[1A\033[2K")
-	}
-	return m
+	return m, nil
 }
 
 func NewConfirm(msg string, dflt bool) *confirmModel {
@@ -184,18 +179,25 @@ func NewConfirm(msg string, dflt bool) *confirmModel {
 	}
 }
 
-func (m *confirmModel) Run() bool {
-	return RunComponent(m).confirmed
+func (m *confirmModel) Run() (bool, error) {
+	model, err := RunComponent(m)
+	return model.confirmed, err
 }
 
-// Shorthand for NewConfirm(msg, dflt).Run()
+// Shorthand for NewConfirm(msg, dflt).Run() ignoring errors
 func Confirm(msg string, dflt bool) bool {
-	return NewConfirm(msg, dflt).Run()
+	confirmed, _ := NewConfirm(msg, dflt).Run()
+	return confirmed
 }
 
+// Shorthand for NewConfirm(msg, dflt).Inline().Run() ignoring errors
 func ConfirmInline(msg string, dflt bool) bool {
-	return NewConfirm(msg, dflt).Inline().Run()
+	confirmed, _ := NewConfirm(msg, dflt).Inline().Run()
+	return confirmed
 }
+
+// Shorthand for NewConfirm(msg, dflt).Inline().WithoutHelp().Run() ignoring errors
 func ConfirmInlineNoHelp(msg string, dflt bool) bool {
-	return NewConfirm(msg, dflt).Inline().WithoutHelp().Run()
+	confirmed, _ := NewConfirm(msg, dflt).Inline().WithoutHelp().Run()
+	return confirmed
 }

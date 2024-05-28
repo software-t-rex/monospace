@@ -6,7 +6,7 @@ this package takes inspiration from bubbletea and lipgloss to power some reusabl
 This are the components included in the package
 ### Confirm
 ```golang
-confirm := ui.NewConfirm("Please confirm", false).Run()
+confirm, err:= ui.NewConfirm("Please confirm", false).Run()
 ```
 ### Select
 This uses a multiSelect component under the hood, already parameterized to handle a single selection.
@@ -16,18 +16,18 @@ options := []ui.SelectOption[int]{
   SelectOption[int]{Value: 2, Label: "option 2"},
   SelectOption[int]{Value: 3, Label: "option 3"},
 }
-selection := ui.NewSelect("Please select an option", options).
+selection, err := ui.NewSelect("Please select an option", options).
   MaxVisibleOptions(3).
   Run()
 
-selection2 := ui.NewSelectStrings("Please select an option from a list of strings", []{"option 1", "option 2", "option 3"}).
+selection2, err := ui.NewSelectStrings("Please select an option from a list of strings", []{"option 1", "option 2", "option 3"}).
   Run()
 ```
 
 #### Select Options
 Here's a demo using all possible options
 ```golang
-selector := ui.NewSelectStrings("Please select a fruit", []string{"apple", "cherry", "orange", "banana"}).
+selection, err := ui.NewSelectStrings("Please select a fruit", []string{"apple", "cherry", "orange", "banana"}).
   SelectedIndex(2).
   MaxVisibleOptions(3).
   WithCleanup(true).
@@ -37,13 +37,13 @@ selector := ui.NewSelectStrings("Please select a fruit", []string{"apple", "cher
 ### MultiSelect
 This is a simple component to handle user selection it presents a menu to the user for selection it can handle multiple or single selection.
 ```golang
-selection := ui.NewSelect("Choose an option", options).Run()
+selection, err := ui.NewSelect("Choose an option", options).Run()
 
 ```
 #### MultiSelect Options
-Here's a demo using all possible options
+Here's a demo using some possible options
 ```golang
-confirm := ui.NewSelect("Choose an option", options).
+selection, err := ui.NewSelect("Choose an option", options).
   SelectionMaxLen(2).              // default to 0 which means no limit
   SelectionMinLen(2).              // default to 1
   SelectionExactLen(2).            // this does exactly the same as the two lines above
@@ -55,6 +55,39 @@ confirm := ui.NewSelect("Choose an option", options).
   Run()
 
 ```
+
+### InputText / InputPassword
+A component to gather text input with current edition binding attached. It supports validation and auto-completion.
+```golang
+input, err := ui.NewInputText(msg)
+```
+
+#### InputText Options
+```golang
+inputStr, err := ui.NewInputText(msg).
+	Inline(). // prompt will be appended to msg end without new line
+	SetPrompt("👉 "). // set a fancy prompt
+	SetMaxLen(100). // it will block input over the given number of character
+	SetMaxWidth(10). // set the size of the input field
+	WithValidator(func (val string) bool {
+		// your validation logic goes here
+	}).
+	WithCleanUp(). // the msg and user input will be removed from display
+	WithCompletion(func(startOfWord string, fullWord string) ([]string, error){
+		// Receives the start of the word to complete and the full word which can be different
+		// if cursor is placed within a word. 
+		// Returns the list of available completions.
+	}).
+	Run()
+
+```
+
+#### Limitations
+- Input password may display the password when in fallback mode
+- If terminal width can't be detected it can lead to weird behavior, same goes if the terminal is resized during edition. 
+- It doesn't support input of carriage return, line feed or tab, they all will be replaced by single space
+- Escapes sequences will be removed
+
 
 ## How to create your own components
 If you come from bubbletea, you will be familiar with most of what to do here. If not I encourage you to look at existing components for better understanding. Don't hesitate to contact me for more in depth knowledge.
@@ -133,7 +166,7 @@ will not be used, so your are on your own on the fallback method to handle input
 
 here's a basic example: 
 ```golang
-func (m *model[T]) Fallback() ui.TeaModelWithFallback {
+func (m *model[T]) Fallback() (ui.Model, error) {
 	var sb strings.Builder
 	// reset selected
 	sb.WriteString(fmt.Sprintf("%s\n", m.title))
@@ -142,12 +175,12 @@ func (m *model[T]) Fallback() ui.TeaModelWithFallback {
 		m.errorMsg = ""
 	}
   // some methods are provided to assist you like: Readline, ReadInt, ReadInts
-	ints, err := ReadInts(sb.String())
+	ints, err := ReadInts(sb.String())+
 	if err != nil {
 		m.errorMsg = Msgs["notANumber"]
 		return m.Fallback() // call the method again as we don't have a valid input
 	}
-	return m
+	return m, nil
 }
 ```
 

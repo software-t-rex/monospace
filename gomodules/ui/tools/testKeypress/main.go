@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/software-t-rex/monospace/gomodules/ui"
+	"github.com/software-t-rex/monospace/gomodules/ui/pkg/sequencesKeys"
 )
 
 type failure struct {
@@ -19,7 +20,7 @@ func main() {
 
 	failed := []failure{}
 	success := 0
-	for seq, desc := range ui.SequenceKeysMap {
+	for seq, desc := range sequencesKeys.Map {
 		if desc == "ctrl+c" {
 			continue
 		}
@@ -51,7 +52,7 @@ func main() {
 		}
 	}
 	// report results
-	fmt.Printf("Tested %d key sequences, %d failed\r\n", len(ui.SequenceKeysMap), len(failed))
+	fmt.Printf("Tested %d key sequences, %d failed\r\n", len(sequencesKeys.Map), len(failed))
 	if len(failed) > 0 {
 		fmt.Println("Failed sequences:")
 		for _, failure := range failed {

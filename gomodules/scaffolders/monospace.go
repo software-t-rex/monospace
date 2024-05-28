@@ -43,7 +43,13 @@ func Monospace() error {
 					Value: jspm.GetConfigVersionString(),
 				})
 			}
-			jspm = ui.NewSelect("multiple package managers found, select the one to use :", jspmOptions).Run()
+			SelectedJspm, errSelect := ui.NewSelect("multiple package managers found, select the one to use :", jspmOptions).Run()
+			if errSelect == nil {
+				jspm = SelectedJspm
+			} else {
+				fmt.Printf(theme.Warning("Error while selecting package manager: %w\n"), errSelect)
+			}
+
 			fmt.Printf("set js_package_manager to %s\n", jspm)
 		}
 	}

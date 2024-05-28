@@ -1,13 +1,14 @@
 {
   "name": "monospace",
-  "packageManager": "^pnpm@8.8.0",
+  "packageManager": "^pnpm@8.14.3",
   "version": "0.0.1",
   "description": "Monospace is not another monorepo tool but more like a meta repository",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": ["monorepo", "metarepo", "repository", "dev tool"],
   "author": "Jonathan Gotti",
-  "license": "MIT"
+  "license": "MIT",
+	"workspaces": [
+		"packages/*",
+		"apps/*"
+	],
+	"private": true
 }

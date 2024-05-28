@@ -14,7 +14,7 @@ import (
 
 const (
 	csiStart string = "\033["
-	csiEnd   string = "m"
+	sgrEnd   string = "m"
 	sgrReset string = "\033[0m"
 )
 
@@ -95,14 +95,14 @@ func isResetParam(p SGRParam) bool {
 
 // Combine multiple ANSI SGR params.
 func SGRCombine(styles ...SGRParam) SGRParam {
-	var builder strings.Builder
+	var sb strings.Builder
 	for i, style := range styles {
 		if i > 0 {
-			builder.WriteString(";")
+			sb.WriteString(";")
 		}
-		builder.WriteString(string(style))
+		sb.WriteString(string(style))
 	}
-	return SGRParam(builder.String())
+	return SGRParam(sb.String())
 }
 
 // Return an ANSI SGR escape sequence from given SGR parameters.
@@ -111,7 +111,7 @@ func SGREscapeSequence(styles ...SGRParam) string {
 	if len(styles) == 0 {
 		return ""
 	}
-	return csiStart + string(SGRCombine(styles...)) + csiEnd
+	return csiStart + string(SGRCombine(styles...)) + sgrEnd
 }
 
 // Return the reset ANSI SGR escape sequence corresponding for given SGR parameters.
@@ -146,7 +146,7 @@ func SGRResetSequence(styles ...SGRParam) string {
 		}
 	}
 
-	return csiStart + string(SGRCombine(resetSeq...)) + csiEnd
+	return csiStart + string(SGRCombine(resetSeq...)) + sgrEnd
 }
 
 // Directly apply styles to a string.

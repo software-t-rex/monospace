@@ -36,9 +36,22 @@ func (s *selectModel[T]) SetStringsOptions(options []string) *selectModel[T] {
 	return s
 }
 
-func (s *selectModel[T]) Run() T {
-	res := s.multiSelect.Run()
-	return res[0]
+// Escapable set to true allow user to escape the selection with the escape key
+// You should really think about your use case before setting this to true
+// most of the time it is better to add an option to explicitly cancel the selection
+// you should check for a ErrSelectEscaped error returned by Run() to know if the user has canceled the selection
+func (s *selectModel[T]) Escapable(escapable bool) *selectModel[T] {
+	s.multiSelect.Escapable(escapable)
+	return s
+}
+
+func (s *selectModel[T]) Run() (T, error) {
+	selection, err := s.multiSelect.Run()
+	if err != nil {
+		var selected T
+		return selected, err
+	}
+	return selection[0], nil
 }
 
 func newSelect[T comparable](title string) *selectModel[T] {

@@ -10,7 +10,7 @@ import (
 
 func main() {
 	theme := ui.SetTheme(ui.ThemeMonoSpace)
-	res := ui.NewInputText("Enter your name (you can try to autocomplete)").
+	res, errInput := ui.NewInputText("Enter your name (you can try to autocomplete)").
 		// WithCleanup().
 		WithValidator(func(str string) error {
 			if str == "" {
@@ -21,7 +21,7 @@ func main() {
 			}
 			return nil
 		}).
-		WithCompletion(func(str string) ([]string, error) {
+		WithCompletion(func(wordStart, fullWord string) ([]string, error) {
 			knownNames := []string{
 				"Adrien", "Adele", "Alice",
 				"Bob", "Brenda",
@@ -45,18 +45,35 @@ func main() {
 				"Trent", "Tom", "Thomas",
 				"Ursula", "Victor", "Vince", "Vincent", "Walter", "Xavier", "Yvonne", "Zach", "Zelda",
 			}
+
 			res := []string{}
 			for _, name := range knownNames {
-				if str == "" || len(str) >= 1 && strings.HasPrefix(strings.ToLower(name), strings.ToLower(str)) {
+				if wordStart == "" || len(wordStart) >= 1 && strings.HasPrefix(strings.ToLower(name), strings.ToLower(wordStart)) {
 					res = append(res, name)
 				}
 			}
+			// if any completion add the provided word to the list of possible completion
+			if len(res) > 0 && fullWord != wordStart {
+				res = append(res, fullWord)
+			}
 			return res, nil
 		}).
+		WithCleanup().
+		WithKeyHandler(func(key string) (ui.Msg, error) {
+			if key == "esc" {
+				return ui.MsgQuit{}, nil
+			}
+			return nil, nil // returning nil,nil will let the input handle the key
+		}).
+		// Inline().
 		Run()
-	ui.Println(fmt.Sprintf("Hello %s!", theme.Bold(res)), ui.BrightBlue.Foreground())
+	if errInput != nil {
+		ui.Println(fmt.Sprintf("Error: %s", errInput), ui.BrightRed.Foreground())
+		return
+	}
+	ui.Println(fmt.Sprintf("Hello "+theme.Bold("%#v!"), res), ui.BrightBlue.Foreground())
 
-	pass := ui.NewInputPassword("Enter your password").
+	pass, ErrPass := ui.NewInputPassword("Enter your password").
 		Inline().
 		WithValidator(func(str string) error {
 			if str == "" {
@@ -65,16 +82,20 @@ func main() {
 			if len(str) < 8 {
 				return fmt.Errorf("password must be at least 8 characters long")
 			}
-			tests := []string{".{7,}", "[a-z]", "[A-Z]", "[0-9]", "[^\\d\\w]"}
+			tests := []string{".{7,}", "[a-zA-Z]", "[0-9]", "[^\\d\\w]"}
 			for _, test := range tests {
 				t, _ := regexp.MatchString(test, str)
 				if !t {
-					return fmt.Errorf("password must contains uppercase and lowercase letters, digits and special characters")
+					return fmt.Errorf("password must contains letters, digits and special characters")
 				}
 			}
 			return nil
 		}).
 		Run()
+	if ErrPass != nil {
+		ui.Println(fmt.Sprintf("Error: %s", ErrPass), ui.BrightRed.Foreground())
+		return
+	}
 	ui.Println(fmt.Sprintf("Your password is '%s'", theme.Bold(pass)), ui.BrightBlue.Foreground())
 
 }

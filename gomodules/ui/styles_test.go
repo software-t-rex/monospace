@@ -39,12 +39,12 @@ func TestSGRResetSequence(t *testing.T) {
 		{
 			name:     "Test with foreground color",
 			styles:   []SGRParam{Red.Foreground(), Bold, Underline},
-			expected: csiStart + "39;22;24" + csiEnd,
+			expected: csiStart + "39;22;24" + sgrEnd,
 		},
 		{
 			name:     "Test with Reverse Black background that blink",
 			styles:   []SGRParam{Black.Background(), Reversed, Blink},
-			expected: csiStart + "49;27;25" + csiEnd,
+			expected: csiStart + "49;27;25" + sgrEnd,
 		},
 		// Add more test cases as needed
 	}

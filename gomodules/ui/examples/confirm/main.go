@@ -9,15 +9,16 @@ import (
 var themeChanged = false
 
 func main() {
-	confirm := ui.NewConfirm("This is an inline prompt without help do you want to continue ?", true).
-		Inline().
-		WithoutHelp().
-		Run()
+	confirm := ui.ConfirmInlineNoHelp("This is an inline prompt without help do you want to continue ?", true)
 	if confirm {
 		fmt.Println("Ok Here it is:")
-		confirmAgain := ui.NewConfirm("This is a confirm with help can you confirm ?", false).
+		confirmAgain, errConfirmAgain := ui.NewConfirm("This is a confirm with help can you confirm ?", false).
 			WithCleanup(true). // ignored in fallback mode
 			Run()
+		if errConfirmAgain != nil {
+			fmt.Println("Error:", errConfirmAgain)
+			return
+		}
 		if confirmAgain {
 			fmt.Println("That was expected.")
 		} else {

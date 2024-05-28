@@ -14,12 +14,14 @@ import (
 	"os"
 
 	"golang.org/x/sys/windows"
-	"golang.org/x/term"
 )
 
+type state struct {
+	mode uint32
+}
+
 func openTTY() (*os.File, error) {
-	// return os.Stdin, nil
-	return os.OpenFile("CONIN$", os.O_RDWR, 0)
+	return os.OpenFile("CONIN$", os.O_RDWR, 0644)
 }
 
 func terminalHasDarkBackground(_ interface{}) bool {
@@ -27,21 +29,21 @@ func terminalHasDarkBackground(_ interface{}) bool {
 	return true
 }
 
-func makeRaw(fd int) (*term.State, error) {
-	state, err := term.MakeRaw(fd)
-	if err != nil {
-		return nil, err
-	}
+func makeRaw(fd int) (*TermState, error) {
+	var st uint32
 	handle := windows.Handle(fd)
-	var mode uint32
-	err = windows.GetConsoleMode(handle, &mode)
-	if err != nil {
+	if err := windows.GetConsoleMode(handle, &st); err != nil {
 		return nil, err
 	}
-	// this is needed to be able to read special keys like F1, F2, arrows keys, etc...
-	err = windows.SetConsoleMode(handle, mode|windows.ENABLE_VIRTUAL_TERMINAL_INPUT)
-	if err != nil {
+	raw := st &^ (windows.ENABLE_ECHO_INPUT | windows.ENABLE_PROCESSED_INPUT | windows.ENABLE_LINE_INPUT | windows.ENABLE_PROCESSED_OUTPUT)
+	raw = raw | windows.ENABLE_VIRTUAL_TERMINAL_INPUT
+	if err := windows.SetConsoleMode(handle, raw); err != nil {
 		return nil, err
 	}
-	return state, err
+
+	return &TermState{mode: st}, nil
+}
+
+func restore(fd int, state *TermState) error {
+	return windows.SetConsoleMode(windows.Handle(fd), state.mode)
 }

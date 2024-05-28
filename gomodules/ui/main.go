@@ -10,19 +10,16 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"regexp"
 	"strings"
+
+	"github.com/software-t-rex/monospace/gomodules/ui/pkg/ansi"
 )
 
-type inputReader int
-
-const (
-	KeyReader inputReader = iota // this is the default reader
-	LineReader
-	PasswordReader
-	IntReader
-	IntsReader
-)
+var ErrInputRead = fmt.Errorf("input read error")
+var ErrRunComponent = fmt.Errorf("error while running component")
 
 type (
 	Msg          interface{}
@@ -47,7 +44,7 @@ type (
 		// This method is called when we fallback to the non-enhanced mode
 		// In such case there's no Render/Update loop but only a single call to Fallback
 		// For examples of fallback usage see the confirm.go file
-		Fallback() Model
+		Fallback() (Model, error)
 		// return the embeded component api
 		GetComponentApi() *ComponentApi
 	}
@@ -95,37 +92,31 @@ func runComponent[M Model](m M) (M, error) {
 	api := m.GetComponentApi()
 	terminal := GetTerminal()
 	for !api.Done {
-		toPrint := m.Render()
+		toPrint := lfToCrLf(m.Render())
 		// Update the number of lines printed
 		linesPrinted = lineCounter(toPrint)
 		var msg Msg
 		var err error
 		switch api.InputReader {
-		case LineReader, PasswordReader:
+		case LineReader, LineReaderWrapped, lineReaderFramed, PasswordReader:
 			fmt.Print(toPrint)
-			if api.InputReader == LineReader {
-				msg, err = ReadLineEnhanced(terminal, m)
-			} else if api.InputReader == PasswordReader {
-				msg, err = ReadPassword(terminal) //, m)
-			}
+			msg, err = ReadLineEnhanced(terminal, lineReaderVisualMode[api.InputReader], m)
 			if err != nil {
-				if errors.Is(err, ErrSIGINT) || errors.Is(err, ErrEOF) {
+				if errors.Is(err, ErrSIGINT) || errors.Is(err, io.EOF) {
 					if api.Cleanup {
 						EraseNLines(linesPrinted)
 					}
 					handleSpecialMsgs(m, msg)
-					return m, nil
+					return m, err
 				}
-				printError(fmt.Errorf("error reading input event: %v", err))
-				return m, err
+				return m, fmt.Errorf("runComponent %w: %w", ErrInputRead, err)
 			}
 		case KeyReader:
 			fmt.Print(toPrint)
 			msg, err = ReadKeyPressEvent(terminal)
 		}
 		if err != nil {
-			printError(fmt.Errorf("error reading input event: %v", err))
-			return m, err
+			return m, fmt.Errorf("runComponent %w: %w", ErrInputRead, err)
 		}
 		executeCmds(m, handleMsgs(m, msg))
 		// Move the cursor up to the start of last render and erase from here
@@ -145,34 +136,39 @@ func runComponent[M Model](m M) (M, error) {
 
 func EraseNLines(n int) {
 	if n > 0 {
-		// \033[0G move the cursor to the start of the line
-		// \033[%dA move the cursor up n lines
-		// \033[J clear the screen from the cursor to the end
-		fmt.Printf("\033[0G\033[%dA\033[J", n)
+		fmt.Printf(ansi.CtrlHorizAbs.Sprintf(0) + ansi.CtrlUp.Sprintf(n) + ansi.CtrlEraseD.Sprintf(0))
 	} else {
-		fmt.Printf("\033[0G\033[J")
+		fmt.Printf(ansi.CtrlHorizAbs.Sprintf(0) + ansi.CtrlEraseD.Sprintf(0))
 	}
 }
 func EraseText(text string) {
 	EraseNLines(lineCounter(text))
 }
 
-/** helper function to run a tea program and return the result model */
-func RunComponent[T Model](initModel T) T {
+/** helper function to run a component and return the result model */
+func RunComponent[M Model](m M) (M, error) {
 	if !EnhancedEnabled() { // use fallback mode
-		initModel.Init()
-		return initModel.Fallback().(T)
+		cmd := m.Init()
+		executeCmds(m, cmd)
+		_m, err := m.Fallback()
+		return _m.(M), err
 	}
-	res, err := runComponent(initModel)
+	res, err := runComponent(m)
 	if err != nil {
-		printError(fmt.Errorf("error while running component: %v", err))
-		return initModel.Fallback().(T)
+		if errors.Is(err, ErrSIGINT) {
+			CmdKill()
+		} else if !errors.Is(err, io.EOF) { // EOF is not an error we want to handle
+			_m, err := m.Fallback()
+			return _m.(M), fmt.Errorf("%w: %w", ErrRunComponent, err)
+		}
 	}
-	return res
+	return res, err
 }
 
 type (
+	// MsgQuit is a message to mark the component as done
 	MsgQuit struct{}
+	// MsgKill is a message to kill the program
 	MsgKill struct{}
 )
 
@@ -189,4 +185,8 @@ func CmdUserAbort() Msg {
 	printError(fmt.Errorf("user aborted"))
 	os.Exit(1)
 	return MsgKill{}
+}
+
+func lfToCrLf(prompt string) string {
+	return regexp.MustCompile(`([^\r])\n`).ReplaceAllString(prompt, "$1\r\n")
 }

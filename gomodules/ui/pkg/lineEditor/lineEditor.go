@@ -10,12 +10,13 @@ package lineEditor
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"unicode"
 
 	"github.com/software-t-rex/monospace/gomodules/ui/pkg/ansi"
 )
+
+// @TODO: add support for \t\n in WrappedLine mode
 
 type VisualEditMode int
 
@@ -27,6 +28,8 @@ const (
 	VModeMaskedLine                        // visual edition with masking of the content
 )
 
+var ErrMaxLen = fmt.Errorf("max length reached")
+
 type LineEditor struct {
 	value            []rune
 	pos              int // cursor position inside the value (!= visual cursor position)
@@ -36,7 +39,7 @@ type LineEditor struct {
 	compSuggests     []string
 	compSuggestIndex int
 	visualMode       VisualEditMode
-	maxLen           int // @todo implement maxLen support
+	maxLen           int
 	maxWidth         int // as received from the config
 
 	// this is the terminal width in characters
@@ -66,7 +69,7 @@ type LineEditorOptions struct {
 
 func NewLineEditor(out io.Writer, visualEditionMode VisualEditMode) *LineEditor {
 	return &LineEditor{
-		out:        os.Stdout,
+		out:        out,
 		visualMode: visualEditionMode,
 	}
 }
@@ -147,11 +150,15 @@ func (l *LineEditor) Insert(s []rune) error {
 	}
 	// don't exceed maxLen
 	if l.maxLen > 0 && l.Len()+slen > l.maxLen {
+		l.RingBell()
 		if l.Len() == l.maxLen {
-			return fmt.Errorf("max length reached")
+			return ErrMaxLen
 		} else {
-			s = s[:l.maxLen-l.Len()]
+			s = s[:max(0, l.maxLen-l.Len())]
 			slen = len(s)
+			if slen < 1 {
+				return ErrMaxLen
+			}
 		}
 	}
 	remain := append(s, l.value[l.pos:]...)
@@ -380,6 +387,26 @@ func (l *LineEditor) RewriteFrom(insertPos int, finalPos int, contentFromInsertP
 	return l.moveCursorToPosition(finalPos)
 }
 
+// this function is used to print the content of the line editor as it was in its last state
+// It will not clean the screen before printing and will not move the cursor
+// Just print the content of the line editor as it is respecting the visual mode
+func (l *LineEditor) Sprint() (string, error) {
+	if l.visualMode <= VModeHidden {
+		return "", nil
+	}
+	buf := new(strings.Builder)
+	// out := bufio.NewWriter(buf)
+	tmpLine := NewLineEditor(buf, l.visualMode).
+		SetTermWidth(l.termWidth).
+		SetConfig(LineEditorOptions{
+			MaxWidth: l.maxWidth,
+			MaxLen:   l.maxLen,
+		}).
+		SetVisualStartOffset(l.visualStartOffset)
+	errWrite := tmpLine.Insert(l.value)
+	return buf.String(), errWrite
+}
+
 func (l *LineEditor) appendUnbounded(str []rune) error {
 	l.pos = l.Len()
 	_, err := fmt.Fprint(l.out, string(str))
@@ -553,6 +580,9 @@ func (l *LineEditor) CompletionStart() (string, string) {
 
 // sets the completion suggestions and complete with the first one if any
 func (l *LineEditor) CompletionSuggests(suggestions []string) *LineEditor {
+	for i, s := range suggestions {
+		suggestions[i] = string(Sanitize([]rune(s), false))
+	}
 	l.compSuggests = suggestions
 	l.compSuggestIndex = -1
 	l.CompletionNext()
@@ -583,8 +613,20 @@ func (l *LineEditor) CompletionNext() error {
 // replace current word with given completion
 func (l *LineEditor) complete(completion string) error {
 	comp := []rune(completion)
+	compLen := len(comp)
 	// get word boundaries
 	endWordPos := l.FindWordBoundaryFromPos(l.compStart, "right")
+	if l.maxLen > 0 {
+		lenWithoutWord := l.Len() - (endWordPos - l.compStart)
+		if lenWithoutWord+compLen > l.maxLen {
+			l.RingBell()
+			comp = comp[:max(0, l.maxLen-lenWithoutWord)]
+			compLen = len(comp)
+			if compLen < 1 {
+				return ErrMaxLen
+			}
+		}
+	}
 	// visual edition
 	return l.RewriteFrom(l.compStart, l.compStart+len(comp), append(comp, copyLineFrom(l, endWordPos)...))
 }

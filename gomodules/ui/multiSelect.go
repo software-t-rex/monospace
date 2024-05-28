@@ -8,11 +8,13 @@ SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
 
 var defaultMaxVisibleOptions = 5
+var ErrSelectEscaped = fmt.Errorf("selection escaped")
 
 // set a number either 0 or between 3 and 15
 func SetDefaultMaxVisibleOptions(max int) {
@@ -41,6 +43,8 @@ type multiSelectModel[T comparable] struct {
 	errorMsg               string
 	bindings               *KeyBindings[*multiSelectModel[T]]
 	singleSelect           bool
+	escapable              bool
+	escaped                bool
 	selectAllToggleBinding string
 	uiApi                  *ComponentApi
 }
@@ -83,6 +87,16 @@ func (m *multiSelectModel[T]) SelectionMinLen(minLen int) *multiSelectModel[T] {
 // this is an alias for SelectionMinLen(0)
 func (m *multiSelectModel[T]) AllowEmptySelection() *multiSelectModel[T] {
 	m.selectionMinLen = 0
+	return m
+}
+
+// allow escape key to cancel the selection
+// Think twice before making this options available to the user,
+// most of the time it's better to force the user to select at least one option
+// and to add an item to cancel the selection explicitly
+// you will have to check for an ErrSelectEscaped error returned by Run() to know if the user has canceled the selection
+func (m *multiSelectModel[T]) Escapable(escapable bool) *multiSelectModel[T] {
+	m.escapable = escapable
 	return m
 }
 
@@ -280,11 +294,18 @@ func multiSelectAddBindings[T comparable](m *multiSelectModel[T]) {
 		}
 		m.uiApi.Done = true
 		return nil
+	})
+	if m.escapable {
+		m.bindings.AddBinding("esc", Msgs["cancel"], func(m *multiSelectModel[T]) Cmd {
+			m.escaped = true
+			m.uiApi.Done = true
+			return nil
+		})
+	}
+	// following bindings are not displayed in the help message
+	m.bindings.AddBinding("ctrl+c", "", func(m *multiSelectModel[T]) Cmd {
+		return CmdUserAbort
 	}).
-		// following bindings are not displayed in the help message
-		AddBinding("ctrl+c", "", func(m *multiSelectModel[T]) Cmd {
-			return CmdUserAbort
-		}).
 		AddBinding("home", "", func(m *multiSelectModel[T]) Cmd {
 			m.focusedIndex = 0
 			m.startVisibleIndex = 0
@@ -322,6 +343,7 @@ func multiSelectAddBindings[T comparable](m *multiSelectModel[T]) {
 		})
 }
 func (m *multiSelectModel[T]) Init() Cmd {
+	m.uiApi.Done = false
 	// ensure focus is in the visible area
 	if m.focusedIndex >= m.maxVisibleOptions {
 		// place selected option in the middle of the visible options
@@ -336,7 +358,6 @@ func (m *multiSelectModel[T]) Init() Cmd {
 
 // h,j,k,l = left, down, up, right
 func (m *multiSelectModel[T]) Update(msg Msg) Cmd {
-	m.uiApi.Done = false
 	m.errorMsg = ""
 	cmd := m.bindings.Handle(m, msg)
 	return cmd
@@ -397,7 +418,7 @@ func (m *multiSelectModel[T]) Render() string {
 	return sb.String()
 }
 
-func (m *multiSelectModel[T]) Fallback() Model {
+func (m *multiSelectModel[T]) Fallback() (Model, error) {
 	var sb strings.Builder
 	// reset selected (we don't want to keep the previous selection while in fallback mode)
 	m.selected = make(map[int]bool, len(m.options))
@@ -423,8 +444,11 @@ func (m *multiSelectModel[T]) Fallback() Model {
 	ints := intsMsg.Value
 	// update the model
 	if err != nil {
-		m.errorMsg = Msgs["notANumber"]
-		return m.Fallback()
+		if errors.Is(err, ErrNaN) {
+			m.errorMsg = Msgs["notANumber"]
+			return m.Fallback()
+		}
+		return m, err
 	} else if m.selectionMinLen > 0 && len(ints) < m.selectionMinLen {
 		m.errorMsg = fmt.Sprintf(Msgs["outBoundMin"], m.selectionMinLen)
 		return m.Fallback()
@@ -442,7 +466,7 @@ func (m *multiSelectModel[T]) Fallback() Model {
 	if m.errorMsg != "" {
 		return m.Fallback()
 	}
-	return m
+	return m, nil
 }
 
 func newMultiSelect[T comparable](title string, singleSelect bool) *multiSelectModel[T] {
@@ -501,7 +525,14 @@ func NewMultiSelectStrings(title string, options []string) *multiSelectModel[str
 	return newMultiSelect[string](title, false).SetStringsOptions(options)
 }
 
-// Run the multi-select model and return a slice of selected items.
-func (m *multiSelectModel[T]) Run() []T {
-	return RunComponent(m).getSelected()
+// Run the multi-select model and return a slice of selected items and optional error.
+// If escapable is set to true and the user presses the escape key, the function will return
+// current user selection and an ErrSelectEscaped error.
+func (m *multiSelectModel[T]) Run() ([]T, error) {
+	model, err := RunComponent(m)
+	selection := model.getSelected()
+	if err == nil && model.escaped {
+		err = ErrSelectEscaped
+	}
+	return selection, err
 }

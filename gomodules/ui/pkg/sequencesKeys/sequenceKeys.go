@@ -52,8 +52,10 @@ var Map = map[string]string{
 	"\x1bOH": "home",  // application mode
 	"\x1bOF": "end",   // application mode
 
+	"\x1b[1~": "home", // linux console
 	"\x1b[2~": "insert",
 	"\x1b[3~": "delete",
+	"\x1b[4~": "end", // linux console
 	"\x1b[5~": "pageup",
 	"\x1b[6~": "pagedown",
 	"\x1b[7~": "home",
@@ -78,7 +80,7 @@ var Map = map[string]string{
 	"\x11": "ctrl+q",
 	"\x12": "ctrl+r",
 	"\x13": "ctrl+s",
-	"\x14": "ctrl+t", // @todo test this with other terminal than tilix
+	"\x14": "ctrl+t",
 	"\x15": "ctrl+u", // kill line
 	"\x16": "ctrl+v", // not always detected (os paste on windows)
 	"\x17": "ctrl+w", // delete previous word
