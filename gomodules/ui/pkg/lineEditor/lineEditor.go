@@ -5,7 +5,7 @@ SPDX-License-Identifier: MIT
 SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 */
 
-package ui
+package lineEditor
 
 import (
 	"fmt"

@@ -5,7 +5,7 @@ SPDX-License-Identifier: MIT
 SPDX-FileCopyrightText: 2024 Jonathan Gotti <jgotti@jgotti.org>
 */
 
-package ui
+package sequencesKeys
 
 // SequenceKeysMap is a map of sequence keys to their corresponding key names.
 // This map is used to convert escape sequences to key names.
@@ -15,7 +15,7 @@ package ui
 // - ctrl+i: is detected as tab
 // - ctrl+j: is detected as enter
 // - ctrl+m: is detected as enter
-// - ctrl+v: is not detected and is an os paste on windows
+// - ctrl+v: is not always detected (OS paste on windows)
 // - ctrl+z: is not detected and trigger EOF on windows and may suspend on *nix
 // - ctrl+h: is detected as backspace
 // - f10 is unreachable on my computer and not tested
@@ -30,7 +30,7 @@ package ui
 // - https://en.wikipedia.org/wiki/ANSI_escape_code
 // - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 // - https://learn.microsoft.com/fr-fr/windows/console/console-virtual-terminal-sequences
-var SequenceKeysMap = map[string]string{
+var Map = map[string]string{
 	"\x1b": "esc",
 	"\n":   "enter",
 	"\r":   "enter",
@@ -60,6 +60,7 @@ var SequenceKeysMap = map[string]string{
 	"\x1b[8~": "end",
 
 	"\x1b[3;5~": "ctrl+delete",
+	"\x1b[3^":   "ctrl+delete",
 	"\x1b[3;3~": "alt+delete",
 
 	"\x01": "ctrl+a",
@@ -77,8 +78,9 @@ var SequenceKeysMap = map[string]string{
 	"\x11": "ctrl+q",
 	"\x12": "ctrl+r",
 	"\x13": "ctrl+s",
-	"\x14": "ctrl+t",
+	"\x14": "ctrl+t", // @todo test this with other terminal than tilix
 	"\x15": "ctrl+u", // kill line
+	"\x16": "ctrl+v", // not always detected (os paste on windows)
 	"\x17": "ctrl+w", // delete previous word
 	"\x18": "ctrl+x",
 	"\x19": "ctrl+y",
@@ -96,6 +98,8 @@ var SequenceKeysMap = map[string]string{
 	"\x1b[18~": "F7",
 	"\x1b[19~": "F8",
 	"\x1b[20~": "F9",
+	"\x1b[21~": "F10",
+	"\x1b[23~": "F11",
 	"\x1b[24~": "F12",
 
 	"\x1b[1;2A": "shift+up",
@@ -110,9 +114,17 @@ var SequenceKeysMap = map[string]string{
 	"\x1b[1;3D": "alt+left",
 
 	"\x1b[1;5A": "ctrl+up",
+	"\x1bOa":    "ctrl+up",
 	"\x1b[1;5B": "ctrl+down",
+	"\x1bOb":    "ctrl+down",
 	"\x1b[1;5C": "ctrl+right",
+	"\x1bOc":    "ctrl+right",
 	"\x1b[1;5D": "ctrl+left",
+	"\x1bOd":    "ctrl+left",
+	"\x1b[1;5H": "ctrl+home",
+	"\x1b[7^":   "ctrl+home",
+	"\x1b[1;5F": "ctrl+end",
+	"\x1b[8^":   "ctrl+end",
 
 	// following keys are not standard and may be captured by terminal emulator
 	"\x1b\x7f": "alt+backspace", // delete previous word
@@ -120,5 +132,33 @@ var SequenceKeysMap = map[string]string{
 	"\x1b\x66": "alt+f",         // move to next word
 	"\x1b\x64": "alt+d",         // delete word
 
+	// this is the start of a bracketed paste
+	// It will be followed by the pasted text and end with "\x1b[201~"
+	// "\x1b[201~" will not be detected as a key but as a sequence end
+	// see [MsgKey] for more details
+	"\x1b[200~": "paste",
+
 	// Add more compound sequences as needed
 }
+
+var MaxLen int = func() int {
+	var maxLen int
+	for k := range Map {
+		if len(k) > maxLen {
+			maxLen = len(k)
+		}
+	}
+	return maxLen
+}()
+
+// for each known sequence key we store the sequence key parts
+// this allow quick search of sequence and to early exit if the sequence is not found
+var PartialLookupMap = func() map[string]struct{} {
+	lookupMap := make(map[string]struct{}, len(Map))
+	for k := range Map {
+		for i := 1; i <= len(k); i++ {
+			lookupMap[k[:i]] = struct{}{}
+		}
+	}
+	return lookupMap
+}()
