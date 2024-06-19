@@ -54,7 +54,7 @@
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/TaskSchema",
-            "description": "Name of a task that can be executed by monospace run.\nIt can be prefixed by a project name or alias and a '#' to make the task specific for that project, ie: myproject#taskToRun"
+            "description": "Name of a task that can be executed by monospace run.\nIt is in the form \"projectName#taskName\" where projectName can be:\n - a project name defined in the 'projects' section\n - an alias defined in the 'projects_aliases' section\n - 'root' to refer to the root of the monospace\n - '*' to define a tasks that will execute on all projects\n - if only a taskName is given it is considered to be prefixed by '*' so 'task' = '*#task'"
           },
           "default": {}
         }
@@ -94,7 +94,7 @@
         },
         "dependsOn": {
           "title": "monospace.yml: pipeline[task].dependsOn",
-          "description": "The list of tasks that this task depends on.\nIt can be the name of a task for the same project (ie: myOtherTask)\nor you can also point to other projects tasks like this 'packages/projectName#taskName'",
+          "description": "The list of tasks that this task depends on.\nDependencies should be listed in the form 'projectName#taskName', if prefix 'projectName#' is ommited then it is considered to point to a task of the same project.\n\nFor example given the following pipeline:\n  myproject#test: \n    dependsOn: [build, myotherProject#test]\n  myproject#build:{}\n  myotherProject#test:{}\n\nthe test task of myproject will depend on the build task of myproject and the test task of myotherProject",
           "type": "array",
           "items": {
             "type": "string"
