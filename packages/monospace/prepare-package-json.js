@@ -5,7 +5,7 @@ const pjson = require("./package.json")
 
 process.chdir(__dirname)
 
-const getManFiles = async () => fs.readdir("../../docs/monospace/cli/manifest").then((dirs) => dirs.map(dir => `./manifest/${dir}`))
+const getManFiles = async () => fs.readdir("../../docs/monospace/cli/manifest").then((dirs) => dirs.map(dir => `./man/${dir}`))
 const getVersion  = async () => new Promise((resolve, reject) => {
 	// check args from command line
 	if (process.argv.length > 2) {

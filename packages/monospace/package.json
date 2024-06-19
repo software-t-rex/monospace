@@ -1,11 +1,11 @@
 {
 	"name": "@t-rex.software/monospace",
-	"version": "0.0.26",
+	"version": "0.0.27",
 	"description": "monospace kinda like monorepo but different",
 	"scripts": {
-		"cleanup": "rm -rf README.md LICENSE manifest installer.js t-rex.software-monospace-${npm_package_version}.tgz",
+		"cleanup": "rm -rf README.md LICENSE man installer.js t-rex.software-monospace-${npm_package_version}.tgz",
 		"update-package-json": "node prepare-package-json",
-		"import-files": "cp -r ../../README.md ../../LICENSE ../../docs/monospace/cli/manifest ./",
+		"import-files": "cp -r ../../README.md ../../LICENSE ../../docs/monospace/cli/manifest ./ && mv ./manifest ./man",
 		"bundle": "esbuild --bundle index.js --outfile=\"installer.js\" --platform=node --target=es6 --minify-whitespace",
 		"build": "node prepare-package-json.js && pnpm run cleanup && pnpm run import-files && pnpm run bundle && npm pack",
 		"preinstall": "node installer.js"
@@ -14,29 +14,33 @@
 		"monospace": "./bin/monospace"
 	},
 	"man": [
-		"./manifest/monospace-aliases.1",
-		"./manifest/monospace-check-update.1",
-		"./manifest/monospace-check.1",
-		"./manifest/monospace-clone.1",
-		"./manifest/monospace-create.1",
-		"./manifest/monospace-exec.1",
-		"./manifest/monospace-externalize.1",
-		"./manifest/monospace-import.1",
-		"./manifest/monospace-init.1",
-		"./manifest/monospace-ls.1",
-		"./manifest/monospace-remove.1",
-		"./manifest/monospace-rename.1",
-		"./manifest/monospace-run.1",
-		"./manifest/monospace-state.1",
-		"./manifest/monospace-status.1",
-		"./manifest/monospace-version.1",
-		"./manifest/monospace.1"
+		"./man/monospace-aliases.1",
+		"./man/monospace-check-update.1",
+		"./man/monospace-check.1",
+		"./man/monospace-clone.1",
+		"./man/monospace-create.1",
+		"./man/monospace-exec.1",
+		"./man/monospace-externalize.1",
+		"./man/monospace-import.1",
+		"./man/monospace-init.1",
+		"./man/monospace-ls.1",
+		"./man/monospace-remove.1",
+		"./man/monospace-rename.1",
+		"./man/monospace-run.1",
+		"./man/monospace-state.1",
+		"./man/monospace-status.1",
+		"./man/monospace-tasks-edit.1",
+		"./man/monospace-tasks-import.1",
+		"./man/monospace-tasks-remove.1",
+		"./man/monospace-tasks.1",
+		"./man/monospace-version.1",
+		"./man/monospace.1"
 	],
 	"files": [
 		"installer.js",
 		"bin/*",
 		"README.md",
-		"manifest/*"
+		"man/*"
 	],
 	"repository": {
 		"type": "git",
