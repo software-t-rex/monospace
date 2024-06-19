@@ -7,3 +7,4 @@ gomodules/js-packagemanager
 gomodules/packageJson
 *.old
 .env
+**/debug.log

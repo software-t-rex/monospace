@@ -23,7 +23,7 @@ replace (
 require (
 	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v3 v3.0.1
-	gotest.tools/v3 v3.4.0
+	gotest.tools/v3 v3.5.1
 )
 
 require (

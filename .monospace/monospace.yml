@@ -27,24 +27,27 @@ pipeline:
     jspm#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     jspm#test:
-        dependsOn: [packageJson#test]
         cmd: [test.sh]
+        dependsOn: [packageJson#test]
     monospace#build:
-        dependsOn: [test, npmpkg#update-package-json]
         cmd: [goreleaser, release, --clean, --skip-publish]
+        dependsOn: [monospace#test]
         output_mode: interleaved
     monospace#buildnext:
+        description: Build the next version of monospace for development (linux only)
         cmd: [goreleaser, build, --config, ./.goreleaser-next.yaml, --id, monospace-next, --snapshot, --clean, --single-target]
         output_mode: interleaved
     monospace#doc:
+        description: Generate markdown doc and man files
         cmd: [./gendoc.sh, -md, -man]
     monospace#test:
-        dependsOn: [packageJson#test, executor#test, jspm#test, ui#test]
         cmd: [test.sh]
+        dependsOn: [packageJson#test, executor#test, jspm#test, ui#test]
         output_mode: status-only
     npmpkg#build: {}
     npmpkg#cleanup: {}
-    npmpkg#update-package-json: {}
+    npmpkg#update-package-json:
+        description: Run update-package-json script from packages/monospace/package.json
     packageJson#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     packageJson#test:
@@ -52,7 +55,9 @@ pipeline:
     root#difforigin:
         cmd: [git, diff, --name-only, origin/main]
     tidy:
-        output_mode: grouped
         cmd: [/bin/bash, -c, 'if [ -f go.mod ]; then go mod tidy; else echo ''no go.mod file => skipped'';fi']
+        output_mode: grouped
+    utils#test:
+        cmd: [test.sh]
     ui#test:
         cmd: [test.sh]
