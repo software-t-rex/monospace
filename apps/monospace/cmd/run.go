@@ -9,6 +9,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -39,7 +40,7 @@ A circular dependency check will be performed before the execution starts.`,
   monospace run -p modules/mymodule,modules/myothermodule test -- additionalArg=value
   # run tasks on monospace root only
   monospace run -p root task
-  # get some dependency graph
+  # get dependency graph for a specific task
   monospace run task --graphviz
   # or for the entire pipeline
   monospace run --graphviz`,
@@ -50,13 +51,15 @@ A circular dependency check will be performed before the execution starts.`,
 			return nil, cobra.ShellCompDirectiveDefault
 		}
 		taskNames := []string{}
-		for task := range config.Pipeline {
-			if !strings.ContainsRune(task, '#') {
-				taskNames = append(taskNames, task)
-			} else {
-				projectTask := strings.Split(task, "#")
-				taskNames = append(taskNames, projectTask[1])
+		for task, taskDef := range config.Pipeline {
+			comp := task
+			if strings.ContainsRune(task, '#') {
+				comp = strings.Split(task, "#")[1]
 			}
+			if taskDef.Description != "" {
+				comp += fmt.Sprintf("\t%s", taskDef.Description)
+			}
+			taskNames = append(taskNames, comp)
 		}
 		return taskNames, cobra.ShellCompDirectiveDefault
 	},
@@ -69,7 +72,7 @@ A circular dependency check will be performed before the execution starts.`,
 		// special cases either full graphviz or no task to run
 		if len(args) == 0 {
 			if graphviz {
-				tasks.OpenGraphvizFull()
+				tasks.OpenGraphvizFull(config)
 				return
 			}
 			utils.PrintError(errors.New("missing task to run"))
@@ -80,7 +83,7 @@ A circular dependency check will be performed before the execution starts.`,
 		filteredProjects := FlagGetFilteredProjects(cmd)
 		// remove additional args from the command and populate additional args as job parameters
 		additionalArgs := splitAdditionalArgs(&args)
-		taskList := tasks.PrepareTaskList(args, filteredProjects)
+		taskList := tasks.PrepareTaskList(args, filteredProjects, config)
 
 		// we don't need to bother with ouput mode for graphviz output
 		if graphviz {
