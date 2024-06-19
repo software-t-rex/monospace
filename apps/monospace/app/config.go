@@ -65,6 +65,18 @@ func (c *MonospaceConfig) GetDir() string {
 func (c *MonospaceConfig) GetRoot() string {
 	return c.root
 }
+
+// returns a map indexed by project name with the alias as value
+func (c *MonospaceConfig) GetProjectsAliases() map[string]string {
+	projectAliases := make(map[string]string)
+	if c.Aliases != nil {
+		for alias, projectName := range c.Aliases {
+			projectAliases[projectName] = alias
+		}
+	}
+	return projectAliases
+}
+
 func (c *MonospaceConfig) Save() error {
 	return ConfigSave()
 }
