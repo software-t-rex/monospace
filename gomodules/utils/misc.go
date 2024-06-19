@@ -5,12 +5,12 @@ import (
 	"strings"
 )
 
-// This is a onliner If
-func If[T any](b bool, t, f T) T {
-	if b {
-		return t
+// This is a onliner If kinda like the ternary operator in other languages
+func If[T any](condition bool, trueVal, falseVal T) T {
+	if condition {
+		return trueVal
 	}
-	return f
+	return falseVal
 }
 
 func Indent(s string, indentation string) string {

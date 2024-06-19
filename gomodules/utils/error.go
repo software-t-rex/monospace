@@ -29,6 +29,12 @@ func PrintSuccess(success ...string) {
 		fmt.Fprintln(os.Stdout, theme.EmphasedSuccess("Success:"), theme.Success(success...))
 	}
 }
+func PrintInfo(info ...string) {
+	if len(info) > 0 && info[0] != "" {
+		theme := ui.GetTheme()
+		fmt.Fprintln(os.Stdout, theme.Info(info...))
+	}
+}
 
 func Exit(errorMsg string) {
 	if errorMsg != "" {

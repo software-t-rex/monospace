@@ -86,7 +86,7 @@ func IntMapFind[V string | int](m map[int]V, val V) int {
 	return -1
 }
 
-func SliceContains[T string | int](slice []T, search T) bool {
+func SliceContains[T comparable](slice []T, search T) bool {
 	for _, val := range slice {
 		if val == search {
 			return true
@@ -96,13 +96,24 @@ func SliceContains[T string | int](slice []T, search T) bool {
 }
 
 // return -1 if not found
-func SliceFindIndex[T string | int](slice []T, search T) int {
+func SliceFindIndex[T comparable](slice []T, search T) int {
 	for k, v := range slice {
 		if v == search {
 			return k
 		}
 	}
 	return -1
+}
+
+// returns entry and true if found, zero value of T and false otherwise
+func SliceSearch[T comparable](slice []T, predicate func(T) bool) (T, bool) {
+	for _, val := range slice {
+		if predicate(val) {
+			return val, true
+		}
+	}
+	var res T
+	return res, false
 }
 
 func SliceReverse[T any](slice []T) []T {
