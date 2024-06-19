@@ -10,8 +10,10 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/software-t-rex/monospace/gomodules/ui"
+	"github.com/software-t-rex/monospace/gomodules/utils"
 	"github.com/software-t-rex/monospace/mono"
 
 	"github.com/spf13/cobra"
@@ -61,6 +63,10 @@ you should look at the ` + ui.ApplyStyle("monospace import", ui.Italic) + ` comm
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckConfigFound(true)
 		pType := GetFlagProjectType(cmd)
+		noInteractive := FlagGetNoInteractive(cmd)
+		if noInteractive {
+			utils.CheckErr(os.Setenv("MONOSPACE_NO_INTERACTIVE", "1"))
+		}
 		mono.ProjectCreate(args[1], args[0], pType)
 	},
 }
@@ -68,4 +74,5 @@ you should look at the ` + ui.ApplyStyle("monospace import", ui.Italic) + ` comm
 func init() {
 	RootCmd.AddCommand(createCmd)
 	FlagAddProjectType(createCmd)
+	FlagAddNoInteractive(createCmd)
 }
