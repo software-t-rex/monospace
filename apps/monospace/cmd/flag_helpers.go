@@ -120,7 +120,11 @@ func FlagGetFilteredProjects(cmd *cobra.Command) []mono.Project {
 	return GetFilteredProjects(projects, filters, includeRoot)
 }
 
-// you should call GEtFlagOutputMode in the Run of the associated command
+func FlagGetFilteredProjectsNames(cmd *cobra.Command) []string {
+	return utils.SliceMap(FlagGetFilteredProjects(cmd), func(p mono.Project) string { return p.Name })
+}
+
+// you should call GetFlagOutputMode in the Run of the associated command
 func FlagAddOutputMode(cmd *cobra.Command) {
 	cmd.Flags().StringP("output-mode", "O", "", "output mode for multiple commands:\n- "+strings.Replace(outputModes, ",", "\n- ", -1)+"\n(default to monospace.yml settings or grouped if not set)")
 	utils.CheckErr(cmd.RegisterFlagCompletionFunc("output-mode", completeOutputMode))
@@ -172,4 +176,21 @@ func GetFlagProjectType(cmd *cobra.Command) string {
 		exitAndHelp(cmd, fmt.Errorf("invalid project type '%s'", pType))
 	}
 	return pType
+}
+
+// you can use this function as a cobra.Command.ValidArgsFunction to allow completion of task names
+func completeTaskNameArgs(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	config, err := app.ConfigGet()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+	taskNames := []string{}
+	for task, taskDef := range config.Pipeline {
+		comp := task
+		if taskDef.Description != "" {
+			comp += fmt.Sprintf("\t%s", taskDef.Description)
+		}
+		taskNames = append(taskNames, comp)
+	}
+	return taskNames, cobra.ShellCompDirectiveDefault
 }
