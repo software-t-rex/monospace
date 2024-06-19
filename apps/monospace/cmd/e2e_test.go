@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/software-t-rex/monospace/app"
 	"gopkg.in/yaml.v3"
@@ -86,7 +87,10 @@ func TestCmd_Suite(t *testing.T) {
 	// test suite helpers methods
 	runMonospace := func(args []string, ops ...icmd.CmdOp) *icmd.Result {
 		cmd := icmd.Command(monospaceBin, args...)
-		return icmd.RunCmd(cmd, append(ops, icmd.WithEnv(append(os.Environ(), "GOCOVERDIR="+tmpDir.Path(), "NO_COLOR=1")...))...)
+		return icmd.RunCmd(cmd, append(ops,
+			icmd.WithEnv(append(os.Environ(), "GOCOVERDIR="+tmpDir.Path(), "NO_COLOR=1")...),
+			icmd.WithTimeout(time.Second*30),
+		)...)
 	}
 	hasFile := func(name string) fs.PathOp { return fs.WithFile(name, "", fs.MatchAnyFileContent, fs.MatchAnyFileMode) }
 	hasDir := func(name string, extraFiles bool, ops ...fs.PathOp) fs.PathOp {
@@ -160,8 +164,8 @@ func TestCmd_Suite(t *testing.T) {
 			{"with no args", []string{"create"}, icmd.Expected{ExitCode: 1}, nil, ""},
 			{"with 1 args", []string{"create", "local"}, icmd.Expected{ExitCode: 1}, nil, ""},
 			{"with 2 args but invalid kind arg", []string{"create", "invalid", "apps/myapp"}, icmd.Expected{ExitCode: 1}, nil, ""},
-			{"with invalid name", []string{"create", "internal", "apps!#/1myapp"}, icmd.Expected{ExitCode: 1}, nil, ""},
-			{"local", []string{"create", "local", "apps/myapp"}, icmd.Success,
+			{"with invalid name", []string{"create", "--no-interactive", "internal", "apps!#/1myapp"}, icmd.Expected{ExitCode: 1}, nil, ""},
+			{"local", []string{"create", "--no-interactive", "local", "apps/myapp"}, icmd.Success,
 				hasDir("apps", false,
 					hasDir("myapp", false,
 						hasDir(".git", true),
@@ -170,10 +174,10 @@ func TestCmd_Suite(t *testing.T) {
 				),
 				"",
 			},
-			{"internal", []string{"create", "internal", "packages/mylib"}, icmd.Success,
+			{"internal", []string{"create", "--no-interactive", "internal", "packages/mylib"}, icmd.Success,
 				hasDir("packages", false, hasDir("mylib", false, hasFile(".gitignore"))), "",
 			},
-			{"internal go type", []string{"create", "internal", "packages/golib", "-t", "go"}, icmd.Success,
+			{"internal go type", []string{"create", "--no-interactive", "internal", "packages/golib", "-t", "go"}, icmd.Success,
 				hasDir("packages", true, hasDir("golib", false,
 					hasFile(".gitignore"),
 					hasFile("go.mod"),
@@ -181,7 +185,7 @@ func TestCmd_Suite(t *testing.T) {
 				)),
 				"",
 			},
-			{"internal js type", []string{"create", "internal", "packages/jslib", "-t", "js"}, icmd.Success,
+			{"internal js type", []string{"create", "--no-interactive", "internal", "packages/jslib", "-t", "js"}, icmd.Success,
 				hasDir("packages", true, hasDir("jslib", false,
 					hasFile(".gitignore"),
 					hasFile("package.json"),

@@ -62,9 +62,6 @@ Want to discover more about monospace? Try the help command:
 monospace help [command]
 
 Or visit https://github.com/software-t-rex/monospace for more information.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -76,7 +73,7 @@ func Execute() {
 	}
 }
 
-func init() {
+func onInitialize() {
 	// this is a trick to disable color output when in completion mode
 	completionMode := false
 	for _, arg := range os.Args {
@@ -85,11 +82,14 @@ func init() {
 			break
 		}
 	}
-	// cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().BoolVarP(&flagRootDisableColorOutput, "no-color", "C", false, "Disable color output mode (you can also use env var NO_COLOR)")
 	ui.ToggleEnhanced(!completionMode && !flagRootDisableColorOutput)
 	theme = ui.SetTheme(ui.ThemeMonoSpace)
 	app.ConfigLoad(mono.SpaceGetConfigPath())
+}
+
+func init() {
+	cobra.OnInitialize(onInitialize)
+	RootCmd.PersistentFlags().BoolVarP(&flagRootDisableColorOutput, "no-color", "C", false, "Disable color output mode (you can also use env var NO_COLOR)")
 }
 
 // utility function to force reload of monospace config from a given directory
