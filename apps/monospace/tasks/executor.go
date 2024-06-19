@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -12,12 +13,13 @@ import (
 )
 
 func setInterleavedOutputDisplayNames(jobs exctr.JobList) {
+	randColorStart := max(1, rand.Intn(7))
 	for i, job := range jobs {
 		nameParts := strings.Split(job.Name(), "/")
 		if !ui.EnhancedEnabled() {
 			job.SetDisplayName(nameParts[len(nameParts)-1])
 		} else {
-			colorId := fmt.Sprintf("%d", (i+1)%7)
+			colorId := fmt.Sprintf("%d", (i+randColorStart)%7)
 			if colorId == "0" {
 				job.SetDisplayName(nameParts[len(nameParts)-1])
 			} else {
