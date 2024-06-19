@@ -233,16 +233,23 @@ Pipeline will be checked for cyclic dependencies before saving any changes.
 		}
 
 		// add new tasks to the pipeline
+		needSave := false
+	taskLoop:
 		for _, task := range newTasks {
 			for {
 				if !noInteractive { // allow editing the task in interactive mode
 					editedTask, errEdit := tasks.NewTaskEditor(config, task).Run()
 					if errEdit != nil {
+						if errors.Is(errEdit, tasks.ErrEditorCanceled) {
+							fmt.Printf(theme.Info("Task %s edit canceled, not added to the pipeline\n"), task.Name)
+							continue taskLoop
+						}
 						utils.Exit(fmt.Sprintf("Error while editing task %s: %s", task.Name, errEdit))
 					}
 					task = editedTask
 				}
 				// add the task to the pipeline
+				needSave = true
 				pipeline[task.Name.String()] = task
 				if !pipeline.IsAcyclic(false) {
 					utils.PrintWarning("Pipeline has cyclic dependencies, please fix it before saving the changes")
@@ -253,6 +260,10 @@ Pipeline will be checked for cyclic dependencies before saving any changes.
 			}
 			config.Pipeline = pipeline.ToConfig(config)
 			fmt.Printf("%s Task %s added to the pipeline\n", theme.SuccessIndicator(), task.Name)
+		}
+		if !needSave {
+			fmt.Println(theme.Info("No task added to the pipeline"))
+			return
 		}
 		utils.CheckErr(app.ConfigSave())
 		fmt.Print(theme.Success("monospace.yml updated\n"))
@@ -368,7 +379,7 @@ var tasksEditCmd = &cobra.Command{
 				editedTask, errEdit := tasks.NewTaskEditor(config, task).Run()
 				if errEdit != nil {
 					if errors.Is(errEdit, tasks.ErrEditorCanceled) {
-						fmt.Println(theme.Info("Task editing canceled"))
+						fmt.Printf(theme.Info("Task %s edit canceled\n"), task.Name)
 						break
 					}
 					utils.Exit(fmt.Sprintf("Error while editing task %s: %s", task.Name, errEdit))

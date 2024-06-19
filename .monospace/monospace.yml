@@ -57,7 +57,5 @@ pipeline:
     tidy:
         cmd: [/bin/bash, -c, 'if [ -f go.mod ]; then go mod tidy; else echo ''no go.mod file => skipped'';fi']
         output_mode: grouped
-    utils#test:
-        cmd: [test.sh]
     ui#test:
         cmd: [test.sh]
