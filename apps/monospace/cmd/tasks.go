@@ -30,8 +30,8 @@ var tasksCmd = &cobra.Command{
 		CheckConfigFound(true)
 		preferFullNames, _ := cmd.Flags().GetBool("full-project-names")
 		details, _ := cmd.Flags().GetBool("details")
-		filteredProjects := FlagGetFilteredProjectsNames(cmd)
 		config := utils.CheckErrOrReturn(app.ConfigGet())
+		filteredProjects := FlagGetFilteredProjectsNames(cmd, config)
 		pipeline := utils.CheckErrOrReturn(tasks.GetStandardizedPipeline(config, true))
 
 		// get project aliases
@@ -88,7 +88,6 @@ var tasksCmd = &cobra.Command{
 	},
 }
 
-// @TODO Use editor to edit tasks
 var tasksImportCmd = &cobra.Command{
 	Use:   "import [projectName#scriptName]...",
 	Short: "Import scripts entries from projects package.json.",
@@ -117,7 +116,7 @@ Pipeline will be checked for cyclic dependencies before saving any changes.
 		// load config
 		config := utils.CheckErrOrReturn(app.ConfigGet())
 		// get requested pkgjsonProjects and filter only the ones that have a package.json file
-		pkgjsonProjects := FlagGetFilteredProjects(cmd)
+		pkgjsonProjects := FlagGetFilteredProjects(cmd, config)
 		pkgjsonProjects = utils.SliceFilter(pkgjsonProjects, func(p mono.Project) bool {
 			return p.HasPackageJson()
 		})
@@ -277,7 +276,7 @@ on cyclic dependencies before saving the changes.`,
 		config := utils.CheckErrOrReturn(app.ConfigGet())
 		theme := ui.GetTheme()
 		pipeline := utils.CheckErrOrReturn(tasks.GetStandardizedPipeline(config, true))
-		filteredProjects := FlagGetFilteredProjectsNames(cmd)
+		filteredProjects := FlagGetFilteredProjectsNames(cmd, config)
 		filteredPipeline := utils.MapFilter(pipeline, func(task tasks.Task) bool {
 			return utils.SliceContains(filteredProjects, task.Name.Project)
 		})

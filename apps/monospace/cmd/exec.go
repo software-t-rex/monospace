@@ -59,7 +59,7 @@ You can restrict the command to one or more projects using flag --project-filter
 			cmdArgs = append([]string{"-c", "color.ui=always"}, cmdArgs...)
 		}
 
-		projects := FlagGetFilteredProjects(cmd)
+		projects := FlagGetFilteredProjects(cmd, config)
 
 		executor := tasks.NewExecutor(outputMode)
 		for _, p := range projects {

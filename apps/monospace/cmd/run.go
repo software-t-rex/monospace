@@ -80,7 +80,7 @@ A circular dependency check will be performed before the execution starts.`,
 			os.Exit(1)
 		}
 
-		filteredProjects := FlagGetFilteredProjects(cmd)
+		filteredProjects := FlagGetFilteredProjects(cmd, config)
 		// remove additional args from the command and populate additional args as job parameters
 		additionalArgs := splitAdditionalArgs(&args)
 		taskList := tasks.PrepareTaskList(args, filteredProjects, config)

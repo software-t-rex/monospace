@@ -50,8 +50,8 @@ func completeProjectFilter(cmd *cobra.Command, args []string, toComplete string)
 	return suggestions, cobra.ShellCompDirectiveDefault
 }
 
-func GetFilteredProjects(projects []mono.Project, filters []string, includeRoot bool) []mono.Project {
-	config := utils.CheckErrOrReturn(app.ConfigGet())
+func GetFilteredProjects(config *app.MonospaceConfig, filters []string, includeRoot bool) []mono.Project {
+	projects := mono.ProjectsAsStructs(config.Projects)
 	filterLen := len(filters)
 	if !includeRoot && utils.SliceContains(filters, "root") {
 		includeRoot = true
@@ -98,8 +98,7 @@ func GetFilteredProjects(projects []mono.Project, filters []string, includeRoot 
 	}
 	return projects
 }
-func FlagGetFilteredProjects(cmd *cobra.Command) []mono.Project {
-	projects := mono.ProjectsGetAll()
+func FlagGetFilteredProjects(cmd *cobra.Command, config *app.MonospaceConfig) []mono.Project {
 	filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
 	filtersOut := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter-out"))
 	includeRoot := false
@@ -117,11 +116,11 @@ func FlagGetFilteredProjects(cmd *cobra.Command) []mono.Project {
 	for _, f := range filtersOut {
 		filters = append(filters, "!"+f)
 	}
-	return GetFilteredProjects(projects, filters, includeRoot)
+	return GetFilteredProjects(config, filters, includeRoot)
 }
 
-func FlagGetFilteredProjectsNames(cmd *cobra.Command) []string {
-	return utils.SliceMap(FlagGetFilteredProjects(cmd), func(p mono.Project) string { return p.Name })
+func FlagGetFilteredProjectsNames(cmd *cobra.Command, config *app.MonospaceConfig) []string {
+	return utils.SliceMap(FlagGetFilteredProjects(cmd, config), func(p mono.Project) string { return p.Name })
 }
 
 // you should call GetFlagOutputMode in the Run of the associated command

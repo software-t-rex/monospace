@@ -77,7 +77,7 @@ won't change the exit status of the command.
 		monoRoot := mono.SpaceGetRoot()
 		monoIgnore := filepath.Join(monoRoot, ".gitignore")
 		hasFilter := cmd.Flags().Changed("project-filter")
-		filteredProjects := FlagGetFilteredProjects(cmd)
+		filteredProjects := FlagGetFilteredProjects(cmd, config)
 		interactive := FlagGetBool(cmd, "interactive")
 		successIndicator := theme.Success("✔")
 		failureIndicator := theme.Error("✘")
