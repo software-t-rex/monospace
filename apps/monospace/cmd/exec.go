@@ -45,6 +45,7 @@ You can restrict the command to one or more projects using flag --project-filter
 		cmdBin := args[0]
 		cmdArgs := args[1:]
 		outputMode := FlagGetOutputMode(cmd, config.PreferredOutputMode)
+		aliases := config.GetProjectsAliases()
 		filterGitOnly := FlagGetBool(cmd, "git")
 		filterExternal := FlagGetBool(cmd, "external")
 		filterInternal := FlagGetBool(cmd, "internal")
@@ -81,7 +82,8 @@ You can restrict the command to one or more projects using flag --project-filter
 			cmd.Dir = project.Path()
 			switch outputMode {
 			case "interleaved":
-				executor.AddNamedJobCmd(project.Name, cmd)
+				alias, hasAlias := aliases[project.Name]
+				executor.AddNamedJobCmd(utils.If(hasAlias, alias, project.Name), cmd)
 			default:
 				executor.AddNamedJobCmd(fmt.Sprintf("%s: %s", project.StyledString(), strings.Join(args, " ")), cmd)
 			}

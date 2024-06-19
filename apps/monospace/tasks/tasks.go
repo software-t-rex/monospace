@@ -434,23 +434,32 @@ func (t TaskList) Len() int {
 
 func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobExecutor.JobExecutor {
 	e := NewExecutor(outputMode)
+	projectAliases := t.config.GetProjectsAliases()
 	taskIds := make(map[string]int, t.Len())
 
 	jobs := make(map[int]jobExecutor.Job, t.Len())
 	for taskId, task := range t.List {
 		taskRunner := task.GetJobRunner(additionalArgs, t.config.JSPM)
+		taskName := task.Name.String()
+		if outputMode == "interleaved" {
+			// replace task name with alias if any when using interleaved output
+			alias, hasAlias := projectAliases[task.Name.Project]
+			if hasAlias {
+				taskName = alias + "#" + task.Name.Task
+			}
+		}
 		if taskRunner != nil {
-			job := e.AddJob(jobExecutor.NamedJob{Name: task.Name.String(), Job: taskRunner})
+			job := e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: taskRunner})
 			taskIds[taskId] = job.Id()
 			jobs[job.Id()] = job
 		} else if task.TaskDef.DependsOn != nil && len(task.TaskDef.DependsOn) > 0 {
 			fmt.Printf(ui.GetTheme().Info("%s#%s is a dummy task, will only executes its dependencies.\n"), task.Name.Project, task.Name.Task)
-			job := e.AddJob(jobExecutor.NamedJob{Name: task.Name.String(), Job: func() (string, error) { return "", nil }})
+			job := e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: func() (string, error) { return "", nil }})
 			taskIds[taskId] = job.Id()
 			jobs[job.Id()] = job
 		} else {
 			// no cmd and no dependencies
-			exit(task.Name.String() + " task has no cmd, no package.json script or dependencies, provide at least one of those or remove the task from pipeline.")
+			exit(taskName + " task has no cmd, no package.json script or dependencies, provide at least one of those or remove the task from pipeline.")
 		}
 	}
 	// add dependencies
