@@ -1,6 +1,6 @@
 {
 	"name": "@t-rex.software/monospace",
-	"version": "0.0.27",
+	"version": "0.0.28",
 	"description": "monospace kinda like monorepo but different",
 	"scripts": {
 		"cleanup": "rm -rf README.md LICENSE man installer.js t-rex.software-monospace-${npm_package_version}.tgz",
