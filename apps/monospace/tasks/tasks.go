@@ -57,6 +57,7 @@ type Task struct {
 var taskNameRegex = regexp.MustCompile("^(?:([^#]+)#)?([^#]+)$")
 
 // ParseTaskName will parse a task name string and return a TaskName struct
+//
 // If provided config is used to check if the project name is valid and to replace aliases with standard names
 // Will exit on failure to retrieve a valid project name
 func ParseTaskName(name string, config *app.MonospaceConfig) TaskName {
@@ -113,6 +114,7 @@ func GetStandardizedPipeline(config *app.MonospaceConfig, failEmpty bool) (Pipel
 		taskName := ParseTaskName(k, config)
 		taskDef := v
 		if len(taskDef.DependsOn) > 0 {
+			taskDef.DependsOn = append([]string{}, v.DependsOn...)
 			for i, depName := range taskDef.DependsOn {
 				// todo handle ^ prefix (or not)
 				if !strings.Contains(depName, "#") {
@@ -123,7 +125,7 @@ func GetStandardizedPipeline(config *app.MonospaceConfig, failEmpty bool) (Pipel
 				}
 			}
 		}
-		res[taskName.String()] = Task{taskName, v}
+		res[taskName.String()] = Task{taskName, taskDef}
 	}
 	// check dependencies are valid (tasks exists and are not persistent tasks)
 	for _, task := range res {
