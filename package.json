@@ -1,6 +1,6 @@
 {
   "name": "monospace",
-  "packageManager": "^pnpm@8.14.3",
+  "packageManager": "^pnpm@9.6.0",
   "version": "0.0.1",
   "description": "Monospace is not another monorepo tool but more like a meta repository",
   "keywords": ["monorepo", "metarepo", "repository", "dev tool"],
