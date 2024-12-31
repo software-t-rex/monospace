@@ -8,9 +8,7 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package cmd
 
 import (
-	"fmt"
 	"os/exec"
-	"strings"
 
 	"github.com/software-t-rex/monospace/app"
 	"github.com/software-t-rex/monospace/gomodules/ui"
@@ -95,7 +93,7 @@ Output mode is grouped by default, and git flags must be passed after a double h
 				alias, hasAlias := aliases[project.Name]
 				executor.AddNamedJobCmd(utils.If(hasAlias, alias, project.Name), cmd)
 			default:
-				executor.AddNamedJobCmd(fmt.Sprintf("%s: %s", project.StyledString(), strings.Join(args, " ")), cmd)
+				executor.AddNamedJobCmd(project.StyledString(), cmd)
 			}
 		}
 		executor.Execute()
