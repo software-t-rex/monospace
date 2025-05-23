@@ -1,11 +1,16 @@
 {
-  "name": "monospace",
-  "packageManager": "^pnpm@9.6.0",
-  "version": "0.0.1",
-  "description": "Monospace is not another monorepo tool but more like a meta repository",
-  "keywords": ["monorepo", "metarepo", "repository", "dev tool"],
-  "author": "Jonathan Gotti",
-  "license": "MIT",
+	"name": "monospace",
+	"packageManager": "pnpm@10.11.0",
+	"version": "0.0.1",
+	"description": "Monospace is not another monorepo tool but more like a meta repository",
+	"keywords": [
+		"monorepo",
+		"metarepo",
+		"repository",
+		"dev tool"
+	],
+	"author": "Jonathan Gotti",
+	"license": "MIT",
 	"workspaces": [
 		"packages/*",
 		"apps/*"
