@@ -12,7 +12,7 @@ type jspm struct {
 }
 
 func (j jspm) GetConfigVersionString() string {
-	return fmt.Sprintf("^%s@%s", j.cmd, j.version)
+	return fmt.Sprintf("%s@%s", j.cmd, j.version)
 }
 
 func detectJSPM(pmCmds []string) []jspm {
