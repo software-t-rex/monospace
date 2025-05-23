@@ -84,18 +84,20 @@ func GetFilteredProjects(config *app.MonospaceConfig, filters []string, includeR
 		}
 	}
 
-	// apply black list
-	if len(blackList) > 0 {
-		projects = utils.SliceFilter(projects, func(p mono.Project) bool {
-			return !utils.SliceContains(blackList, p.Name)
-		})
-	}
 	// apply white list
 	if len(whiteList) > 0 {
 		projects = utils.SliceFilter(projects, func(p mono.Project) bool {
 			return utils.SliceContains(whiteList, p.Name)
 		})
 	}
+
+	// apply black list
+	if len(blackList) > 0 {
+		projects = utils.SliceFilter(projects, func(p mono.Project) bool {
+			return !utils.SliceContains(blackList, p.Name)
+		})
+	}
+
 	return projects
 }
 func FlagGetFilteredProjects(cmd *cobra.Command, config *app.MonospaceConfig) []mono.Project {
@@ -117,6 +119,15 @@ func FlagGetFilteredProjects(cmd *cobra.Command, config *app.MonospaceConfig) []
 		filters = append(filters, "!"+f)
 	}
 	return GetFilteredProjects(config, filters, includeRoot)
+}
+
+func FlagGetFilteredProjectsWithRoot(cmd *cobra.Command, config *app.MonospaceConfig) []mono.Project {
+	filters := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter"))
+	filtersOut := utils.CheckErrOrReturn(cmd.Flags().GetStringSlice("project-filter-out"))
+	for _, f := range filtersOut {
+		filters = append(filters, "!"+f)
+	}
+	return GetFilteredProjects(config, filters, true)
 }
 
 func FlagGetFilteredProjectsNames(cmd *cobra.Command, config *app.MonospaceConfig) []string {

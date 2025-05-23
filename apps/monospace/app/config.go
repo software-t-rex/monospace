@@ -251,6 +251,8 @@ func ConfigRemoveProject(projectName string, save bool) error {
 	return err
 }
 
+// Add given env vars to the current env prefixing them with MONOSPACE_
+// It also add MONOSPACE_ROOT, MONOSPACE_VERSION, MONOSPACE_JSPM, MONOSPACE_GOPREFIX to the env
 func PopulateEnv(env map[string]string) error {
 	if !ConfigIsLoaded() {
 		return ErrNotLoadedConfig

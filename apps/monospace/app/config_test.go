@@ -74,7 +74,7 @@ func TestConfigInitAndSave(t *testing.T) {
 	}
 	res, err := os.ReadFile(configPath)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	} else {
 		expected := `# yaml-language-server: $schema=https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json
 go_mod_prefix: test.com

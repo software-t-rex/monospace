@@ -66,9 +66,9 @@ func Test_parseTaskName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil && !tt.shouldExit {
-					t.Fatalf("Unattended called to exit: " + r.(string))
+					t.Fatalf("Unattended called to exit: %s", r.(string))
 				} else if r == nil && tt.shouldExit {
-					t.Fatalf("Should have call exit")
+					t.Fatal("Should have call exit")
 				}
 			}()
 			if got := ParseTaskName(tt.args.name, testConfig); !reflect.DeepEqual(got, tt.want) {

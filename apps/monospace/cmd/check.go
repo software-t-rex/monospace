@@ -128,7 +128,7 @@ won't change the exit status of the command.
 				fmt.Println(successIndicator + " " + theme.Success(pm.Slug+" at version "+version))
 				return nil
 			}
-			versionConfig := "^" + pm.Slug + "@" + version
+			versionConfig := pm.Slug + "@" + version
 			if fix {
 				updateVersion = true
 			} else if interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to update js_package_manager config from %s to %s ?", config.JSPM, versionConfig), true) {
@@ -166,7 +166,7 @@ won't change the exit status of the command.
 					printProjectCheckHeader(project)
 				} else {
 					fmt.Println(projectCheckHeader(project, unknwonIndicator))
-					utils.PrintWarning(fmt.Sprintf("package.json packageManager (%s) does not match monospace.yml (%s)", pkgJson.PackageManager, config.JSPM))
+					utils.PrintWarning(fmt.Sprintf("%s packageManager (%s) does not match monospace.yml (%s)", filepath.Join(project.Path(), "package.json"), pkgJson.PackageManager, config.JSPM))
 				}
 			}
 		}
