@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -192,8 +193,40 @@ func ConfigRemoveProjectAlias(alias string, save bool) error {
 	if err != nil {
 		return err
 	}
-	if config.Aliases[alias] != "" {
-		delete(config.Aliases, alias)
+	projectName := config.Aliases[alias]
+	if projectName == "" {
+		if save {
+			return ConfigSave()
+		}
+		return nil
+	}
+	delete(config.Aliases, alias)
+	// update pipeline: rename task keys and dependsOn entries that use the alias
+	if len(config.Pipeline) > 0 {
+		aliasPrefix := alias + "#"
+		projectPrefix := projectName + "#"
+		renamedKeys := map[string]string{}
+		for k := range config.Pipeline {
+			if strings.HasPrefix(k, aliasPrefix) {
+				renamedKeys[k] = projectPrefix + k[len(aliasPrefix):]
+			}
+		}
+		for oldKey, newKey := range renamedKeys {
+			config.Pipeline[newKey] = config.Pipeline[oldKey]
+			delete(config.Pipeline, oldKey)
+		}
+		for k, task := range config.Pipeline {
+			changed := false
+			for i, dep := range task.DependsOn {
+				if strings.HasPrefix(dep, aliasPrefix) {
+					task.DependsOn[i] = projectPrefix + dep[len(aliasPrefix):]
+					changed = true
+				}
+			}
+			if changed {
+				config.Pipeline[k] = task
+			}
+		}
 	}
 	if save {
 		return ConfigSave()

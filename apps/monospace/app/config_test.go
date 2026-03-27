@@ -189,5 +189,52 @@ func TestConfigRemoveProjectAlias(t *testing.T) {
 	if err != nil {
 		t.Errorf("Should not error on removing unknown project alias, err: %v", err)
 	}
+}
 
+func TestConfigRemoveProjectAliasUpdatesPipeline(t *testing.T) {
+	cfg := &MonospaceConfig{
+		GoModPrefix: "test.com",
+		Projects:    map[string]string{"packages/test": "internal", "packages/other": "internal"},
+		Aliases:     map[string]string{"myalias": "packages/test"},
+		Pipeline: map[string]MonospaceConfigTask{
+			"myalias#build": {Cmd: []string{"make build"}},
+			"myalias#test":  {Cmd: []string{"make test"}, DependsOn: []string{"myalias#build"}},
+			"packages/other#ci": {Cmd: []string{"ci"}, DependsOn: []string{"myalias#test", "packages/other#lint"}},
+			"packages/other#lint": {Cmd: []string{"lint"}},
+		},
+	}
+	appConfig = cfg
+
+	err := ConfigRemoveProjectAlias("myalias", false)
+	if err != nil {
+		t.Fatalf("ConfigRemoveProjectAlias(): unexpected error: %v", err)
+	}
+
+	// alias removed
+	if _, ok := cfg.Aliases["myalias"]; ok {
+		t.Errorf("ConfigRemoveProjectAlias(): alias should be removed")
+	}
+
+	// task keys renamed
+	if _, ok := cfg.Pipeline["myalias#build"]; ok {
+		t.Errorf("ConfigRemoveProjectAlias(): old task key myalias#build should be renamed")
+	}
+	if _, ok := cfg.Pipeline["packages/test#build"]; !ok {
+		t.Errorf("ConfigRemoveProjectAlias(): task key should be renamed to packages/test#build")
+	}
+	if _, ok := cfg.Pipeline["packages/test#test"]; !ok {
+		t.Errorf("ConfigRemoveProjectAlias(): task key should be renamed to packages/test#test")
+	}
+
+	// dependsOn updated in renamed task
+	testTask := cfg.Pipeline["packages/test#test"]
+	if len(testTask.DependsOn) != 1 || testTask.DependsOn[0] != "packages/test#build" {
+		t.Errorf("ConfigRemoveProjectAlias(): dependsOn in renamed task should be updated, got: %v", testTask.DependsOn)
+	}
+
+	// dependsOn updated in unrelated task
+	ciTask := cfg.Pipeline["packages/other#ci"]
+	if len(ciTask.DependsOn) != 2 || ciTask.DependsOn[0] != "packages/test#test" {
+		t.Errorf("ConfigRemoveProjectAlias(): dependsOn in other tasks should be updated, got: %v", ciTask.DependsOn)
+	}
 }

@@ -1,0 +1,2 @@
+- [x] cmd `aliases remove` don't change name from tasks using that aliases (check dependencies too)
+- [x] cmd `check` doesn't fix hookspath in git config when not present
