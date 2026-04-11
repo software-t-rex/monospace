@@ -84,7 +84,11 @@ func onInitialize() {
 	}
 	ui.ToggleEnhanced(!completionMode && !flagRootDisableColorOutput)
 	theme = ui.SetTheme(ui.ThemeMonoSpace)
-	app.ConfigLoad(mono.SpaceGetConfigPath())
+	if err := app.ConfigLoad(mono.SpaceGetConfigPath()); err != nil && mono.SpaceGetRoot() != "" {
+		// The root was found but the config failed to load: YAML parse error or version incompatibility
+		fmt.Fprintf(os.Stderr, "%s monospace.yml is unreadable or incompatible with this version of monospace: %s\n", theme.FailureIndicator(), err)
+		os.Exit(1)
+	}
 }
 
 func init() {

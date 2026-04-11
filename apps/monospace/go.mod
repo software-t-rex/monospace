@@ -21,6 +21,7 @@ replace (
 )
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.6.0
 	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.1
@@ -33,7 +34,6 @@ require (
 
 require (
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/bmatcuk/doublestar/v4 v4.6.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/kr/text v0.2.0 // indirect

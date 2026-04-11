@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/software-t-rex/monospace/app"
@@ -108,6 +109,32 @@ func cycleOutputMode(task *app.MonospaceConfigTask, direction int) {
 	task.OutputMode = outputmodes[index]
 }
 
+func cycleCacheMode(task *app.MonospaceConfigTask, direction int) {
+	modes := []string{"", app.CacheModeSkip, app.CacheModeRestore}
+	index := utils.SliceFindIndex(modes, task.Cache)
+	index += direction
+	if index < 0 {
+		index = len(modes) - 1
+	}
+	if index >= len(modes) {
+		index = 0
+	}
+	task.Cache = modes[index]
+}
+
+func cycleCacheStrategy(task *app.MonospaceConfigTask, direction int) {
+	strategies := []string{"", app.CacheStrategyContent, app.CacheStrategyMtime}
+	index := utils.SliceFindIndex(strategies, task.CacheStrategy)
+	index += direction
+	if index < 0 {
+		index = len(strategies) - 1
+	}
+	if index >= len(strategies) {
+		index = 0
+	}
+	task.CacheStrategy = strategies[index]
+}
+
 type TaskEditorSection int
 
 const (
@@ -117,6 +144,11 @@ const (
 	TaskConfigSectionDeps
 	TaskConfigSectionPersist
 	TaskConfigSectionOutputMode
+	TaskConfigSectionCache         // "skip" | "restore" | ""
+	TaskConfigSectionCacheStrategy // "content" | "mtime" | ""
+	TaskConfigSectionCacheMaxEntries
+	TaskConfigSectionInputs
+	TaskConfigSectionOutputs
 	TaskConfigSectionSave
 	TaskConfigSectionCancel
 	// TaskConfigSectionEnv
@@ -141,7 +173,7 @@ func (m *TaskEditorUIModel) Init() ui.Cmd {
 	m.bindings.
 		AddBinding("enter", "", func(m *TaskEditorUIModel) ui.Cmd {
 			switch m.focusSection {
-			case TaskConfigSectionCmd, TaskConfigSectionDesc:
+			case TaskConfigSectionCmd, TaskConfigSectionDesc, TaskConfigSectionInputs, TaskConfigSectionOutputs, TaskConfigSectionCacheMaxEntries:
 				if !m.editing {
 					m.startLineEdition()
 				}
@@ -151,6 +183,10 @@ func (m *TaskEditorUIModel) Init() ui.Cmd {
 				m.task.TaskDef.Persistent = !m.task.TaskDef.Persistent
 			case TaskConfigSectionOutputMode:
 				cycleOutputMode(&m.task.TaskDef, 1)
+			case TaskConfigSectionCache:
+				cycleCacheMode(&m.task.TaskDef, 1)
+			case TaskConfigSectionCacheStrategy:
+				cycleCacheStrategy(&m.task.TaskDef, 1)
 			case TaskConfigSectionSave:
 				m.uiAPI.Done = true
 			case TaskConfigSectionCancel:
@@ -179,6 +215,10 @@ func (m *TaskEditorUIModel) Init() ui.Cmd {
 				cycleOutputMode(&m.task.TaskDef, -1)
 			} else if m.focusSection == TaskConfigSectionPersist {
 				m.task.TaskDef.Persistent = !m.task.TaskDef.Persistent
+			} else if m.focusSection == TaskConfigSectionCache {
+				cycleCacheMode(&m.task.TaskDef, -1)
+			} else if m.focusSection == TaskConfigSectionCacheStrategy {
+				cycleCacheStrategy(&m.task.TaskDef, -1)
 			}
 			return nil
 		}).
@@ -187,6 +227,10 @@ func (m *TaskEditorUIModel) Init() ui.Cmd {
 				cycleOutputMode(&m.task.TaskDef, 1)
 			} else if m.focusSection == TaskConfigSectionPersist {
 				m.task.TaskDef.Persistent = !m.task.TaskDef.Persistent
+			} else if m.focusSection == TaskConfigSectionCache {
+				cycleCacheMode(&m.task.TaskDef, 1)
+			} else if m.focusSection == TaskConfigSectionCacheStrategy {
+				cycleCacheStrategy(&m.task.TaskDef, 1)
 			}
 			return nil
 		}).
@@ -214,6 +258,14 @@ func (m *TaskEditorUIModel) ReadlineConfig() ui.LineEditorOptions {
 			val = strings.Join(m.task.TaskDef.Cmd, " ")
 		case TaskConfigSectionDesc:
 			val = m.task.TaskDef.Description
+		case TaskConfigSectionCacheMaxEntries:
+			if m.task.TaskDef.CacheMaxEntries > 0 {
+				val = strconv.Itoa(m.task.TaskDef.CacheMaxEntries)
+			}
+		case TaskConfigSectionInputs:
+			val = strings.Join(m.task.TaskDef.Inputs, " ")
+		case TaskConfigSectionOutputs:
+			val = strings.Join(m.task.TaskDef.Outputs, " ")
 		}
 	}
 	return ui.LineEditorOptions{
@@ -249,6 +301,20 @@ func (m *TaskEditorUIModel) Update(msg ui.Msg) ui.Cmd {
 				m.endLineEdition()
 			case TaskConfigSectionDesc:
 				m.task.TaskDef.Description = msg.Value()
+				m.endLineEdition()
+			case TaskConfigSectionCacheMaxEntries:
+				v := strings.TrimSpace(msg.Value())
+				if v == "" {
+					m.task.TaskDef.CacheMaxEntries = 0 // 0 = use global default
+				} else if n, err := strconv.Atoi(v); err == nil && n > 0 {
+					m.task.TaskDef.CacheMaxEntries = n
+				}
+				m.endLineEdition()
+			case TaskConfigSectionInputs:
+				m.task.TaskDef.Inputs = ParseArgs(msg.Value())
+				m.endLineEdition()
+			case TaskConfigSectionOutputs:
+				m.task.TaskDef.Outputs = ParseArgs(msg.Value())
 				m.endLineEdition()
 			}
 		}
@@ -296,6 +362,28 @@ func (m *TaskEditorUIModel) renderHelp(theme *ui.Theme) string {
 		sb.WriteString(fmt.Sprintf("%s %s %s to toggle\n", dfltMsg, keyBindSep, boldInFaint("↵")))
 	case TaskConfigSectionOutputMode:
 		sb.WriteString(fmt.Sprintf("%s %s %s to switch\n", dfltMsg, keyBindSep, boldInFaint(fmt.Sprintf("arrows%s↵", keySep))))
+	case TaskConfigSectionCache:
+		sb.WriteString(fmt.Sprintf("%s %s %s to switch\n", dfltMsg, keyBindSep, boldInFaint(fmt.Sprintf("arrows%s↵", keySep))))
+	case TaskConfigSectionCacheStrategy:
+		sb.WriteString(fmt.Sprintf("%s %s %s to switch\n", dfltMsg, keyBindSep, boldInFaint(fmt.Sprintf("arrows%s↵", keySep))))
+	case TaskConfigSectionCacheMaxEntries:
+		if m.editing {
+			sb.WriteString(fmt.Sprintf("%s %s to save %s %s to cancel\n", theme.Accentuated(boldInFaint("Max cache entries (empty = global default):")), boldInFaint("↵"), keyBindSep, boldInFaint("esc")))
+		} else {
+			sb.WriteString(fmt.Sprintf("%s %s %s to edit\n", dfltMsg, keyBindSep, boldInFaint("↵")))
+		}
+	case TaskConfigSectionInputs:
+		if m.editing {
+			sb.WriteString(fmt.Sprintf("%s %s to save %s %s to cancel\n", theme.Accentuated(boldInFaint("Editing Inputs field (space-separated globs):")), boldInFaint("↵"), keyBindSep, boldInFaint("esc")))
+		} else {
+			sb.WriteString(fmt.Sprintf("%s %s %s to edit\n", dfltMsg, keyBindSep, boldInFaint("↵")))
+		}
+	case TaskConfigSectionOutputs:
+		if m.editing {
+			sb.WriteString(fmt.Sprintf("%s %s to save %s %s to cancel\n", theme.Accentuated(boldInFaint("Editing Outputs field (space-separated globs):")), boldInFaint("↵"), keyBindSep, boldInFaint("esc")))
+		} else {
+			sb.WriteString(fmt.Sprintf("%s %s %s to edit\n", dfltMsg, keyBindSep, boldInFaint("↵")))
+		}
 	case TaskConfigSectionSave:
 		sb.WriteString(fmt.Sprintf("%s %s %s to exit\n", dfltMsg, keyBindSep, boldInFaint("↵")))
 	default:
@@ -332,6 +420,22 @@ func (m *TaskEditorUIModel) Render() string {
 	sb.WriteString("\n")
 	sb.WriteString(renderSection(theme, "Output mode:", utils.If(m.task.TaskDef.OutputMode != "", m.task.TaskDef.OutputMode, fmt.Sprintf("default (%s)", m.config.PreferredOutputMode)), m.focusSection == TaskConfigSectionOutputMode, m.editing))
 	sb.WriteString("\n")
+	sb.WriteString(renderSection(theme, "Cache:", utils.If(m.task.TaskDef.Cache != "", m.task.TaskDef.Cache, "disabled"), m.focusSection == TaskConfigSectionCache, m.editing))
+	sb.WriteString("\n")
+	cacheStrategyLabel := utils.If(m.task.TaskDef.CacheStrategy != "", m.task.TaskDef.CacheStrategy, fmt.Sprintf("default (%s)", app.CacheStrategyContent))
+	sb.WriteString(renderSection(theme, "Cache strategy:", cacheStrategyLabel, m.focusSection == TaskConfigSectionCacheStrategy, m.editing))
+	sb.WriteString("\n")
+	globalMax := m.config.CacheMaxEntries
+	if globalMax == 0 {
+		globalMax = app.DefaultCacheMaxEntries
+	}
+	cacheMaxLabel := utils.If(m.task.TaskDef.CacheMaxEntries > 0, strconv.Itoa(m.task.TaskDef.CacheMaxEntries), fmt.Sprintf("default (%d)", globalMax))
+	sb.WriteString(renderSection(theme, "Max cache entries:", cacheMaxLabel, m.focusSection == TaskConfigSectionCacheMaxEntries, m.editing))
+	sb.WriteString("\n")
+	sb.WriteString(renderSection(theme, "Inputs:", cutString(strings.Join(m.task.TaskDef.Inputs, " "), 40), m.focusSection == TaskConfigSectionInputs, m.editing))
+	sb.WriteString("\n")
+	sb.WriteString(renderSection(theme, "Outputs:", cutString(strings.Join(m.task.TaskDef.Outputs, " "), 40), m.focusSection == TaskConfigSectionOutputs, m.editing))
+	sb.WriteString("\n")
 	sb.WriteString(renderSection(theme, "Save", "", m.focusSection == TaskConfigSectionSave, m.editing))
 	sb.WriteString("\n")
 	sb.WriteString(renderSection(theme, "Cancel", "", m.focusSection == TaskConfigSectionCancel, m.editing))
@@ -342,7 +446,8 @@ func (m *TaskEditorUIModel) Render() string {
 		sb.WriteString("\n")
 	}
 	if m.editing {
-		if m.focusSection == TaskConfigSectionCmd || m.focusSection == TaskConfigSectionDesc {
+		switch m.focusSection {
+		case TaskConfigSectionCmd, TaskConfigSectionDesc, TaskConfigSectionCacheMaxEntries, TaskConfigSectionInputs, TaskConfigSectionOutputs:
 			sb.WriteString(theme.FocusItemIndicator())
 		}
 	}
@@ -370,11 +475,16 @@ func NewTaskEditor(config *app.MonospaceConfig, task Task) *TaskEditorUIModel {
 		task: Task{
 			Name: task.Name,
 			TaskDef: app.MonospaceConfigTask{
-				Description: task.TaskDef.Description,
-				Cmd:         append([]string{}, task.TaskDef.Cmd...),
-				DependsOn:   append([]string{}, task.TaskDef.DependsOn...),
-				Persistent:  task.TaskDef.Persistent,
-				OutputMode:  task.TaskDef.OutputMode,
+				Description:     task.TaskDef.Description,
+				Cmd:             append([]string{}, task.TaskDef.Cmd...),
+				DependsOn:       append([]string{}, task.TaskDef.DependsOn...),
+				Persistent:      task.TaskDef.Persistent,
+				OutputMode:      task.TaskDef.OutputMode,
+				Cache:           task.TaskDef.Cache,
+				CacheStrategy:   task.TaskDef.CacheStrategy,
+				CacheMaxEntries: task.TaskDef.CacheMaxEntries,
+				Inputs:          append([]string{}, task.TaskDef.Inputs...),
+				Outputs:         append([]string{}, task.TaskDef.Outputs...),
 			},
 		},
 		originalTask: task,

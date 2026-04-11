@@ -19,20 +19,23 @@ import (
 )
 
 type MonospaceConfigTask struct {
-	Description string            `yaml:"description,omitempty"`
-	Cmd         []string          `yaml:"cmd,omitempty,flow"`
-	DependsOn   []string          `yaml:"dependsOn,omitempty,flow"`
-	Env         map[string]string `yaml:"env,omitempty,flow"`
-	Persistent  bool              `yaml:"persistent,omitempty"`
-	OutputMode  string            `yaml:"output_mode,omitempty"`
-	Cache       bool              `yaml:"cache,omitempty"`
-	Inputs      []string          `yaml:"inputs,omitempty"`
-	Outputs     []string          `yaml:"outputs,omitempty"`
+	Description     string            `yaml:"description,omitempty"`
+	Cmd             []string          `yaml:"cmd,omitempty,flow"`
+	DependsOn       []string          `yaml:"dependsOn,omitempty,flow"`
+	Env             map[string]string `yaml:"env,omitempty,flow"`
+	Persistent      bool              `yaml:"persistent,omitempty"`
+	OutputMode      string            `yaml:"output_mode,omitempty"`
+	Cache           string            `yaml:"cache,omitempty"`             // "skip" | "restore" | ""
+	CacheStrategy   string            `yaml:"cache_strategy,omitempty"`    // "content" | "mtime" | ""
+	CacheMaxEntries int               `yaml:"cache_max_entries,omitempty"` // 0 = use global default
+	Inputs          []string          `yaml:"inputs,omitempty"`
+	Outputs         []string          `yaml:"outputs,omitempty"`
 }
 type MonospaceConfig struct {
 	GoModPrefix         string                         `yaml:"go_mod_prefix,omitempty"`
 	JSPM                string                         `yaml:"js_package_manager,omitempty"`
 	PreferredOutputMode string                         `yaml:"preferred_output_mode,omitempty"`
+	CacheMaxEntries     int                            `yaml:"cache_max_entries,omitempty"` // global default, 0 = use DefaultCacheMaxEntries
 	Projects            map[string]string              `yaml:"projects,omitempty"`
 	Aliases             map[string]string              `yaml:"projects_aliases,omitempty"`
 	Pipeline            map[string]MonospaceConfigTask `yaml:"pipeline,omitempty"`
