@@ -570,13 +570,23 @@ func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceR
 			// hash failure is non-fatal: run the task normally
 			return runCmdCaptured(taskRunner)
 		}
-		result, _ := Check(cacheOpts, hash)
+		result, checkErr := Check(cacheOpts, hash)
+		if checkErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: cache check failed: %v\n", checkErr)
+		}
 		if result.Hit {
 			if task.TaskDef.Cache == app.CacheModeRestore {
-				Restore(cacheOpts, result) //nolint:errcheck
+				if err := Restore(cacheOpts, result); err != nil {
+					fmt.Fprintf(os.Stderr, "warning: cache restore failed: %v, re-running task\n", err)
+					// fall through to cache miss
+				} else {
+					cachedOutput, _ := readCachedOutput(result.CacheDir)
+					return fmt.Sprintf("[cache hit: %s, restored]\n", hash[:8]) + cachedOutput, nil
+				}
+			} else {
+				cachedOutput, _ := readCachedOutput(result.CacheDir)
+				return fmt.Sprintf("[cache hit: %s]\n", hash[:8]) + cachedOutput, nil
 			}
-			cachedOutput, _ := readCachedOutput(result.CacheDir)
-			return fmt.Sprintf("[cache hit: %s]\n", hash[:8]) + cachedOutput, nil
 		}
 		// cache miss: run, capture output, and save to cache
 		out, runErr := runCmdCaptured(taskRunner)

@@ -252,11 +252,14 @@ func Check(opts CacheOptions, hash string) (CacheResult, error) {
 
 	data, err := os.ReadFile(metaPath)
 	if err != nil {
-		return CacheResult{Hit: false, Hash: hash}, nil
+		if os.IsNotExist(err) {
+			return CacheResult{Hit: false, Hash: hash}, nil
+		}
+		return CacheResult{Hit: false, Hash: hash}, fmt.Errorf("reading cache metadata: %w", err)
 	}
 	var meta CacheMetadata
 	if err := json.Unmarshal(data, &meta); err != nil {
-		return CacheResult{Hit: false, Hash: hash}, nil
+		return CacheResult{Hit: false, Hash: hash}, fmt.Errorf("unmarshaling cache metadata: %w", err)
 	}
 	return CacheResult{Hit: true, Hash: hash, CacheDir: entryDir}, nil
 }
