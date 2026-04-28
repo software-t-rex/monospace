@@ -8,3 +8,4 @@ gomodules/packageJson
 *.old
 .env
 **/debug.log
+**/.cache/

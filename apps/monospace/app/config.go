@@ -13,25 +13,29 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 type MonospaceConfigTask struct {
-	Description string            `yaml:"description,omitempty"`
-	Cmd         []string          `yaml:"cmd,omitempty,flow"`
-	DependsOn   []string          `yaml:"dependsOn,omitempty,flow"`
-	Env         map[string]string `yaml:"env,omitempty,flow"`
-	Persistent  bool              `yaml:"persistent,omitempty"`
-	OutputMode  string            `yaml:"output_mode,omitempty"`
-	Cache       bool              `yaml:"cache,omitempty"`
-	Inputs      []string          `yaml:"inputs,omitempty"`
-	Outputs     []string          `yaml:"outputs,omitempty"`
+	Description     string            `yaml:"description,omitempty"`
+	Cmd             []string          `yaml:"cmd,omitempty,flow"`
+	DependsOn       []string          `yaml:"dependsOn,omitempty,flow"`
+	Env             map[string]string `yaml:"env,omitempty,flow"`
+	Persistent      bool              `yaml:"persistent,omitempty"`
+	OutputMode      string            `yaml:"output_mode,omitempty"`
+	Cache           string            `yaml:"cache,omitempty"`             // "skip" | "restore" | ""
+	CacheStrategy   string            `yaml:"cache_strategy,omitempty"`    // "content" | "mtime" | ""
+	CacheMaxEntries int               `yaml:"cache_max_entries,omitempty"` // 0 = use global default
+	Inputs          []string          `yaml:"inputs,omitempty"`
+	Outputs         []string          `yaml:"outputs,omitempty"`
 }
 type MonospaceConfig struct {
 	GoModPrefix         string                         `yaml:"go_mod_prefix,omitempty"`
 	JSPM                string                         `yaml:"js_package_manager,omitempty"`
 	PreferredOutputMode string                         `yaml:"preferred_output_mode,omitempty"`
+	CacheMaxEntries     int                            `yaml:"cache_max_entries,omitempty"` // global default, 0 = use DefaultCacheMaxEntries
 	Projects            map[string]string              `yaml:"projects,omitempty"`
 	Aliases             map[string]string              `yaml:"projects_aliases,omitempty"`
 	Pipeline            map[string]MonospaceConfigTask `yaml:"pipeline,omitempty"`
@@ -121,6 +125,9 @@ func ConfigRead(configPath string) (*MonospaceConfig, error) {
 		return nil, err
 	}
 	err = yaml.Unmarshal(raw, &config)
+	if config == nil {
+		config = &MonospaceConfig{}
+	}
 	config.configPath = configPath
 	config.root = filepath.Dir(filepath.Dir(configPath))
 	return config, err
@@ -192,8 +199,40 @@ func ConfigRemoveProjectAlias(alias string, save bool) error {
 	if err != nil {
 		return err
 	}
-	if config.Aliases[alias] != "" {
-		delete(config.Aliases, alias)
+	projectName := config.Aliases[alias]
+	if projectName == "" {
+		if save {
+			return ConfigSave()
+		}
+		return nil
+	}
+	delete(config.Aliases, alias)
+	// update pipeline: rename task keys and dependsOn entries that use the alias
+	if len(config.Pipeline) > 0 {
+		aliasPrefix := alias + "#"
+		projectPrefix := projectName + "#"
+		renamedKeys := map[string]string{}
+		for k := range config.Pipeline {
+			if strings.HasPrefix(k, aliasPrefix) {
+				renamedKeys[k] = projectPrefix + k[len(aliasPrefix):]
+			}
+		}
+		for oldKey, newKey := range renamedKeys {
+			config.Pipeline[newKey] = config.Pipeline[oldKey]
+			delete(config.Pipeline, oldKey)
+		}
+		for k, task := range config.Pipeline {
+			changed := false
+			for i, dep := range task.DependsOn {
+				if strings.HasPrefix(dep, aliasPrefix) {
+					task.DependsOn[i] = projectPrefix + dep[len(aliasPrefix):]
+					changed = true
+				}
+			}
+			if changed {
+				config.Pipeline[k] = task
+			}
+		}
 	}
 	if save {
 		return ConfigSave()
@@ -205,6 +244,9 @@ func ConfigAddOrUpdateProject(projectName string, repoUrl string, save bool) err
 	config, err := ConfigGet()
 	if err != nil {
 		return err
+	}
+	if config.Projects == nil {
+		config.Projects = make(map[string]string)
 	}
 	config.Projects[projectName] = repoUrl
 	if save {

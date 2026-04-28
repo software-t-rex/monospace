@@ -82,6 +82,20 @@ var tasksCmd = &cobra.Command{
 				if task.TaskDef.OutputMode != "" && task.TaskDef.OutputMode != config.PreferredOutputMode {
 					sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("output mode"), task.TaskDef.OutputMode))
 				}
+				if task.TaskDef.Cache != "" {
+					sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("cache"), task.TaskDef.Cache))
+					strategy := task.TaskDef.CacheStrategy
+					if strategy == "" {
+						strategy = "content"
+					}
+					sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("cache strategy"), strategy))
+					if len(task.TaskDef.Inputs) > 0 {
+						sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("inputs"), strings.Join(task.TaskDef.Inputs, ", ")))
+					}
+					if len(task.TaskDef.Outputs) > 0 {
+						sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("outputs"), strings.Join(task.TaskDef.Outputs, ", ")))
+					}
+				}
 			}
 		}
 		fmt.Print(sb.String())

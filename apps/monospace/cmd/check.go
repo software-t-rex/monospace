@@ -286,11 +286,19 @@ won't change the exit status of the command.
 			if utils.FileExistsNoErr(filepath.Join(monoRoot, app.DfltHooksDir)) {
 				fmt.Printf(boldUnderline("found %s checking git core.hookspath:\n"), app.DfltHooksDir)
 				hookspath, err := git.HooksPathGet(monoRoot)
-				if err == nil {
-					if hookspath == app.DfltHooksDir {
+				if err == nil && hookspath == app.DfltHooksDir {
+					fmt.Println(successIndicator + " git core.hookspath set to " + app.DfltHooksDir)
+				} else {
+					fmt.Println(failureIndicator + " " + theme.Warning("git core.hookspath is not set to "+app.DfltHooksDir))
+					if fix {
+						fmt.Println("setting git core.hookspath...")
+						utils.CheckErr(git.HooksPathSet(monoRoot, app.DfltHooksDir))
+						fmt.Println(successIndicator + " git core.hookspath set to " + app.DfltHooksDir)
+					} else if interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to set git core.hookspath to %s ?", app.DfltHooksDir), true) {
+						fmt.Println("setting git core.hookspath...")
+						utils.CheckErr(git.HooksPathSet(monoRoot, app.DfltHooksDir))
 						fmt.Println(successIndicator + " git core.hookspath set to " + app.DfltHooksDir)
 					} else {
-						fmt.Println(failureIndicator + " " + theme.Warning("git core.hookspath is not set to "+app.DfltHooksDir))
 						fmt.Println("You can either remove this directory or set your git config to use it:")
 						fmt.Printf("git -C %s config core.hookspath %s\n", monoRoot, app.DfltHooksDir)
 					}

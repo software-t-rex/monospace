@@ -34,16 +34,17 @@ func runStep(t *testing.T, name string, fn func(t *testing.T)) {
 
 var unSkipedSteps []string = []string{
 	"create",
-	"aliases",     // require create
-	"import",      // require create
-	"clone",       // require import, create
-	"rename",      // require import, create
-	"remove",      // require create
-	"ls",          // require all previous steps
-	"run",         // require clone, and steps above
-	"exec",        // require run and all steps required by run
-	"check",       // require create, import and rename
-	"externalize", // no deps
+	"aliases",         // require create
+	"import",          // require create
+	"clone",           // require import, create
+	"rename",          // require import, create
+	"remove",          // require create
+	"ls",              // require all previous steps
+	"run",             // require clone, and steps above
+	"exec",            // require run and all steps required by run
+	"check",           // require create, import and rename
+	"check hookspath", // require check
+	"externalize",     // no deps
 	"status",
 }
 
@@ -215,6 +216,32 @@ func TestCmd_Suite(t *testing.T) {
 		}
 		t.Log("aliases")
 		runTestCases(initDir.Path())(t, tests)
+
+		t.Run("remove should update pipeline task names and dependsOn", func(t *testing.T) {
+			confPath := initDir.Join(".monospace/monospace.yml")
+			config, err := app.ConfigRead(confPath)
+			assert.Assert(t, err == nil, "should read config without error")
+			// re-add golib alias (already removed above) with pipeline tasks referencing it
+			if config.Aliases == nil {
+				config.Aliases = make(map[string]string)
+			}
+			config.Aliases["golib"] = "packages/golib"
+			config.Pipeline = map[string]app.MonospaceConfigTask{
+				"golib#build":         {Cmd: []string{"echo", "build"}},
+				"packages/mylib#test": {Cmd: []string{"echo", "test"}, DependsOn: []string{"golib#build"}},
+			}
+			rawConfig, _ := yaml.Marshal(config)
+			os.WriteFile(confPath, rawConfig, 0640)
+			// remove the golib alias
+			runMonospace([]string{"aliases", "remove", "golib"}, initDirOp).Assert(t, icmd.Success)
+			// check should succeed: pipeline tasks were renamed from golib#* to packages/golib#*
+			runMonospace([]string{"check"}, initDirOp).Assert(t, icmd.Success)
+			// clean up pipeline only (golib alias was already removed by the command above)
+			config2, _ := app.ConfigRead(confPath)
+			config2.Pipeline = nil
+			rawConfig2, _ := yaml.Marshal(config2)
+			os.WriteFile(confPath, rawConfig2, 0640)
+		})
 	})
 
 	runStep(t, "import", func(t *testing.T) {
@@ -237,6 +264,11 @@ func TestCmd_Suite(t *testing.T) {
 		icmd.RunCmd(icmd.Command("git", "add", "."), initDirOp).Assert(t, icmd.Success)
 		icmd.RunCmd(icmd.Command("git", "commit", "-m", "commitChanges"), initDirOp).Assert(t, icmd.Expected{ExitCode: 0, Out: ""})
 
+		// create a local non-monospace git repo to test clone error (avoids requiring network access)
+		nonMonospaceDir := fs.NewDir(t, "mstest-non-monospace")
+		icmd.RunCmd(icmd.Command("git", "init"), icmd.Dir(nonMonospaceDir.Path())).Assert(t, icmd.Success)
+		icmd.RunCmd(icmd.Command("git", "commit", "--allow-empty", "-m", "init"), icmd.Dir(nonMonospaceDir.Path())).Assert(t, icmd.Success)
+
 		tests := []testCase{
 			{"should clone external projects too", []string{"clone", initDir.Path(), "clonedRepo"}, icmd.Success,
 				hasDir("clonedRepo", true,
@@ -255,8 +287,8 @@ func TestCmd_Suite(t *testing.T) {
 					),
 				), "",
 			},
-			{"should error on non monospace repo", []string{"clone", "git@github.com:malko/rocketchat-jira-hook.git"}, icmd.Expected{ExitCode: 1},
-				hasDir("rocketchat-jira-hook", true, hasDir(".git", true)), "&& monospace init",
+			{"should error on non monospace repo", []string{"clone", nonMonospaceDir.Path(), "non-monospace-clone"}, icmd.Expected{ExitCode: 1},
+				hasDir("non-monospace-clone", true, hasDir(".git", true)), "&& monospace init",
 			},
 		}
 		t.Log("clone")
@@ -302,7 +334,7 @@ func TestCmd_Suite(t *testing.T) {
 
 	runStep(t, "ls", func(t *testing.T) {
 		skipOrContinue(t, "ls")
-		longOutput := "apps/myapp (local)\nmodules/renamed (file:///home/malko/git/T-REx/monospace/gomodules/js-packagemanager)\npackages/jslib (internal)"
+		longOutput := "apps/myapp (local)\nmodules/renamed (file://" + filepath.Join(monospaceDir, "../../gomodules/js-packagemanager") + ")\npackages/jslib (internal)"
 		cloneOutput := "apps/myapp\nmodules/external\npackages/golib\npackages/jslib\npackages/mylib"
 		tests := []testCase{
 			{"should return the list of projects", []string{"ls", "-C"}, icmd.Expected{ExitCode: 0, Out: "apps/myapp\nmodules/renamed\npackages/jslib"}, nil, ""},
@@ -310,7 +342,7 @@ func TestCmd_Suite(t *testing.T) {
 			{"should support list alias", []string{"list", "-C", "-l"}, icmd.Expected{ExitCode: 0, Out: longOutput}, nil, ""},
 			{"should support monospaceRoot as argument", []string{"ls", filepath.Join(cloneDir.Path(), "clonedRepo")}, icmd.Expected{ExitCode: 0, Out: cloneOutput}, nil, ""},
 			{"should support a monospace subdir path as argument", []string{"ls", filepath.Join(cloneDir.Path(), "clonedRepo/modules/")}, icmd.Expected{ExitCode: 0, Out: cloneOutput}, nil, ""},
-			{"should print an error with a dir which is not a monospace as argument", []string{"ls", filepath.Join(cloneDir.Path(), "rocketchat-jira-hook")}, icmd.Expected{ExitCode: 1}, nil, "not part of a monospace"},
+			{"should print an error with a dir which is not a monospace as argument", []string{"ls", filepath.Join(cloneDir.Path(), "non-monospace-clone")}, icmd.Expected{ExitCode: 1}, nil, "not part of a monospace"},
 			{"should print an error with a dir which doesn't exists as argument", []string{"ls", filepath.Join(cloneDir.Path(), "notexists")}, icmd.Expected{ExitCode: 1}, nil, "no such file or directory"},
 		}
 		t.Log("ls")
@@ -758,6 +790,41 @@ func TestCmd_Suite(t *testing.T) {
 			cmdRes := runMonospace([]string{"ls", "-l"}, initDirOp)
 			cmdRes.Assert(t, icmd.Success)
 			assert.Assert(t, strings.Contains(cmdRes.Stdout(), "packages/jslib (git@github.com/whatever)"), "packages/jslib should be external")
+		})
+	})
+
+	runStep(t, "check hookspath", func(t *testing.T) {
+		skipOrContinue(t, "check hookspath")
+		runTCs := runTestCases(initDir.Path())
+		runTC := func(tc testCase) {
+			t.Helper()
+			runTCs(t, []testCase{tc})
+		}
+
+		// unset hookspath so we can test the fix behavior
+		t.Run("setup: unset core.hookspath", func(t *testing.T) {
+			icmd.RunCmd(icmd.Command("git", "-C", initDir.Path(), "config", "--unset", "core.hooksPath")).Assert(t, icmd.Success)
+		})
+		runTC(testCase{
+			"should warn when core.hookspath is not set but still exit 0",
+			[]string{"check"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			"git core.hookspath is not set",
+		})
+		runTC(testCase{
+			"with --fix should set core.hookspath",
+			[]string{"check", "--fix"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			"setting git core.hookspath",
+		})
+		runTC(testCase{
+			"after fix check should report hookspath correctly set",
+			[]string{"check"},
+			icmd.Expected{ExitCode: 0},
+			nil,
+			"git core.hookspath set to",
 		})
 	})
 

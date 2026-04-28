@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package tasks
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net/url"
@@ -88,6 +89,13 @@ func ParseTaskName(name string, config *app.MonospaceConfig) TaskName {
 
 func StandardizedTaskName(name string, config *app.MonospaceConfig) string {
 	return ParseTaskName(name, config).String()
+}
+
+// RunOptions groups all execution-time options passed to Run and GetExecutor.
+type RunOptions struct {
+	AdditionalArgs []string
+	OutputMode     string
+	NoCache        bool
 }
 
 type Pipeline map[string]Task
@@ -434,16 +442,16 @@ func (t TaskList) Len() int {
 	return len(t.List)
 }
 
-func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobExecutor.JobExecutor {
-	e := NewExecutor(outputMode)
+func (t TaskList) GetExecutor(opts RunOptions) *jobExecutor.JobExecutor {
+	e := NewExecutor(opts.OutputMode)
 	projectAliases := t.config.GetProjectsAliases()
 	taskIds := make(map[string]int, t.Len())
 
 	jobs := make(map[int]jobExecutor.Job, t.Len())
 	for taskId, task := range t.List {
-		taskRunner := task.GetJobRunner(additionalArgs, t.config.JSPM)
+		taskRunner := task.GetJobRunner(opts.AdditionalArgs, t.config.JSPM)
 		taskName := task.Name.String()
-		if outputMode == "interleaved" {
+		if opts.OutputMode == "interleaved" {
 			// replace task name with alias if any when using interleaved output
 			alias, hasAlias := projectAliases[task.Name.Project]
 			if hasAlias {
@@ -451,7 +459,15 @@ func (t TaskList) GetExecutor(additionalArgs []string, outputMode string) *jobEx
 			}
 		}
 		if taskRunner != nil {
-			job := e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: taskRunner})
+			maxEntries := task.TaskDef.CacheMaxEntries
+			if maxEntries == 0 {
+				maxEntries = t.config.CacheMaxEntries
+			}
+			if maxEntries == 0 {
+				maxEntries = app.DefaultCacheMaxEntries
+			}
+			jobImpl := wrapWithCache(taskRunner, task, opts, mono.SpaceGetRoot(), maxEntries)
+			job := e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: jobImpl})
 			taskIds[taskId] = job.Id()
 			jobs[job.Id()] = job
 		} else if task.TaskDef.DependsOn != nil && len(task.TaskDef.DependsOn) > 0 {
@@ -510,11 +526,11 @@ func OpenGraphviz(taskList TaskList) {
 	utils.Open("https://dreampuf.github.io/GraphvizOnline/#" + url.PathEscape(dot))
 }
 
-func Run(taskList TaskList, additionalArgs []string, outputMode string) {
+func Run(taskList TaskList, opts RunOptions) {
 	if taskList.Len() == 0 {
 		exit("no tasks found")
 	}
-	executor := taskList.GetExecutor(additionalArgs, outputMode)
+	executor := taskList.GetExecutor(opts)
 	err := executor.DagExecute()
 	if err.Len() > 0 {
 		if errors.Is(err[0], jobExecutor.ErrCyclicDependencyDetected) {
@@ -522,6 +538,75 @@ func Run(taskList TaskList, additionalArgs []string, outputMode string) {
 		}
 		os.Exit(1)
 	}
+}
+
+// wrapWithCache wraps a task runner with cache logic when the task has caching
+// enabled. Returns the original *exec.Cmd unchanged when cache is disabled or
+// --no-cache is set. Otherwise returns a func() (string, error) closure that
+// checks the cache before running and saves the result on a miss.
+func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceRoot string, maxEntries int) interface{} {
+	if opts.NoCache || task.TaskDef.Cache == "" || task.TaskDef.Cache == "false" {
+		return taskRunner
+	}
+	strategy := task.TaskDef.CacheStrategy
+	if strategy == "" {
+		strategy = app.CacheStrategyContent
+	}
+	cacheOpts := CacheOptions{
+		ProjectName:   task.Name.Project,
+		TaskName:      task.Name.Task,
+		ProjectPath:   mono.ProjectGetPath(task.Name.Project),
+		Mode:          task.TaskDef.Cache,
+		Strategy:      strategy,
+		Inputs:        task.TaskDef.Inputs,
+		Outputs:       task.TaskDef.Outputs,
+		MonospaceRoot: monospaceRoot,
+		MaxEntries:    maxEntries,
+	}
+	taskDef := task.TaskDef
+	return func() (string, error) {
+		hash, err := ComputeHash(cacheOpts, taskDef)
+		if err != nil {
+			// hash failure is non-fatal: run the task normally
+			return runCmdCaptured(taskRunner)
+		}
+		result, checkErr := Check(cacheOpts, hash)
+		if checkErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: cache check failed: %v\n", checkErr)
+		}
+		if result.Hit {
+			if task.TaskDef.Cache == app.CacheModeRestore {
+				if err := Restore(cacheOpts, result); err != nil {
+					fmt.Fprintf(os.Stderr, "warning: cache restore failed: %v, re-running task\n", err)
+					// fall through to cache miss
+				} else {
+					cachedOutput, _ := readCachedOutput(result.CacheDir)
+					return fmt.Sprintf("[cache hit: %s, restored]\n", hash[:8]) + cachedOutput, nil
+				}
+			} else {
+				cachedOutput, _ := readCachedOutput(result.CacheDir)
+				return fmt.Sprintf("[cache hit: %s]\n", hash[:8]) + cachedOutput, nil
+			}
+		}
+		// cache miss: run, capture output, and save to cache
+		out, runErr := runCmdCaptured(taskRunner)
+		if runErr == nil {
+			Save(cacheOpts, hash, out) //nolint:errcheck
+		}
+		return out, runErr
+	}
+}
+
+// runCmdCaptured executes cmd and returns its combined stdout+stderr output.
+// The cmd must not have Stdout/Stderr pre-assigned: it is always called from
+// within a cache closure where the *exec.Cmd is captured before the executor
+// can redirect it (the executor only redirects job.Cmd, not closures).
+func runCmdCaptured(cmd *exec.Cmd) (string, error) {
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	err := cmd.Run()
+	return buf.String(), err
 }
 
 func OpenGraphvizFull(config *app.MonospaceConfig) {

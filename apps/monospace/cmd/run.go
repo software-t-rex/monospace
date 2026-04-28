@@ -123,7 +123,12 @@ A circular dependency check will be performed before the execution starts.`,
 			outputMode = FlagGetOutputMode(cmd, config.PreferredOutputMode)
 		}
 
-		tasks.Run(taskList, additionalArgs, outputMode)
+		noCache := utils.CheckErrOrReturn(cmd.Flags().GetBool("no-cache"))
+		tasks.Run(taskList, tasks.RunOptions{
+			AdditionalArgs: additionalArgs,
+			OutputMode:     outputMode,
+			NoCache:        noCache,
+		})
 	},
 }
 
@@ -132,4 +137,5 @@ func init() {
 	FlagAddProjectFilter(runCmd, true)
 	FlagAddOutputMode(runCmd)
 	runCmd.Flags().BoolP("graphviz", "g", false, "Open a graph visualisation of the task execution plan instead of executing it")
+	runCmd.Flags().Bool("no-cache", false, "Bypass task cache and always execute tasks")
 }

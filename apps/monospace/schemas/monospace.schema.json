@@ -48,6 +48,13 @@
             }
           }
         },
+        "cache_max_entries": {
+          "title": "monospace.yml: cache_max_entries",
+          "description": "Global default for the maximum number of cache entries to keep per task.\nWhen a task accumulates more entries than this limit the oldest ones are removed automatically after each successful run.\nCan be overridden per task in the pipeline. Defaults to 3 when not set.",
+          "type": "integer",
+          "minimum": 1,
+          "default": 3
+        },
         "pipeline": {
           "title": "monospace.yml: pipeline",
           "description": "An object representing the task dependency graph of your monospace",
@@ -116,6 +123,42 @@
         "output_mode": {
           "title": "monospace.yml: pipeline[task].output_mode",
           "$ref": "#/definitions/output_mode"
+        },
+        "cache": {
+          "title": "monospace.yml: pipeline[task].cache",
+          "description": "Enable task output caching.\n- skip: on cache hit, skip execution (mark as success)\n- restore: on cache hit, restore output files and skip execution\nOmit or set to false to disable caching.",
+          "oneOf": [
+            { "type": "string", "enum": ["skip", "restore"] },
+            { "type": "boolean", "const": false }
+          ],
+          "default": false
+        },
+        "cache_strategy": {
+          "title": "monospace.yml: pipeline[task].cache_strategy",
+          "description": "Algorithm used to compute the cache key.\n- content: SHA256 of file contents (default, accurate)\n- mtime: hash of file modification times and sizes (faster, less reliable)",
+          "type": "string",
+          "enum": ["content", "mtime"],
+          "default": "content"
+        },
+        "inputs": {
+          "title": "monospace.yml: pipeline[task].inputs",
+          "description": "Glob patterns for files that contribute to the cache key, relative to the project directory.\nDefaults to all project files when not specified.",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "outputs": {
+          "title": "monospace.yml: pipeline[task].outputs",
+          "description": "Glob patterns for output files to save and restore when cache mode is 'restore', relative to the project directory.",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "cache_max_entries": {
+          "title": "monospace.yml: pipeline[task].cache_max_entries",
+          "description": "Maximum number of cache entries to keep for this task. Overrides the global cache_max_entries setting. Oldest entries are removed automatically after each successful run.",
+          "type": "integer",
+          "minimum": 1
         }
       },
       "additionalProperties": false

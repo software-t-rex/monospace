@@ -3,31 +3,33 @@
 
 .SH NAME
 .PP
-monospace-tasks - List tasks defined in monospace.yml pipeline.
+monospace-cache-status - Show cache status for tasks
 
 
 .SH SYNOPSIS
 .PP
-\fBmonospace tasks [flags]\fP
+\fBmonospace cache status [task...] [flags]\fP
 
 
 .SH DESCRIPTION
 .PP
-List tasks defined in monospace.yml pipeline.
+Display currently cached tasks with their hash and timestamp.
+
+.PP
+You can optionally specify task names (in project#task form) to filter the output.
+Use --project-filter to restrict results to specific projects.
 
 
 .SH OPTIONS
 .PP
-\fB-d\fP, \fB--details\fP[=false]
-	Print additional task details
-
-.PP
-\fB-f\fP, \fB--full-project-names\fP[=false]
-	Prefer full project names rather than aliases
-
-.PP
 \fB-h\fP, \fB--help\fP[=false]
-	help for tasks
+	help for status
+
+.PP
+\fB-r\fP, \fB--include-root\fP[=false]
+	Include 'root' monospace directory in the list of projects
+- Without any filter, 'root' is only appended to projects list
+- Used with --project-filter, 'root' is appended to filters list
 
 .PP
 \fB-p\fP, \fB--project-filter\fP=[]
@@ -49,7 +51,7 @@ Exclude projects from the list (blacklisting)
 
 .SH SEE ALSO
 .PP
-\fBmonospace(1)\fP, \fBmonospace-tasks-edit(1)\fP, \fBmonospace-tasks-import(1)\fP, \fBmonospace-tasks-remove(1)\fP
+\fBmonospace-cache(1)\fP
 
 
 .SH HISTORY
