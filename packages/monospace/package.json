@@ -1,6 +1,6 @@
 {
 	"name": "@t-rex.software/monospace",
-	"version": "0.0.29",
+	"version": "0.0.30",
 	"description": "monospace kinda like monorepo but different",
 	"scripts": {
 		"cleanup": "rm -rf README.md LICENSE man installer.js t-rex.software-monospace-${npm_package_version}.tgz",
@@ -15,6 +15,10 @@
 	},
 	"man": [
 		"./man/monospace-aliases.1",
+		"./man/monospace-cache-clear.1",
+		"./man/monospace-cache-prune.1",
+		"./man/monospace-cache-status.1",
+		"./man/monospace-cache.1",
 		"./man/monospace-check-update.1",
 		"./man/monospace-check.1",
 		"./man/monospace-clone.1",
