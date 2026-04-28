@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -48,6 +50,129 @@ func baseTaskDef(cmd []string) app.MonospaceConfigTask {
 	return app.MonospaceConfigTask{
 		Cmd:   cmd,
 		Cache: app.CacheModeSkip,
+	}
+}
+
+// ─── walkProjectFiles ──────────────────────────────────────────────────────────
+
+// TestWalkProjectFiles_FollowsSymlinkDirectory checks that walkProjectFiles traverses
+// directories accessible via a symbolic link.
+// Current bug: filepath.WalkDir does not follow symlinks to directories.
+func TestWalkProjectFiles_FollowsSymlinkDirectory(t *testing.T) {
+	projectDir := t.TempDir()
+
+	// Create a real subdirectory with a file
+	realSubdir := filepath.Join(projectDir, "subdir")
+	if err := os.MkdirAll(realSubdir, 0750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(realSubdir, "file.go"), []byte("package main"), 0640); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(projectDir, "main.go"), []byte("package main"), 0640); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a symbolic link to the real subdirectory
+	linkDir := filepath.Join(projectDir, "linkdir")
+	if err := os.Symlink(realSubdir, linkDir); err != nil {
+		t.Skip("cannot create symbolic links on this OS")
+	}
+
+	files, err := walkProjectFiles(projectDir)
+	if err != nil {
+		t.Fatalf("walkProjectFiles: %v", err)
+	}
+
+	var relFiles []string
+	for _, f := range files {
+		rel, _ := filepath.Rel(projectDir, f)
+		relFiles = append(relFiles, rel)
+	}
+	sort.Strings(relFiles)
+
+	// We want the CONTENT of the linked directory to be traversed (linkdir/file.go),
+	// not just the link itself appearing as a file.
+	hasFileInsideLink := false
+	sep := string(filepath.Separator)
+	for _, f := range relFiles {
+		if strings.HasPrefix(f, "linkdir"+sep) {
+			hasFileInsideLink = true
+		}
+	}
+	if !hasFileInsideLink {
+		t.Errorf("walkProjectFiles should traverse the content of symbolic directories\n"+
+			"(e.g.: linkdir/file.go), found files: %v", relFiles)
+	}
+}
+
+// TestWalkProjectFiles_SymlinkCycleNoHang checks that walkProjectFiles does not loop
+// indefinitely when a symbolic link cycle is present.
+func TestWalkProjectFiles_SymlinkCycleNoHang(t *testing.T) {
+	projectDir := t.TempDir()
+
+	subdir := filepath.Join(projectDir, "subdir")
+	if err := os.MkdirAll(subdir, 0750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(subdir, "file.go"), []byte("content"), 0640); err != nil {
+		t.Fatal(err)
+	}
+
+	// Symbolic link in subdir that points to the parent directory → cycle
+	cycleLink := filepath.Join(subdir, "cycle")
+	if err := os.Symlink(projectDir, cycleLink); err != nil {
+		t.Skip("cannot create symbolic links on this OS")
+	}
+
+	done := make(chan []string, 1)
+	go func() {
+		files, _ := walkProjectFiles(projectDir)
+		done <- files
+	}()
+
+	select {
+	case files := <-done:
+		// Must complete without looping — just check that we have at least one file
+		if len(files) == 0 {
+			t.Error("no files found when at least one was expected")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("walkProjectFiles diverged on a symbolic link cycle")
+	}
+}
+
+// TestComputeHash_InputsPatternChangesBustsCache checks that changing Inputs patterns
+// invalidates the cache even when the matched files are identical.
+// Current bug: patterns themselves are not included in the hash, only
+// the resolved files. Two different patterns matching the same files
+// therefore produce the same hash.
+func TestComputeHash_InputsPatternChangesBustsCache(t *testing.T) {
+	root := t.TempDir()
+	dir := makeTestProject(t, map[string]string{
+		"src/main.go": "main",
+	})
+	taskDef := baseTaskDef([]string{"build"})
+
+	// Both patterns match the same file src/main.go
+	opts1 := baseOpts(dir, root)
+	opts1.Inputs = []string{"src/**"}
+
+	opts2 := baseOpts(dir, root)
+	opts2.Inputs = []string{"src/**/*.go"}
+
+	h1, err := ComputeHash(opts1, taskDef)
+	if err != nil {
+		t.Fatalf("ComputeHash opts1: %v", err)
+	}
+	h2, err := ComputeHash(opts2, taskDef)
+	if err != nil {
+		t.Fatalf("ComputeHash opts2: %v", err)
+	}
+
+	if h1 == h2 {
+		t.Error("different Inputs patterns should produce different hashes " +
+			"even if the matched files are identical (patterns are not included in the hash)")
 	}
 }
 

@@ -9,6 +9,41 @@ import (
 	"testing"
 )
 
+// TestConfigRead_NullYAML_NoPanic checks that a YAML file containing "null"
+// does not cause a nil pointer dereference (config remains nil after Unmarshal).
+func TestConfigRead_NullYAML_NoPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("ConfigRead panicked on null YAML (nil pointer dereference): %v", r)
+		}
+	}()
+	configPath := filepath.Join(t.TempDir(), "config.yml")
+	if err := os.WriteFile(configPath, []byte("null"), 0640); err != nil {
+		t.Fatal(err)
+	}
+	_, _ = ConfigRead(configPath)
+}
+
+// TestConfigAddOrUpdateProject_NilProjectsMap checks that calling
+// ConfigAddOrUpdateProject when config.Projects is nil does not panic.
+func TestConfigAddOrUpdateProject_NilProjectsMap(t *testing.T) {
+	savedConfig := appConfig
+	defer func() { appConfig = savedConfig }()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("ConfigAddOrUpdateProject panicked with nil Projects: %v", r)
+		}
+	}()
+	appConfig = &MonospaceConfig{GoModPrefix: "test.com"} // Projects is nil
+	if err := ConfigAddOrUpdateProject("test/project", "local", false); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if appConfig.Projects["test/project"] != "local" {
+		t.Errorf("project not added, got: %v", appConfig.Projects)
+	}
+}
+
 var sampleConfig = &MonospaceConfig{
 	GoModPrefix:         "test.com",
 	JSPM:                "yarn@xxx",

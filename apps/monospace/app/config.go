@@ -125,6 +125,9 @@ func ConfigRead(configPath string) (*MonospaceConfig, error) {
 		return nil, err
 	}
 	err = yaml.Unmarshal(raw, &config)
+	if config == nil {
+		config = &MonospaceConfig{}
+	}
 	config.configPath = configPath
 	config.root = filepath.Dir(filepath.Dir(configPath))
 	return config, err
@@ -241,6 +244,9 @@ func ConfigAddOrUpdateProject(projectName string, repoUrl string, save bool) err
 	config, err := ConfigGet()
 	if err != nil {
 		return err
+	}
+	if config.Projects == nil {
+		config.Projects = make(map[string]string)
 	}
 	config.Projects[projectName] = repoUrl
 	if save {

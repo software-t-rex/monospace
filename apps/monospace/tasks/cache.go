@@ -99,6 +99,15 @@ func ComputeHash(opts CacheOptions, taskDef app.MonospaceConfigTask) (string, er
 		fmt.Fprintf(h, "%s=%s\n", k, taskDef.Env[k])
 	}
 
+	// 2b. Input/output patterns — included in the hash to invalidate the cache
+	// if the patterns change even when the resolved files are identical.
+	inputsCopy := append([]string(nil), opts.Inputs...)
+	sort.Strings(inputsCopy)
+	fmt.Fprintf(h, "inputs:%s\n", strings.Join(inputsCopy, ","))
+	outputsCopy := append([]string(nil), opts.Outputs...)
+	sort.Strings(outputsCopy)
+	fmt.Fprintf(h, "outputs:%s\n", strings.Join(outputsCopy, ","))
+
 	// 3. Resolve input file list
 	files, err := resolveInputFiles(opts)
 	if err != nil {
@@ -168,23 +177,72 @@ func resolveInputFiles(opts CacheOptions) ([]string, error) {
 
 // walkProjectFiles recursively collects all regular files in dir,
 // skipping .git and .monospace directories.
+// Symbolic links to directories are followed with cycle detection
+// to avoid infinite loops.
 func walkProjectFiles(dir string) ([]string, error) {
+	realRoot, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		realRoot = dir
+	}
+	visited := map[string]struct{}{realRoot: {}}
+	return walkProjectFilesRecurse(dir, visited)
+}
+
+func walkProjectFilesRecurse(dir string, visited map[string]struct{}) ([]string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
 	var files []string
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return nil // skip unreadable entries
-		}
-		if d.IsDir() {
-			name := d.Name()
-			if name == ".git" || name == ".monospace" {
-				return filepath.SkipDir
+	for _, entry := range entries {
+		path := filepath.Join(dir, entry.Name())
+
+		// Symbolic link: resolve and process based on the target
+		if entry.Type()&fs.ModeSymlink != 0 {
+			realPath, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				continue // broken link, skipped
 			}
-			return nil
+			info, err := os.Stat(realPath)
+			if err != nil {
+				continue
+			}
+			if info.IsDir() {
+				name := entry.Name()
+				if name == ".git" || name == ".monospace" {
+					continue
+				}
+				if _, seen := visited[realPath]; seen {
+					continue // cycle detected
+				}
+				visited[realPath] = struct{}{}
+				sub, err := walkProjectFilesRecurse(path, visited)
+				if err != nil {
+					continue
+				}
+				files = append(files, sub...)
+			} else {
+				files = append(files, path)
+			}
+			continue
 		}
+
+		if entry.IsDir() {
+			name := entry.Name()
+			if name == ".git" || name == ".monospace" {
+				continue
+			}
+			sub, err := walkProjectFilesRecurse(path, visited)
+			if err != nil {
+				continue
+			}
+			files = append(files, sub...)
+			continue
+		}
+
 		files = append(files, path)
-		return nil
-	})
-	return files, err
+	}
+	return files, nil
 }
 
 // Check looks up whether a cache entry exists for the given hash.
