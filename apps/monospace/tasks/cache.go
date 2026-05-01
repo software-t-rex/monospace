@@ -121,22 +121,30 @@ func ComputeHash(opts CacheOptions, taskDef app.MonospaceConfigTask) (string, er
 		strategy = app.CacheStrategyContent
 	}
 	for _, file := range files {
-		rel, _ := filepath.Rel(opts.ProjectPath, file)
+		rel, err := filepath.Rel(opts.ProjectPath, file)
+		if err != nil {
+			return "", fmt.Errorf("getting relative path for %s: %w", file, err)
+		}
 		if strategy == app.CacheStrategyMtime {
 			info, err := os.Stat(file)
 			if err != nil {
-				continue
+				return "", fmt.Errorf("stat input file %q for %s#%s: %w", file, opts.ProjectName, opts.TaskName, err)
 			}
 			fmt.Fprintf(h, "%s:%d:%d\n", rel, info.Size(), info.ModTime().Unix())
 		} else {
 			// content strategy
 			f, err := os.Open(file)
 			if err != nil {
-				continue
+				return "", fmt.Errorf("open input file %q for %s#%s: %w", file, opts.ProjectName, opts.TaskName, err)
 			}
 			fmt.Fprintf(h, "%s:", rel)
-			io.Copy(h, f) //nolint:errcheck
-			f.Close()
+			if _, err := io.Copy(h, f); err != nil {
+				f.Close()
+				return "", fmt.Errorf("read input file %q for %s#%s: %w", file, opts.ProjectName, opts.TaskName, err)
+			}
+			if err := f.Close(); err != nil {
+				return "", fmt.Errorf("close input file %q for %s#%s: %w", file, opts.ProjectName, opts.TaskName, err)
+			}
 			fmt.Fprint(h, "\n")
 		}
 	}
@@ -299,7 +307,7 @@ func Save(opts CacheOptions, hash string, output string) error {
 	}
 
 	// Save output files only in restore mode
-	if opts.Mode == app.CacheModeRestore && len(opts.Outputs) > 0 {
+	if opts.Mode == "restore" && len(opts.Outputs) > 0 {
 		outputsDir := filepath.Join(entryDir, "outputs")
 		if err := os.MkdirAll(outputsDir, 0750); err != nil {
 			return fmt.Errorf("creating outputs dir: %w", err)
@@ -330,16 +338,22 @@ func Save(opts CacheOptions, hash string, output string) error {
 // Only useful in restore mode on a cache hit.
 func Restore(opts CacheOptions, result CacheResult) error {
 	outputsDir := filepath.Join(result.CacheDir, "outputs")
-	if _, err := os.Stat(outputsDir); os.IsNotExist(err) {
-		return nil // nothing to restore
+	if _, err := os.Stat(outputsDir); err != nil {
+		if os.IsNotExist(err) {
+			return nil // nothing to restore
+		}
+		return fmt.Errorf("stat outputs dir %s: %w", outputsDir, err)
 	}
 	return filepath.WalkDir(outputsDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+		if err != nil {
+			return fmt.Errorf("walk outputs dir %s: %w", outputsDir, err)
+		}
+		if d.IsDir() {
 			return nil
 		}
 		rel, err := filepath.Rel(outputsDir, path)
 		if err != nil {
-			return nil
+			return fmt.Errorf("get relative path for %s: %w", path, err)
 		}
 		dst := filepath.Join(opts.ProjectPath, rel)
 		return copyFile(path, dst)
@@ -494,8 +508,13 @@ func PruneTaskCache(monospaceRoot, project, task string, maxEntries int) error {
 }
 
 // copyFile copies a file from src to dst, creating parent directories as needed.
+// It preserves the source file's permissions.
 func copyFile(src, dst string) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0750); err != nil {
+		return err
+	}
+	srcInfo, err := os.Stat(src)
+	if err != nil {
 		return err
 	}
 	in, err := os.Open(src)
@@ -504,12 +523,16 @@ func copyFile(src, dst string) error {
 	}
 	defer in.Close()
 
-	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0640)
+	mode := srcInfo.Mode().Perm()
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
 
-	_, err = io.Copy(out, in)
-	return err
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+	// Ensure the destination has the same permissions as the source
+	return os.Chmod(dst, mode)
 }

@@ -545,7 +545,7 @@ func Run(taskList TaskList, opts RunOptions) {
 // --no-cache is set. Otherwise returns a func() (string, error) closure that
 // checks the cache before running and saves the result on a miss.
 func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceRoot string, maxEntries int) interface{} {
-	if opts.NoCache || task.TaskDef.Cache == "" || task.TaskDef.Cache == "false" {
+	if opts.NoCache || (task.TaskDef.Cache != "skip" && task.TaskDef.Cache != "restore") {
 		return taskRunner
 	}
 	strategy := task.TaskDef.CacheStrategy
@@ -575,7 +575,7 @@ func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceR
 			fmt.Fprintf(os.Stderr, "warning: cache check failed: %v\n", checkErr)
 		}
 		if result.Hit {
-			if task.TaskDef.Cache == app.CacheModeRestore {
+			if task.TaskDef.Cache == "restore" {
 				if err := Restore(cacheOpts, result); err != nil {
 					fmt.Fprintf(os.Stderr, "warning: cache restore failed: %v, re-running task\n", err)
 					// fall through to cache miss
@@ -591,7 +591,9 @@ func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceR
 		// cache miss: run, capture output, and save to cache
 		out, runErr := runCmdCaptured(taskRunner)
 		if runErr == nil {
-			Save(cacheOpts, hash, out) //nolint:errcheck
+			if err := Save(cacheOpts, hash, out); err != nil {
+				fmt.Fprintf(os.Stderr, "warning: cache save failed: %v\n", err)
+			}
 		}
 		return out, runErr
 	}

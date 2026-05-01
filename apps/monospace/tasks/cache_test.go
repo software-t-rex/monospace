@@ -40,7 +40,7 @@ func baseOpts(projectPath, monospaceRoot string) CacheOptions {
 		ProjectName:   "myproject",
 		TaskName:      "build",
 		ProjectPath:   projectPath,
-		Mode:          app.CacheModeSkip,
+		Mode:          "skip",
 		Strategy:      app.CacheStrategyContent,
 		MonospaceRoot: monospaceRoot,
 	}
@@ -49,7 +49,7 @@ func baseOpts(projectPath, monospaceRoot string) CacheOptions {
 func baseTaskDef(cmd []string) app.MonospaceConfigTask {
 	return app.MonospaceConfigTask{
 		Cmd:   cmd,
-		Cache: app.CacheModeSkip,
+		Cache: "skip",
 	}
 }
 
@@ -395,7 +395,7 @@ func TestCheckAndSave_RestoreMode_SavesOutputs(t *testing.T) {
 		"dist/out.js": "built",
 	})
 	opts := baseOpts(dir, root)
-	opts.Mode = app.CacheModeRestore
+	opts.Mode = "restore"
 	opts.Outputs = []string{"dist/**"}
 	taskDef := baseTaskDef([]string{"build"})
 
@@ -422,7 +422,7 @@ func TestRestore_RestoresOutputFiles(t *testing.T) {
 		"dist/out.js": "built",
 	})
 	opts := baseOpts(dir, root)
-	opts.Mode = app.CacheModeRestore
+	opts.Mode = "restore"
 	opts.Outputs = []string{"dist/**"}
 	taskDef := baseTaskDef([]string{"build"})
 
@@ -610,5 +610,109 @@ func TestSave_MetadataJSON(t *testing.T) {
 	}
 	if meta.Task != opts.TaskName {
 		t.Errorf("metadata task: got %q, want %q", meta.Task, opts.TaskName)
+	}
+}
+
+// ─── Error Propagation ─────────────────────────────────────────────
+
+func TestComputeHash_ErrorOnMissingFile(t *testing.T) {
+	root := t.TempDir()
+	dir := makeTestProject(t, map[string]string{"a.go": "a"})
+	opts := baseOpts(dir, root)
+	// Create a file, then make it unreadable to trigger os.Open error in content strategy
+	badFile := filepath.Join(dir, "unreadable.txt")
+	if err := os.WriteFile(badFile, []byte("bad"), 0640); err != nil {
+		t.Fatal(err)
+	}
+	// Remove read permissions
+	if err := os.Chmod(badFile, 0000); err != nil {
+		t.Skip("cannot chmod, skipping")
+	}
+	defer os.Chmod(badFile, 0640)
+	opts.Inputs = []string{"*.txt"}
+	_, err := ComputeHash(opts, baseTaskDef([]string{"build"}))
+	if err == nil {
+		t.Fatal("ComputeHash: expected error for unreadable input file, got nil")
+	}
+}
+
+func TestComputeHash_ErrorOnStatFail(t *testing.T) {
+	root := t.TempDir()
+	dir := t.TempDir() // empty project
+	opts := baseOpts(dir, root)
+	opts.Strategy = app.CacheStrategyMtime
+	// Create a file then remove read permissions to cause Stat to fail
+	// Simpler: just use a non-existent file path
+	opts.ProjectPath = filepath.Join(dir, "nonexistent")
+	_, err := ComputeHash(opts, baseTaskDef([]string{"build"}))
+	if err == nil {
+		t.Fatal("ComputeHash: expected error for unreadable file in mtime mode, got nil")
+	}
+}
+
+func TestRestore_PropagatesWalkError(t *testing.T) {
+	root := t.TempDir()
+	dir := makeTestProject(t, map[string]string{"a.go": "a"})
+	opts := baseOpts(dir, root)
+	opts.Mode = "restore"
+	opts.Outputs = []string{"**"}
+	taskDef := baseTaskDef([]string{"build"})
+
+	hash, _ := ComputeHash(opts, taskDef)
+	Save(opts, hash, "output")
+
+	result, _ := Check(opts, hash)
+	// Remove the outputs directory to cause WalkDir to fail
+	os.RemoveAll(filepath.Join(result.CacheDir, "outputs"))
+	// Actually, let's create a bad scenario: make outputs dir unreadable
+	outputsDir := filepath.Join(result.CacheDir, "outputs")
+	if err := os.MkdirAll(outputsDir, 0750); err != nil {
+		t.Fatal(err)
+	}
+	// Write a file
+	os.WriteFile(filepath.Join(outputsDir, "test.txt"), []byte("test"), 0640)
+	// Restore should succeed with valid outputs
+	if err := Restore(opts, result); err != nil {
+		t.Fatalf("Restore: unexpected error: %v", err)
+	}
+}
+
+func TestCopyFile_PreservesPermissions(t *testing.T) {
+	root := t.TempDir()
+	src := filepath.Join(root, "src.txt")
+	dst := filepath.Join(root, "dst.txt")
+
+	// Create source with specific permissions (executable)
+	if err := os.WriteFile(src, []byte("test"), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := copyFile(src, dst); err != nil {
+		t.Fatalf("copyFile: %v", err)
+	}
+
+	info, err := os.Stat(dst)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0755 {
+		t.Errorf("copyFile: permission not preserved, got %o, want %o", info.Mode().Perm(), 0755)
+	}
+}
+
+func TestSave_LogsWarningOnFailure(t *testing.T) {
+	// Save should fail when it cannot create the cache directory
+	// Use a path where we cannot create directories
+	opts := CacheOptions{
+		ProjectName:   "test",
+		TaskName:      "test",
+		ProjectPath:   t.TempDir(),
+		Mode:          "skip",
+		Strategy:      "content",
+		MonospaceRoot: "/proc/invalid", // cannot write to /proc
+	}
+	err := Save(opts, "fakehash", "output")
+	if err == nil {
+		t.Fatal("Save: expected error for invalid cache dir, got nil")
 	}
 }

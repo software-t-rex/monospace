@@ -18,6 +18,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// isCacheEnabled returns true if the cache mode is "skip" or "restore".
+// Empty or any other value is considered "disabled".
+func isCacheEnabled(mode string) bool {
+	return mode == "skip" || mode == "restore"
+}
+
 type MonospaceConfigTask struct {
 	Description     string            `yaml:"description,omitempty"`
 	Cmd             []string          `yaml:"cmd,omitempty,flow"`
@@ -25,7 +31,7 @@ type MonospaceConfigTask struct {
 	Env             map[string]string `yaml:"env,omitempty,flow"`
 	Persistent      bool              `yaml:"persistent,omitempty"`
 	OutputMode      string            `yaml:"output_mode,omitempty"`
-	Cache           string            `yaml:"cache,omitempty"`             // "skip" | "restore" | ""
+	Cache           string            `yaml:"cache,omitempty"`             // "skip" | "restore" | "" (disabled)
 	CacheStrategy   string            `yaml:"cache_strategy,omitempty"`    // "content" | "mtime" | ""
 	CacheMaxEntries int               `yaml:"cache_max_entries,omitempty"` // 0 = use global default
 	Inputs          []string          `yaml:"inputs,omitempty"`
@@ -215,6 +221,12 @@ func ConfigRemoveProjectAlias(alias string, save bool) error {
 		for k := range config.Pipeline {
 			if strings.HasPrefix(k, aliasPrefix) {
 				renamedKeys[k] = projectPrefix + k[len(aliasPrefix):]
+			}
+		}
+		// Check for key collisions before renaming
+		for oldKey, newKey := range renamedKeys {
+			if _, exists := config.Pipeline[newKey]; exists && newKey != oldKey {
+				return fmt.Errorf("cannot remove alias %q: renaming pipeline task %q to %q would overwrite an existing task", alias, oldKey, newKey)
 			}
 		}
 		for oldKey, newKey := range renamedKeys {

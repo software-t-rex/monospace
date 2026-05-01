@@ -126,12 +126,10 @@
         },
         "cache": {
           "title": "monospace.yml: pipeline[task].cache",
-          "description": "Enable task output caching.\n- skip: on cache hit, skip execution (mark as success)\n- restore: on cache hit, restore output files and skip execution\nOmit or set to false to disable caching.",
-          "oneOf": [
-            { "type": "string", "enum": ["skip", "restore"] },
-            { "type": "boolean", "const": false }
-          ],
-          "default": false
+          "description": "Enable task output caching.\n- skip: on cache hit, skip execution (mark as success)\n- restore: on cache hit, restore output files and skip execution\nOmit or set to \"disabled\" to disable caching.",
+          "type": "string",
+          "enum": ["skip", "restore", "disabled"],
+          "default": "disabled"
         },
         "cache_strategy": {
           "title": "monospace.yml: pipeline[task].cache_strategy",

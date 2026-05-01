@@ -82,7 +82,7 @@ var tasksCmd = &cobra.Command{
 				if task.TaskDef.OutputMode != "" && task.TaskDef.OutputMode != config.PreferredOutputMode {
 					sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("output mode"), task.TaskDef.OutputMode))
 				}
-				if task.TaskDef.Cache != "" {
+				if task.TaskDef.Cache == "skip" || task.TaskDef.Cache == "restore" {
 					sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("cache"), task.TaskDef.Cache))
 					strategy := task.TaskDef.CacheStrategy
 					if strategy == "" {

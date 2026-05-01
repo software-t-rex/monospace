@@ -110,7 +110,7 @@ func cycleOutputMode(task *app.MonospaceConfigTask, direction int) {
 }
 
 func cycleCacheMode(task *app.MonospaceConfigTask, direction int) {
-	modes := []string{"", app.CacheModeSkip, app.CacheModeRestore}
+	modes := []string{"", "skip", "restore"}
 	index := utils.SliceFindIndex(modes, task.Cache)
 	index += direction
 	if index < 0 {

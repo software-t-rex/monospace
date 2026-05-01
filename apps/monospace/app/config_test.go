@@ -6,7 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 // TestConfigRead_NullYAML_NoPanic checks that a YAML file containing "null"
@@ -93,7 +96,7 @@ func TestConfigInitAndSave(t *testing.T) {
 
 	err := ConfigLoad(configPath)
 	if err == nil {
-		t.Errorf("ConfigInit(): should error on unexisiting config file")
+		t.Errorf("ConfigInit(): should error on unexisting config file")
 	}
 
 	err = ConfigSave()
@@ -157,14 +160,14 @@ func Dump(o ...any) {
 func TestConfigAddProject(t *testing.T) {
 	appConfig = sampleConfig
 
-	err := ConfigAddProject("packages/test", "whathever", false)
+	err := ConfigAddProject("packages/test", "whatever", false)
 	if err == nil {
 		t.Errorf("ConfigAddProject(): should report error on adding existing project, err: %v", err)
 	}
 
 	err = ConfigAddProject("test/toto", "local", false)
 	if appConfig.Projects["test/toto"] != "local" {
-		t.Errorf("ConfigAddProject(): shoud add project to config want: %v, got: %v, err: %v", "local", appConfig.Projects["test/toto"], err)
+		t.Errorf("ConfigAddProject(): should add project to config want: %v, got: %v, err: %v", "local", appConfig.Projects["test/toto"], err)
 	}
 
 }
@@ -178,7 +181,7 @@ func TestConfigAddProjectAlias(t *testing.T) {
 
 	err = ConfigAddProjectAlias("packages/test", "aliasname", false)
 	if appConfig.Aliases["aliasname"] != "packages/test" {
-		t.Errorf("ConfigAddProjectAlias(): shoud add project alias to config want: %v, got: %v, err: %v", "local", appConfig.Projects["test/toto"], err)
+		t.Errorf("ConfigAddProjectAlias(): should add project alias to config want: %v, got: %v, err: %v", "local", appConfig.Projects["test/toto"], err)
 	}
 }
 
@@ -193,7 +196,7 @@ func TestConfigRemoveProject(t *testing.T) {
 	}
 	p, ok := appConfig.Projects["test/removableProject"]
 	if ok || p != "" {
-		t.Errorf("ConfigRemoveProject(): shoud remove project from config")
+		t.Errorf("ConfigRemoveProject(): should remove project from config")
 	}
 
 	err = ConfigRemoveProject("test/unknownProject", false)
@@ -217,7 +220,7 @@ func TestConfigRemoveProjectAlias(t *testing.T) {
 	}
 	p, ok := appConfig.Aliases["myalias"]
 	if ok || p != "" {
-		t.Errorf("ConfigRemoveProjectAlias(): shoud remove project alias from config")
+		t.Errorf("ConfigRemoveProjectAlias(): should remove project alias from config")
 	}
 
 	err = ConfigRemoveProjectAlias("unknownAlias", false)
@@ -271,5 +274,74 @@ func TestConfigRemoveProjectAliasUpdatesPipeline(t *testing.T) {
 	ciTask := cfg.Pipeline["packages/other#ci"]
 	if len(ciTask.DependsOn) != 2 || ciTask.DependsOn[0] != "packages/test#test" {
 		t.Errorf("ConfigRemoveProjectAlias(): dependsOn in other tasks should be updated, got: %v", ciTask.DependsOn)
+	}
+}
+
+func TestConfigRemoveProjectAliasCollision(t *testing.T) {
+	cfg := &MonospaceConfig{
+		GoModPrefix: "test.com",
+		Projects:    map[string]string{"packages/test": "internal", "packages/other": "internal"},
+		Aliases:     map[string]string{"myalias": "packages/test"},
+		Pipeline: map[string]MonospaceConfigTask{
+			"myalias#build":     {Cmd: []string{"make build"}},
+			"packages/test#build": {Cmd: []string{"make build2"}}, // collision target
+		},
+	}
+	appConfig = cfg
+
+	err := ConfigRemoveProjectAlias("myalias", false)
+	if err == nil {
+		t.Fatalf("ConfigRemoveProjectAlias(): expected error for collision, got nil")
+	}
+	if !strings.Contains(err.Error(), "would overwrite") {
+		t.Errorf("ConfigRemoveProjectAlias(): expected 'would overwrite' error, got: %v", err)
+	}
+}
+
+// TestCacheIsEnabled checks the isCacheEnabled helper.
+func TestCacheIsEnabled(t *testing.T) {
+	if isCacheEnabled("") {
+		t.Errorf("isCacheEnabled(%q) should be false", "")
+	}
+	if isCacheEnabled("disabled") {
+		t.Errorf("isCacheEnabled(%q) should be false", "disabled")
+	}
+	if isCacheEnabled("false") {
+		t.Errorf("isCacheEnabled(%q) should be false", "false")
+	}
+	if !isCacheEnabled("skip") {
+		t.Errorf("isCacheEnabled(%q) should be true", "skip")
+	}
+	if !isCacheEnabled("restore") {
+		t.Errorf("isCacheEnabled(%q) should be true", "restore")
+	}
+	if isCacheEnabled("foo") {
+		t.Errorf("isCacheEnabled(%q) should be false", "foo")
+	}
+}
+
+// TestCacheStringValues checks that cache field works as plain string.
+func TestCacheStringValues(t *testing.T) {
+	type tmp struct {
+		Cache string `yaml:"cache"`
+	}
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"skip", "skip"},
+		{"restore", "restore"},
+		{"disabled", "disabled"},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		var out tmp
+		data := []byte("cache: " + tt.input)
+		if err := yaml.Unmarshal(data, &out); err != nil {
+			t.Errorf("unmarshaling %q: unexpected error: %v", tt.input, err)
+		}
+		if out.Cache != tt.expected {
+			t.Errorf("unmarshaling %q: expected %q, got %q", tt.input, tt.expected, out.Cache)
+		}
 	}
 }

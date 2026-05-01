@@ -168,7 +168,7 @@ The maximum number of entries per task is resolved as follows:
 
 		pruned := 0
 		for taskKey, task := range pipeline {
-			if task.TaskDef.Cache == "" || task.TaskDef.Cache == "false" {
+			if task.TaskDef.Cache != "skip" && task.TaskDef.Cache != "restore" {
 				continue
 			}
 			if len(filterKeys) > 0 {
