@@ -75,7 +75,12 @@ var tasksCmd = &cobra.Command{
 				if task.TaskDef.Description != "" {
 					sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("description"), task.TaskDef.Description))
 				}
-				sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("command"), task.GetJobRunner(nil, config.JSPM).String()))
+				runner := task.GetJobRunner(nil, config.JSPM)
+				runnerStr := "n/a"
+				if runner != nil {
+					runnerStr = runner.String()
+				}
+				sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("command"), runnerStr))
 				if task.TaskDef.DependsOn != nil {
 					sb.WriteString(fmt.Sprintf("  %s: %s\n", theme.Italic("dependends on"), strings.Join(task.TaskDef.DependsOn, ", ")))
 				}
