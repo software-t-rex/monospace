@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2023 Jonathan Gotti <jgotti@jgotti.org>
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -279,8 +280,64 @@ won't change the exit status of the command.
 		if !hasFilter {
 			// check Pipeline config is correct
 			fmt.Println(boldUnderline("checking pipeline:"))
-			utils.CheckErrOrReturn(tasks.GetStandardizedPipeline(config, false)).IsAcyclic(true)
+			pipeline := utils.CheckErrOrReturn(tasks.GetStandardizedPipeline(config, false))
+			pipeline.IsAcyclic(true)
 			fmt.Println(successIndicator + " pipeline ok")
+
+			// check for broken tasks (tasks with no executable command)
+			fmt.Println(boldUnderline("checking tasks brokenness:"))
+			brokenTasks := make([]string, 0)
+			for taskName, task := range pipeline {
+				if task.GetJobRunner(nil, config.JSPM) == nil {
+					brokenTasks = append(brokenTasks, taskName)
+				}
+			}
+			if len(brokenTasks) > 0 {
+				exitStatus = 1
+				needSave := false
+				for _, taskName := range brokenTasks {
+					task, ok := pipeline[taskName]
+					if !ok {
+						continue
+					}
+					fmt.Println(failureIndicator + " " + theme.Warning("task " + taskName + " is broken (no command found)"))
+					if fix {
+						pipeline = pipeline.RemoveTask(taskName, config)
+						needSave = true
+						fmt.Println("  " + theme.Info("task " + taskName + " removed"))
+					} else if interactive {
+						if ui.ConfirmInline(fmt.Sprintf("Do you want to remove task %s ?", taskName), false) {
+							pipeline = pipeline.RemoveTask(taskName, config)
+							needSave = true
+							fmt.Println("  " + theme.Info("task " + taskName + " removed"))
+						} else if ui.ConfirmInline(fmt.Sprintf("Do you want to edit task %s ?", taskName), false) {
+							editedTask, errEdit := tasks.NewTaskEditor(config, task).Run()
+							if errEdit != nil {
+								if errors.Is(errEdit, tasks.ErrEditorCanceled) {
+									fmt.Println(theme.Info("Task " + taskName + " edit canceled"))
+								} else {
+									fmt.Println(theme.Warning("Error editing task " + taskName + ": " + errEdit.Error()))
+								}
+							} else {
+								pipeline[taskName] = editedTask
+								needSave = true
+								fmt.Println(theme.Success("Task " + taskName + " updated"))
+							}
+						}
+					}
+				}
+				if needSave {
+					config.Pipeline = pipeline.ToConfig(config)
+					if !pipeline.IsAcyclic(false) {
+						utils.PrintWarning("Pipeline has cyclic dependencies, changes not saved")
+					} else {
+						utils.CheckErr(app.ConfigSave())
+						fmt.Print(theme.Success("monospace.yml updated\n"))
+					}
+				}
+			} else {
+				fmt.Println(successIndicator + " no broken tasks found")
+			}
 
 			// check githooks path is correctly set
 			if utils.FileExistsNoErr(filepath.Join(monoRoot, app.DfltHooksDir)) {
