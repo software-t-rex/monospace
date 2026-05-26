@@ -219,7 +219,8 @@ won't change the exit status of the command.
 					printProjectCheckHeader(p, fmt.Sprintf("project %s does not exist", p.StyledString()))
 					if fix || (interactive && ui.ConfirmInline(fmt.Sprintf("Do you want to clone %s to %s ?", p.RepoUrl, p.StyledString()), true)) {
 						fmt.Println("cloning...")
-						utils.CheckErr(git.Clone(p.RepoUrl, p.Path()))
+						utils.CheckErrWithMsg(git.Clone(p.RepoUrl, p.Path()),
+							fmt.Sprintf("Failed to clone %s", p.StyledString()))
 					}
 					continue Loop
 				}
