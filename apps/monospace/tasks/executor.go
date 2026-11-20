@@ -76,6 +76,9 @@ func NewExecutor(outputMode string) *exctr.JobExecutor {
 		e.OnJobDone(func(jobs exctr.JobList, jobId int) {
 			if pw, ok := writers[jobId]; ok {
 				pw.Flush()
+				if job := jobs[jobId]; job.Cmd != nil && job.Err != nil {
+					pw.Write([]byte(theme.Error(job.Err.Error()) + "\n"))
+				}
 			}
 		})
 	case "status-only":

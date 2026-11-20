@@ -79,3 +79,24 @@ func TestInterleaved_DirectCmd_PartialWrites(t *testing.T) {
 		t.Errorf("streamed output should end with a flushed newline:\n%q", clean)
 	}
 }
+
+// TestInterleaved_DirectCmd_ReportsStartError checks that an error that
+// produced no output (here: command not found) is still displayed.
+func TestInterleaved_DirectCmd_ReportsStartError(t *testing.T) {
+	for _, mode := range []string{"interleaved", "errors-only"} {
+		t.Run(mode, func(t *testing.T) {
+			e := NewExecutor(mode)
+			e.AddJob(jobExecutor.NamedJob{
+				Name: "myproject#missing",
+				Job:  exec.Command("monospace-test-no-such-binary"),
+			})
+			captured := captureStdout(t, func() {
+				e.DagExecute()
+			})
+			clean := stripAnsi(captured)
+			if !strings.Contains(clean, "myproject#missing: ") || !strings.Contains(clean, "monospace-test-no-such-binary") {
+				t.Errorf("start error should be displayed with the task prefix:\n%q", clean)
+			}
+		})
+	}
+}
