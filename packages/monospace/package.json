@@ -82,9 +82,9 @@
 		"x64"
 	],
 	"devDependencies": {
-		"esbuild": "0.17.14",
-		"jszip": "^3.10.1",
-		"tar": "^7.5.13"
+		"esbuild": "0.28.2",
+		"jszip": "^3.10.2",
+		"tar": "^7.5.23"
 	},
 	"private": false
 }
