@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"os/exec"
@@ -466,10 +467,20 @@ func (t TaskList) GetExecutor(opts RunOptions) *jobExecutor.JobExecutor {
 			if maxEntries == 0 {
 				maxEntries = app.DefaultCacheMaxEntries
 			}
-			jobImpl := wrapWithCache(taskRunner, task, opts, mono.SpaceGetRoot(), maxEntries)
-			job := e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: jobImpl})
-			taskIds[taskId] = job.Id()
-			jobs[job.Id()] = job
+			// The live streaming prefix must be resolved lazily: the executor
+			// rewrites the job display name in OnJobsStart (shortened to the last
+			// "/" segment, optionally colored), which happens *after* AddJob.
+			// Reading the name at run time keeps the streamed prefix identical to
+			// the one used for cache-hit replays and error dumps.
+			var j jobExecutor.Job
+			var livePrefix func() string
+			if opts.OutputMode == "interleaved" {
+				livePrefix = func() string { return j.Name() }
+			}
+			jobImpl := wrapWithCache(taskRunner, task, opts, mono.SpaceGetRoot(), maxEntries, livePrefix)
+			j = e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: jobImpl})
+			taskIds[taskId] = j.Id()
+			jobs[j.Id()] = j
 		} else if task.TaskDef.DependsOn != nil && len(task.TaskDef.DependsOn) > 0 {
 			fmt.Printf(ui.GetTheme().Info("%s#%s is a dummy task, will only executes its dependencies.\n"), task.Name.Project, task.Name.Task)
 			job := e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: func() (string, error) { return "", nil }})
@@ -544,7 +555,11 @@ func Run(taskList TaskList, opts RunOptions) {
 // enabled. Returns the original *exec.Cmd unchanged when cache is disabled or
 // --no-cache is set. Otherwise returns a func() (string, error) closure that
 // checks the cache before running and saves the result on a miss.
-func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceRoot string, maxEntries int) interface{} {
+//
+// When livePrefix is not nil the closure streams the task output to stdout as
+// it is produced (interleaved mode), prefixed by livePrefix(). livePrefix is
+// called at run time so that it reflects the final job display name.
+func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceRoot string, maxEntries int, livePrefix func() string) interface{} {
 	if opts.NoCache || (task.TaskDef.Cache != "skip" && task.TaskDef.Cache != "restore") {
 		return taskRunner
 	}
@@ -565,50 +580,106 @@ func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceR
 	}
 	taskDef := task.TaskDef
 	return func() (string, error) {
-		hash, err := ComputeHash(cacheOpts, taskDef)
-		if err != nil {
-			// hash failure is non-fatal: run the task normally
-			return runCmdCaptured(taskRunner)
+		// The writer is built inside the closure on purpose: the job display name
+		// is only known (and finalized) once the executor has started the jobs.
+		var live io.Writer
+		if opts.OutputMode == "interleaved" && livePrefix != nil {
+			live = jobExecutor.NewPrefixedWriter(os.Stdout, livePrefix()+": ")
 		}
-		result, checkErr := Check(cacheOpts, hash)
-		if checkErr != nil {
-			fmt.Fprintf(os.Stderr, "warning: cache check failed: %v\n", checkErr)
-		}
-		if result.Hit {
-			if task.TaskDef.Cache == "restore" {
-				if err := Restore(cacheOpts, result); err != nil {
-					fmt.Fprintf(os.Stderr, "warning: cache restore failed: %v, re-running task\n", err)
-					// fall through to cache miss
-				} else {
-					cachedOutput, _ := readCachedOutput(result.CacheDir)
-					return fmt.Sprintf("[cache hit: %s, restored]\n", hash[:8]) + cachedOutput, nil
-				}
-			} else {
-				cachedOutput, _ := readCachedOutput(result.CacheDir)
-				return fmt.Sprintf("[cache hit: %s]\n", hash[:8]) + cachedOutput, nil
-			}
-		}
-		// cache miss: run, capture output, and save to cache
-		out, runErr := runCmdCaptured(taskRunner)
-		if runErr == nil {
-			if err := Save(cacheOpts, hash, out); err != nil {
-				fmt.Fprintf(os.Stderr, "warning: cache save failed: %v\n", err)
-			}
+		return runWithCache(cacheOpts, taskDef, taskRunner, live)
+	}
+}
+
+// runWithCache holds the cache logic of a task run: hash computation, cache
+// lookup, restore, and save on miss.
+//
+// It is the pure (testable) core of wrapWithCache, free of global state.
+//
+// live, when not nil, receives the task output while the command runs (tee).
+// It never replaces the internal capture buffer: the buffer stays the single
+// source of truth for the cache, so a cache miss always saves the complete
+// output whatever happens on the live side.
+//
+// When live is not nil the returned string is empty on the run paths (miss and
+// hash failure) since the output has already been streamed; this avoids a
+// double dump by the executor. On a cache hit the replay string is returned
+// even when live is set: streaming only concerns live execution.
+func runWithCache(cacheOpts CacheOptions, taskDef app.MonospaceConfigTask, taskRunner *exec.Cmd, live io.Writer) (string, error) {
+	hash, err := ComputeHash(cacheOpts, taskDef)
+	if err != nil {
+		// hash failure is non-fatal: run the task normally
+		out, runErr := runCmdCaptured(taskRunner, live)
+		if live != nil {
+			return "", runErr
 		}
 		return out, runErr
 	}
+	result, checkErr := Check(cacheOpts, hash)
+	if checkErr != nil {
+		fmt.Fprintf(os.Stderr, "warning: cache check failed: %v\n", checkErr)
+	}
+	if result.Hit {
+		if cacheOpts.Mode == "restore" {
+			if err := Restore(cacheOpts, result); err != nil {
+				fmt.Fprintf(os.Stderr, "warning: cache restore failed: %v, re-running task\n", err)
+				// fall through to cache miss
+			} else {
+				cachedOutput, _ := readCachedOutput(result.CacheDir)
+				return fmt.Sprintf("[cache hit: %s, restored]\n", hash[:8]) + cachedOutput, nil
+			}
+		} else {
+			cachedOutput, _ := readCachedOutput(result.CacheDir)
+			return fmt.Sprintf("[cache hit: %s]\n", hash[:8]) + cachedOutput, nil
+		}
+	}
+	// cache miss: run, capture output, and save to cache
+	out, runErr := runCmdCaptured(taskRunner, live)
+	if runErr == nil {
+		if err := Save(cacheOpts, hash, out); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: cache save failed: %v\n", err)
+		}
+	}
+	if live != nil {
+		// output already streamed, do not let the executor dump it again
+		return "", runErr
+	}
+	return out, runErr
+}
+
+// capturedOutputWriter tees the command output to an internal buffer (source of
+// truth for the cache) and, optionally, to a live writer (stdout streaming).
+//
+// The very same instance is assigned to both cmd.Stdout and cmd.Stderr: os/exec
+// only reuses a single pipe (and a single copy goroutine) when both fields hold
+// the same interface value, which avoids concurrent writes to the buffer.
+type capturedOutputWriter struct {
+	buf  bytes.Buffer
+	live io.Writer
+}
+
+func (w *capturedOutputWriter) Write(p []byte) (int, error) {
+	w.buf.Write(p) // bytes.Buffer never fails
+	if w.live != nil {
+		// best effort: a broken live sink (e.g. `monospace run | head`) must not
+		// fail the task nor prevent the cache from being filled.
+		_, _ = w.live.Write(p)
+	}
+	return len(p), nil
 }
 
 // runCmdCaptured executes cmd and returns its combined stdout+stderr output.
 // The cmd must not have Stdout/Stderr pre-assigned: it is always called from
 // within a cache closure where the *exec.Cmd is captured before the executor
 // can redirect it (the executor only redirects job.Cmd, not closures).
-func runCmdCaptured(cmd *exec.Cmd) (string, error) {
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
+//
+// live, when not nil, also receives the output as it is produced.
+func runCmdCaptured(cmd *exec.Cmd, live io.Writer) (string, error) {
+	var w capturedOutputWriter
+	w.live = live
+	cmd.Stdout = &w
+	cmd.Stderr = &w
 	err := cmd.Run()
-	return buf.String(), err
+	return w.buf.String(), err
 }
 
 func OpenGraphvizFull(config *app.MonospaceConfig) {
