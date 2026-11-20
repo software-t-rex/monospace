@@ -35,7 +35,8 @@ var ansiRe = regexp.MustCompile("\x1b\\[[0-9;]*[a-zA-Z]")
 func stripAnsi(s string) string { return ansiRe.ReplaceAllString(s, "") }
 
 // captureStdout runs fn with os.Stdout redirected to a pipe and returns what
-// was written to it.
+// was written to it. Reading is done concurrently so large outputs cannot fill
+// the pipe buffer and deadlock the test.
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
 	orig := os.Stdout
@@ -43,8 +44,22 @@ func captureStdout(t *testing.T, fn func()) string {
 	if err != nil {
 		t.Fatalf("creating stdout pipe: %v", err)
 	}
+
+	var buf bytes.Buffer
+	var readErr error
+	readDone := make(chan struct{})
+	go func() {
+		defer close(readDone)
+		_, readErr = buf.ReadFrom(r)
+	}()
+
 	os.Stdout = w
-	defer func() { os.Stdout = orig }()
+	defer func() {
+		os.Stdout = orig
+		_ = w.Close()
+		_ = r.Close()
+		<-readDone
+	}()
 
 	fn()
 
@@ -52,9 +67,9 @@ func captureStdout(t *testing.T, fn func()) string {
 		t.Fatalf("closing stdout pipe: %v", err)
 	}
 	os.Stdout = orig
-	var buf bytes.Buffer
-	if _, err := buf.ReadFrom(r); err != nil {
-		t.Fatalf("reading captured stdout: %v", err)
+	<-readDone
+	if readErr != nil {
+		t.Fatalf("reading captured stdout: %v", readErr)
 	}
 	return buf.String()
 }
@@ -345,7 +360,7 @@ func TestInterleaved_CacheMiss_StreamsExactlyOnce(t *testing.T) {
 	e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: func() (string, error) {
 		// same wiring as wrapWithCache: writer built at run time, prefix lazily
 		// resolved from the job display name.
-		live := jobExecutor.NewPrefixedWriter(os.Stdout, taskName+": ")
+		live := newTaskOutputWriter(os.Stdout, taskName)
 		return runWithCache(cacheOpts, taskDef, streamCmd(marker), live)
 	}})
 
@@ -398,7 +413,7 @@ func TestInterleaved_PrefixIsTheFinalDisplayName(t *testing.T) {
 
 	j = e.AddJob(jobExecutor.NamedJob{Name: registeredName, Job: func() (string, error) {
 		// mirrored from wrapWithCache: the writer is built at run time
-		live := jobExecutor.NewPrefixedWriter(os.Stdout, livePrefix()+": ")
+		live := newTaskOutputWriter(os.Stdout, livePrefix())
 		return runWithCache(cacheOpts, taskDef, streamCmd(marker), live)
 	}})
 
@@ -437,7 +452,7 @@ func TestInterleaved_CacheHit_ReplaysThroughExecutor(t *testing.T) {
 
 	e := NewExecutor("interleaved")
 	e.AddJob(jobExecutor.NamedJob{Name: taskName, Job: func() (string, error) {
-		live := jobExecutor.NewPrefixedWriter(os.Stdout, taskName+": ")
+		live := newTaskOutputWriter(os.Stdout, taskName)
 		return runWithCache(cacheOpts, taskDef, streamCmd("from-cmd"), live)
 	}})
 

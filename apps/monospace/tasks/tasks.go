@@ -584,7 +584,7 @@ func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceR
 		// is only known (and finalized) once the executor has started the jobs.
 		var live io.Writer
 		if opts.OutputMode == "interleaved" && livePrefix != nil {
-			live = jobExecutor.NewPrefixedWriter(os.Stdout, livePrefix()+": ")
+			live = newTaskOutputWriter(os.Stdout, livePrefix())
 		}
 		return runWithCache(cacheOpts, taskDef, taskRunner, live)
 	}
@@ -593,7 +593,8 @@ func wrapWithCache(taskRunner *exec.Cmd, task *Task, opts RunOptions, monospaceR
 // runWithCache holds the cache logic of a task run: hash computation, cache
 // lookup, restore, and save on miss.
 //
-// It is the pure (testable) core of wrapWithCache, free of global state.
+// It is the testable core of wrapWithCache, independent from the UI, though it
+// still reads and writes the cache and logs warnings on stderr.
 //
 // live, when not nil, receives the task output while the command runs (tee).
 // It never replaces the internal capture buffer: the buffer stays the single
@@ -660,8 +661,9 @@ type capturedOutputWriter struct {
 func (w *capturedOutputWriter) Write(p []byte) (int, error) {
 	w.buf.Write(p) // bytes.Buffer never fails
 	if w.live != nil {
-		// best effort: a broken live sink (e.g. `monospace run | head`) must not
-		// fail the task nor prevent the cache from being filled.
+		// best effort: a closed stdout (for example `monospace run | head`)
+		// must not make the task fail. SIGPIPE is handled at the CLI level so
+		// the write returns an error instead of terminating the process.
 		_, _ = w.live.Write(p)
 	}
 	return len(p), nil
@@ -679,6 +681,9 @@ func runCmdCaptured(cmd *exec.Cmd, live io.Writer) (string, error) {
 	cmd.Stdout = &w
 	cmd.Stderr = &w
 	err := cmd.Run()
+	if flusher, ok := live.(interface{ Flush() }); ok {
+		flusher.Flush()
+	}
 	return w.buf.String(), err
 }
 

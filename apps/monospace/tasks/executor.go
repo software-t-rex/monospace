@@ -47,10 +47,12 @@ func NewExecutor(outputMode string) *exctr.JobExecutor {
 		if outputMode == "errors-only" {
 			withStdout = false
 		}
+		writers := make(map[int]*taskOutputWriter)
 		e.OnJobsStart(func(jobs exctr.JobList) {
 			setInterleavedOutputDisplayNames(jobs)
-			for _, job := range jobs {
-				pw := exctr.NewPrefixedWriter(os.Stdout, job.Name()+": ")
+			for i, job := range jobs {
+				pw := newTaskOutputWriter(os.Stdout, job.Name())
+				writers[i] = pw
 				if job.Cmd != nil {
 					if withStdout {
 						job.Cmd.Stdout = pw
@@ -69,6 +71,11 @@ func NewExecutor(outputMode string) *exctr.JobExecutor {
 						return res, err
 					}
 				}
+			}
+		})
+		e.OnJobDone(func(jobs exctr.JobList, jobId int) {
+			if pw, ok := writers[jobId]; ok {
+				pw.Flush()
 			}
 		})
 	case "status-only":
