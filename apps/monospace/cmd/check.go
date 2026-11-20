@@ -56,10 +56,10 @@ Here's the reported anomalies and the action taken when --fix flag is used:
 More choices may be available when --interactive flag is used
 
 ## Check pipeline (skipped if --project-filter is used)
-- Check tasks are associated with existing projects.
+- Check tasks are associated with existing projects: fixed by removing the task and
+  the references to it in other tasks dependencies.
 - Check tasks depends on existing non persistent tasks.
 - Check for circular task dependencies
-There's no fix available on pipeline errors
 
 ## Check githooks path (warning only, skipped if --project-filter is used)
 - if a .monospace/githooks dir exists check git core.hooksPath is set to it
@@ -281,9 +281,59 @@ won't change the exit status of the command.
 		if !hasFilter {
 			// check Pipeline config is correct
 			fmt.Println(boldUnderline("checking pipeline:"))
-			pipeline := utils.CheckErrOrReturn(tasks.GetStandardizedPipeline(config, false))
+			// pipeline tasks referring to an unknown project can't be standardized,
+			// report and remove them before calling GetStandardizedPipeline which would exit
+			if orphans := config.PipelineFindOrphans(); !orphans.IsEmpty() {
+				for _, orphan := range orphans.Tasks {
+					if strings.TrimSpace(orphan.Project) == "" {
+						fmt.Println(failureIndicator + " " + theme.Warning(fmt.Sprintf("task %s has an invalid name", orphan.Task)))
+					} else {
+						fmt.Println(failureIndicator + " " + theme.Warning(fmt.Sprintf("task %s belongs to unknown project %s", orphan.Task, orphan.Project)))
+					}
+				}
+				for _, orphan := range orphans.Deps {
+					if strings.TrimSpace(orphan.Project) == "" {
+						fmt.Println(failureIndicator + " " + theme.Warning(fmt.Sprintf("task %s has an invalid dependency %s", orphan.Task, orphan.Dep)))
+					} else {
+						fmt.Println(failureIndicator + " " + theme.Warning(fmt.Sprintf("task %s depends on %s which belongs to unknown project %s", orphan.Task, orphan.Dep, orphan.Project)))
+					}
+				}
+				removeOrphans := fix
+				if !fix && interactive {
+					removeOrphans = ui.ConfirmInline(
+						fmt.Sprintf("Do you want to remove %d orphan task(s) and %d orphan dependency(ies) ?", len(orphans.Tasks), len(orphans.Deps)),
+						false,
+					)
+				}
+				if removeOrphans {
+					removed := config.PipelineFixOrphans()
+					for _, orphan := range removed.Tasks {
+						fmt.Println("  " + theme.Info("task "+orphan.Task+" removed"))
+					}
+					for _, orphan := range removed.Deps {
+						fmt.Println("  " + theme.Info("dependency "+orphan.Dep+" removed from task "+orphan.Task))
+					}
+					if !removed.IsEmpty() {
+						utils.CheckErr(app.ConfigSave())
+						fmt.Print(theme.Success("monospace.yml updated\n"))
+					}
+				} else {
+					// don't mutate the pipeline if the user declined: it stays invalid
+					if interactive {
+						utils.PrintWarning("Pipeline left unchanged, it still contains orphan tasks")
+					}
+					exitStatus = 1
+				}
+			}
+			// pipeline fixes are not safe while orphans remain: saving would remove them
+			pipelineFixable := config.PipelineFindOrphans().IsEmpty()
+			pipeline := utils.CheckErrOrReturn(tasks.GetStandardizedPipeline(config.PipelineConfigWithoutOrphans(), false))
 			pipeline.IsAcyclic(true)
-			fmt.Println(successIndicator + " pipeline ok")
+			if pipelineFixable {
+				fmt.Println(successIndicator + " pipeline ok")
+			} else {
+				fmt.Println(failureIndicator + " " + theme.Warning("pipeline is invalid due to orphan tasks"))
+			}
 
 			// check for broken tasks (tasks with no executable command)
 			fmt.Println(boldUnderline("checking tasks brokenness:"))
@@ -301,16 +351,16 @@ won't change the exit status of the command.
 					if !ok {
 						continue
 					}
-					fmt.Println(failureIndicator + " " + theme.Warning("task " + taskName + " is broken (no command found)"))
+					fmt.Println(failureIndicator + " " + theme.Warning("task "+taskName+" is broken (no command found)"))
 					if fix {
 						pipeline = pipeline.RemoveTask(taskName, config)
 						needSave = true
-						fmt.Println("  " + theme.Info("task " + taskName + " removed"))
-					} else if interactive {
+						fmt.Println("  " + theme.Info("task "+taskName+" removed"))
+					} else if interactive && pipelineFixable {
 						if ui.ConfirmInline(fmt.Sprintf("Do you want to remove task %s ?", taskName), false) {
 							pipeline = pipeline.RemoveTask(taskName, config)
 							needSave = true
-							fmt.Println("  " + theme.Info("task " + taskName + " removed"))
+							fmt.Println("  " + theme.Info("task "+taskName+" removed"))
 						} else if ui.ConfirmInline(fmt.Sprintf("Do you want to edit task %s ?", taskName), false) {
 							editedTask, errEdit := tasks.NewTaskEditor(config, task).Run()
 							if errEdit != nil {
@@ -326,6 +376,9 @@ won't change the exit status of the command.
 							}
 						}
 					}
+				}
+				if !pipelineFixable && interactive {
+					utils.PrintWarning("Pipeline fixes skipped while orphan tasks remain")
 				}
 				if needSave {
 					config.Pipeline = pipeline.ToConfig(config)
@@ -370,6 +423,10 @@ won't change the exit status of the command.
 
 		if exitStatus != 0 && !fix && !interactive {
 			os.Exit(exitStatus)
+		}
+		if !hasFilter && !config.PipelineFindOrphans().IsEmpty() {
+			utils.PrintWarning("Some pipeline anomalies remain")
+			return
 		}
 		fmt.Println(theme.Success("All good!"))
 	},

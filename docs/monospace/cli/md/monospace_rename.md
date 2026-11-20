@@ -6,6 +6,7 @@ Rename a project
 
 This will rename a project inside the monospace:
 will update the monospace gitignore and .monospace.yml files accordingly.
+It will also rename the project pipeline tasks and update tasks depending on them.
 
 ```
 monospace rename projectName newProjectName [flags]

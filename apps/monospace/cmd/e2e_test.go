@@ -297,6 +297,17 @@ func TestCmd_Suite(t *testing.T) {
 
 	runStep(t, "rename", func(t *testing.T) {
 		skipOrContinue(t, "rename")
+		// add pipeline tasks to check they are renamed (and not lost) with their references
+		confPath := initDir.Join(".monospace/monospace.yml")
+		config, err := app.ConfigRead(confPath)
+		assert.Assert(t, err == nil, "should read config without error")
+		config.Pipeline = map[string]app.MonospaceConfigTask{
+			"modules/external#build": {Cmd: []string{"echo", "build"}},
+			"packages/jslib#ci":      {Cmd: []string{"echo", "ci"}, DependsOn: []string{"modules/external#build"}},
+		}
+		rawConfig, _ := yaml.Marshal(config)
+		os.WriteFile(confPath, rawConfig, 0640)
+
 		tests := []testCase{
 			{"should error on invalid project", []string{"rename", "inexsiting", "renamed"}, icmd.Expected{ExitCode: 1}, nil, "Unkwown project"},
 			{"should error with invalid project name", []string{"rename", "modules/external", "modules/&renamed"}, icmd.Expected{ExitCode: 1}, nil, "not a valid project name"},
@@ -308,28 +319,79 @@ func TestCmd_Suite(t *testing.T) {
 		}
 		t.Log("rename")
 		runTestCases(initDir.Path())(t, tests)
+
+		t.Run("should rename pipeline tasks and their references", func(t *testing.T) {
+			params, err := app.ConfigRead(confPath)
+			assert.Assert(t, err == nil, "should read config without error")
+			if _, ok := params.Pipeline["modules/renamed#build"]; !ok {
+				t.Errorf("pipeline task should be renamed to modules/renamed#build, got: %v", params.Pipeline)
+			}
+			if _, ok := params.Pipeline["modules/external#build"]; ok {
+				t.Errorf("old pipeline task modules/external#build should not exist anymore")
+			}
+			ci, ok := params.Pipeline["packages/jslib#ci"]
+			if !ok {
+				t.Fatalf("pipeline task packages/jslib#ci should be kept")
+			}
+			assert.DeepEqual(t, ci.DependsOn, []string{"modules/renamed#build"})
+			// clean up pipeline for the next steps
+			params.Pipeline = nil
+			rawConfig, _ := yaml.Marshal(params)
+			os.WriteFile(confPath, rawConfig, 0640)
+		})
 	})
 
 	runStep(t, "remove", func(t *testing.T) {
 		skipOrContinue(t, "remove")
+		// add pipeline tasks to check they are removed along with the project
+		confPath := initDir.Join(".monospace/monospace.yml")
+		config, err := app.ConfigRead(confPath)
+		assert.Assert(t, err == nil, "should read config without error")
+		config.Pipeline = map[string]app.MonospaceConfigTask{
+			"packages/golib#build": {Cmd: []string{"echo", "build"}},
+			"packages/mylib#test":  {Cmd: []string{"echo", "test"}, DependsOn: []string{"packages/golib#build"}},
+			"apps/myapp#ci":        {Cmd: []string{"echo", "ci"}, DependsOn: []string{"packages/golib#build"}},
+		}
+		rawConfig, _ := yaml.Marshal(config)
+		os.WriteFile(confPath, rawConfig, 0640)
+
 		tests := []testCase{
 			{"should error on unknown project", []string{"remove", "unknown"}, icmd.Expected{ExitCode: 1}, nil, "Unknown project"},
-			{"should keep the directory if -y", []string{"remove", "packages/mylib", "-y"}, icmd.Success,
+			{"should report removed pipeline tasks", []string{"remove", "packages/mylib", "-y"}, icmd.Success,
 				hasDir("packages", false,
 					hasDir("golib", true),
 					hasDir("jslib", true),
 					hasDir("mylib", true),
-				), "",
+				), "Pipeline tasks removed: packages/mylib#test",
 			},
 			{"should delete the directory if -rmdir", []string{"remove", "packages/golib", "--rmdir"}, icmd.Success,
 				hasDir("packages", false,
 					hasDir("jslib", true),
 					hasDir("mylib", true),
-				), "",
+				), "Pipeline tasks removed: packages/golib#build",
 			},
 		}
-		t.Log("rename")
+		t.Log("remove")
 		runTestCases(initDir.Path())(t, tests)
+
+		t.Run("should remove project pipeline tasks and their references", func(t *testing.T) {
+			params, err := app.ConfigRead(confPath)
+			assert.Assert(t, err == nil, "should read config without error")
+			for key := range params.Pipeline {
+				if strings.HasPrefix(key, "packages/golib#") || strings.HasPrefix(key, "packages/mylib#") {
+					t.Errorf("pipeline task %s should be removed with its project", key)
+				}
+			}
+			ci, ok := params.Pipeline["apps/myapp#ci"]
+			if !ok {
+				t.Fatalf("pipeline task apps/myapp#ci should be kept")
+			}
+			assert.Assert(t, len(ci.DependsOn) == 0, "reference to the removed project task should be removed, got: %v", ci.DependsOn)
+			// clean up pipeline for the next steps
+			params.Pipeline = nil
+			rawConfig, _ := yaml.Marshal(params)
+			os.WriteFile(confPath, rawConfig, 0640)
+		})
 	})
 
 	runStep(t, "ls", func(t *testing.T) {
@@ -652,6 +714,73 @@ func TestCmd_Suite(t *testing.T) {
 		})
 		runTC(testCase{"should not return errors when local project has no directory", []string{"check"},
 			icmd.Success, nil, "",
+		})
+
+		t.Log("pipeline tasks belonging to an unknown project")
+		confPath := initDir.Join(".monospace/monospace.yml")
+		config, err := app.ConfigRead(confPath)
+		assert.Assert(t, err == nil, "should read config without error")
+		config.Pipeline = map[string]app.MonospaceConfigTask{
+			"packages/ghost#build": {Cmd: []string{"echo", "build"}},
+			"packages/jslib#ci":    {Cmd: []string{"echo", "ci"}, DependsOn: []string{"packages/ghost#build"}},
+		}
+		rawConfig, _ := yaml.Marshal(config)
+		os.WriteFile(confPath, rawConfig, 0640)
+
+		runTC(testCase{"should report pipeline tasks from unknown project", []string{"check"},
+			icmd.Expected{ExitCode: 1}, nil, "task packages/ghost#build belongs to unknown project packages/ghost",
+		})
+		runTC(testCase{"with --fix should remove orphan pipeline tasks and their references", []string{"check", "--fix"},
+			icmd.Success, nil, "task packages/ghost#build removed",
+		})
+		t.Run("pipeline should be clean after --fix", func(t *testing.T) {
+			params, err := app.ConfigRead(confPath)
+			assert.Assert(t, err == nil, "should read config without error")
+			for key := range params.Pipeline {
+				if strings.HasPrefix(key, "packages/ghost#") {
+					t.Errorf("orphan pipeline task %s should have been removed", key)
+				}
+			}
+			ci, ok := params.Pipeline["packages/jslib#ci"]
+			if !ok {
+				t.Fatalf("pipeline task packages/jslib#ci should be kept")
+			}
+			assert.Assert(t, len(ci.DependsOn) == 0, "orphan dependency should be removed, got: %v", ci.DependsOn)
+			checkIsClean(t)
+			// clean up pipeline for the next steps
+			params.Pipeline = nil
+			rawConfig, _ := yaml.Marshal(params)
+			os.WriteFile(confPath, rawConfig, 0640)
+		})
+
+		t.Log("pipeline task with an invalid name")
+		invalidCfg, err := app.ConfigRead(confPath)
+		assert.Assert(t, err == nil, "should read config without error")
+		invalidCfg.Pipeline = map[string]app.MonospaceConfigTask{
+			// leading whitespace makes the project name invalid, like tasks.ParseTaskName
+			" #build": {Cmd: []string{"echo", "build"}},
+		}
+		rawConfig, err = yaml.Marshal(invalidCfg)
+		assert.Assert(t, err == nil, "should marshal config without error")
+		assert.Assert(t, os.WriteFile(confPath, rawConfig, 0640) == nil, "should write config without error")
+
+		runTC(testCase{"should report pipeline task with invalid name", []string{"check"},
+			icmd.Expected{ExitCode: 1}, nil, "task  #build has an invalid name",
+		})
+		runTC(testCase{"with --fix should remove pipeline task with invalid name", []string{"check", "--fix"},
+			icmd.Success, nil, "task  #build removed",
+		})
+		t.Run("pipeline should be clean after invalid task removal", func(t *testing.T) {
+			params, err := app.ConfigRead(confPath)
+			assert.Assert(t, err == nil, "should read config without error")
+			if _, ok := params.Pipeline[" #build"]; ok {
+				t.Errorf("invalid pipeline task should have been removed")
+			}
+			checkIsClean(t)
+			// clean up pipeline for the next steps
+			params.Pipeline = nil
+			rawConfig, _ := yaml.Marshal(params)
+			os.WriteFile(confPath, rawConfig, 0640)
 		})
 	})
 

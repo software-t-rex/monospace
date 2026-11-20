@@ -47,12 +47,12 @@ More choices may be available when --interactive flag is used
 .SH Check pipeline (skipped if --project-filter is used)
 .RS
 .IP \(bu 2
-Check tasks are associated with existing projects.
+Check tasks are associated with existing projects: fixed by removing the task and
+the references to it in other tasks dependencies.
 .IP \(bu 2
 Check tasks depends on existing non persistent tasks.
 .IP \(bu 2
 Check for circular task dependencies
-There's no fix available on pipeline errors
 
 .RE
 

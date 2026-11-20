@@ -22,7 +22,8 @@ var renameCmd = &cobra.Command{
 	Use:   "rename projectName newProjectName",
 	Short: "Rename a project",
 	Long: `This will rename a project inside the monospace:
-will update the monospace gitignore and .monospace.yml files accordingly.`,
+will update the monospace gitignore and .monospace.yml files accordingly.
+It will also rename the project pipeline tasks and update tasks depending on them.`,
 	Args: cobra.ExactArgs(2),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -47,8 +48,8 @@ will update the monospace gitignore and .monospace.yml files accordingly.`,
 
 		project := utils.CheckErrOrReturn(mono.ProjectGetByName(oldName))
 
-		utils.CheckErr(app.ConfigRemoveProject(project.Name, false))
-		utils.CheckErr(app.ConfigAddProject(newName, project.RepoUrl, true))
+		// ConfigRenameProject rename pipeline tasks and their references so no task is lost
+		utils.CheckErr(app.ConfigRenameProject(project.Name, newName, true))
 
 		if project.Kind != mono.Internal {
 			utils.CheckErr(mono.ProjectRemoveFromGitignore(project, true))

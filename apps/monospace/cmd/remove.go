@@ -22,6 +22,7 @@ var removeCmd = &cobra.Command{
 
 It will:
 - remove the project from the .monospace/monospace.yml config
+- remove the project tasks from the pipeline and the references to them in other tasks dependencies
 - remove the project from the monospace .gitignore for non 'internal' projects
 - delete the corresponding directory if --rmdir or -r flag is set
 

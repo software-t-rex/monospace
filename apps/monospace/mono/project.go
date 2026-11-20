@@ -352,11 +352,16 @@ func ProjectRemoveFromGitignore(project Project, silent bool) (err error) {
 /* exit on error */
 func ProjectRemove(projectName string, rmdir bool, withConfirm bool) {
 	project := utils.CheckErrOrReturn(ProjectGetByName(projectName))
+	removedPipelineTasks := utils.CheckErrOrReturn(app.ProjectPipelineTasks(project.Name))
 	utils.CheckErr(app.ConfigRemoveProject(project.Name, true))
 	root := SpaceGetRoot()
 	theme := ui.GetTheme()
 
 	successMsg := fmt.Sprintf("Project %s successfully removed", projectName)
+
+	if len(removedPipelineTasks) > 0 {
+		fmt.Printf("%s Pipeline tasks removed: %s\n", theme.SuccessIndicator(), strings.Join(removedPipelineTasks, ", "))
+	}
 
 	utils.CheckErr(ProjectRemoveFromGitignore(project, false))
 

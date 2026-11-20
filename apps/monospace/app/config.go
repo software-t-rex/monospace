@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -212,40 +213,12 @@ func ConfigRemoveProjectAlias(alias string, save bool) error {
 		}
 		return nil
 	}
-	delete(config.Aliases, alias)
 	// update pipeline: rename task keys and dependsOn entries that use the alias
-	if len(config.Pipeline) > 0 {
-		aliasPrefix := alias + "#"
-		projectPrefix := projectName + "#"
-		renamedKeys := map[string]string{}
-		for k := range config.Pipeline {
-			if strings.HasPrefix(k, aliasPrefix) {
-				renamedKeys[k] = projectPrefix + k[len(aliasPrefix):]
-			}
-		}
-		// Check for key collisions before renaming
-		for oldKey, newKey := range renamedKeys {
-			if _, exists := config.Pipeline[newKey]; exists && newKey != oldKey {
-				return fmt.Errorf("cannot remove alias %q: renaming pipeline task %q to %q would overwrite an existing task", alias, oldKey, newKey)
-			}
-		}
-		for oldKey, newKey := range renamedKeys {
-			config.Pipeline[newKey] = config.Pipeline[oldKey]
-			delete(config.Pipeline, oldKey)
-		}
-		for k, task := range config.Pipeline {
-			changed := false
-			for i, dep := range task.DependsOn {
-				if strings.HasPrefix(dep, aliasPrefix) {
-					task.DependsOn[i] = projectPrefix + dep[len(aliasPrefix):]
-					changed = true
-				}
-			}
-			if changed {
-				config.Pipeline[k] = task
-			}
-		}
+	// (errors are reported before any mutation, the alias is kept on collision)
+	if _, _, errRemap := config.remapPipelinePrefixes(map[string]string{alias: projectName}); errRemap != nil {
+		return fmt.Errorf("cannot remove alias %q: %w", alias, errRemap)
 	}
+	delete(config.Aliases, alias)
 	if save {
 		return ConfigSave()
 	}
@@ -291,6 +264,9 @@ func ConfigRemoveProject(projectName string, save bool) error {
 	if err != nil {
 		return err
 	}
+	// remove pipeline tasks belonging to the project and the references to them.
+	// prefixes have to be collected before removing the project aliases.
+	config.removePipelineRefs(config.projectPipelinePrefixes(projectName))
 	delete(config.Projects, projectName)
 	// lookup for aliases to remove
 	for k, v := range config.Aliases {
@@ -302,7 +278,341 @@ func ConfigRemoveProject(projectName string, save bool) error {
 	if save {
 		return ConfigSave()
 	}
-	return err
+	return nil
+}
+
+// ConfigRenameProject renames a project, its pipeline tasks and every reference to them,
+// so no pipeline task is lost. Aliases pointing to the project are updated too.
+func ConfigRenameProject(oldName, newName string, save bool) error {
+	config, err := ConfigGet()
+	if err != nil {
+		return err
+	}
+	repoUrl, exists := config.Projects[oldName]
+	if !exists {
+		return fmt.Errorf("unknown project %s", oldName)
+	}
+	if _, exists := config.Projects[newName]; exists {
+		return fmt.Errorf("project %s already exists", newName)
+	}
+	// an alias with the target name would be shadowed by the renamed project
+	if _, exists := config.Aliases[newName]; exists {
+		return fmt.Errorf("cannot rename project %s to %s: %s is already used as an alias", oldName, newName, newName)
+	}
+	// rename pipeline task keys and their dependsOn entries,
+	// errors are reported before any mutation to avoid losing tasks
+	if _, _, errRemap := config.remapPipelinePrefixes(map[string]string{oldName: newName}); errRemap != nil {
+		return fmt.Errorf("cannot rename project %q: %w", oldName, errRemap)
+	}
+	config.Projects[newName] = repoUrl
+	delete(config.Projects, oldName)
+	// aliases targeting the project have to target the new project name,
+	// pipeline tasks using an alias prefix are left untouched since they still resolve to the project
+	for alias, target := range config.Aliases {
+		if target == oldName {
+			config.Aliases[alias] = newName
+		}
+	}
+	if save {
+		return ConfigSave()
+	}
+	return nil
+}
+
+// this regexp mirrors the task name syntax accepted by tasks.ParseTaskName
+var pipelineTaskNameRegexp = regexp.MustCompile("^(?:([^#]+)#)?([^#]+)$")
+
+// splitPipelineTaskName splits a pipeline task key into its project prefix and task name.
+// A missing project prefix is reported as an empty string meaning "*" (ie: "build", "#build").
+// It mirrors tasks.ParseTaskName exactly, including its handling of whitespace.
+func splitPipelineTaskName(key string) (project string, task string, ok bool) {
+	match := pipelineTaskNameRegexp.FindStringSubmatch(strings.TrimPrefix(key, "#"))
+	if match == nil {
+		return "", "", false
+	}
+	return match[1], match[2], true
+}
+
+// pipelineProjectPrefix normalizes a project prefix, an empty prefix meaning "*"
+func pipelineProjectPrefix(prefix string) string {
+	if prefix == "" {
+		return "*"
+	}
+	return prefix
+}
+
+// pipelineProjectIsValid returns true if the prefix refers to a known project or a valid alias,
+// or is one of the reserved "*" and "root" prefixes.
+// It mirrors tasks.getStandardProjectName() validity rules.
+func (c *MonospaceConfig) pipelineProjectIsValid(prefix string) bool {
+	prefix = pipelineProjectPrefix(prefix)
+	if prefix == "*" || prefix == "root" {
+		return true
+	}
+	if _, ok := c.Projects[prefix]; ok {
+		return true
+	}
+	if aliased, ok := c.Aliases[prefix]; ok {
+		_, ok = c.Projects[aliased]
+		return ok
+	}
+	return false
+}
+
+// projectPipelinePrefixes returns the project name plus every alias referring to it
+func (c *MonospaceConfig) projectPipelinePrefixes(projectName string) map[string]bool {
+	prefixes := map[string]bool{projectName: true}
+	for alias, target := range c.Aliases {
+		if target == projectName {
+			prefixes[alias] = true
+		}
+	}
+	return prefixes
+}
+
+// ProjectPipelineTasks returns the sorted list of pipeline task keys belonging to the given project
+// (either using its name or one of its aliases as prefix)
+func (c *MonospaceConfig) ProjectPipelineTasks(projectName string) []string {
+	prefixes := c.projectPipelinePrefixes(projectName)
+	pipelineTasks := make([]string, 0)
+	for key := range c.Pipeline {
+		project, _, ok := splitPipelineTaskName(key)
+		if ok && prefixes[pipelineProjectPrefix(project)] {
+			pipelineTasks = append(pipelineTasks, key)
+		}
+	}
+	sort.Strings(pipelineTasks)
+	return pipelineTasks
+}
+
+// ProjectPipelineTasks returns the sorted list of pipeline task keys belonging to the given project
+// from the loaded config
+func ProjectPipelineTasks(projectName string) ([]string, error) {
+	config, err := ConfigGet()
+	if err != nil {
+		return nil, err
+	}
+	return config.ProjectPipelineTasks(projectName), nil
+}
+
+// remapPipelinePrefixes renames pipeline task keys and dependsOn entries using one of the given
+// prefixes. Errors are reported before any mutation to avoid losing tasks on collision.
+// Dependencies without '#' are relative to their own project, they are left untouched.
+func (c *MonospaceConfig) remapPipelinePrefixes(prefixMap map[string]string) (changedKeys, changedDeps []string, err error) {
+	renamedKeys := map[string]string{}
+	for key := range c.Pipeline {
+		project, task, ok := splitPipelineTaskName(key)
+		if !ok {
+			continue
+		}
+		newPrefix, found := prefixMap[pipelineProjectPrefix(project)]
+		if !found {
+			continue
+		}
+		if newKey := newPrefix + "#" + task; newKey != key {
+			renamedKeys[key] = newKey
+		}
+	}
+	// check for collisions before mutating anything
+	for oldKey, newKey := range renamedKeys {
+		if _, exists := c.Pipeline[newKey]; exists {
+			return nil, nil, fmt.Errorf("renaming pipeline task %q to %q would overwrite an existing task", oldKey, newKey)
+		}
+	}
+	for oldKey, newKey := range renamedKeys {
+		c.Pipeline[newKey] = c.Pipeline[oldKey]
+		delete(c.Pipeline, oldKey)
+		changedKeys = append(changedKeys, oldKey)
+	}
+	for key, task := range c.Pipeline {
+		changed := false
+		for i, dep := range task.DependsOn {
+			if !strings.Contains(dep, "#") {
+				continue
+			}
+			project, depTask, ok := splitPipelineTaskName(dep)
+			if !ok {
+				continue
+			}
+			newPrefix, found := prefixMap[pipelineProjectPrefix(project)]
+			if !found {
+				continue
+			}
+			task.DependsOn[i] = newPrefix + "#" + depTask
+			changedDeps = append(changedDeps, key+" -> "+dep)
+			changed = true
+		}
+		if changed {
+			c.Pipeline[key] = task
+		}
+	}
+	sort.Strings(changedKeys)
+	sort.Strings(changedDeps)
+	return
+}
+
+// removePipelineRefs removes pipeline tasks belonging to one of the given prefixes and filters out
+// the dependsOn entries referring to them. Dependencies without '#' are relative to their own
+// project, they are left untouched.
+func (c *MonospaceConfig) removePipelineRefs(prefixes map[string]bool) (removedTasks, cleanedDeps []string) {
+	if len(prefixes) == 0 {
+		return
+	}
+	for key := range c.Pipeline {
+		project, _, ok := splitPipelineTaskName(key)
+		if ok && prefixes[pipelineProjectPrefix(project)] {
+			delete(c.Pipeline, key)
+			removedTasks = append(removedTasks, key)
+		}
+	}
+	for key, task := range c.Pipeline {
+		if len(task.DependsOn) == 0 {
+			continue
+		}
+		kept := make([]string, 0, len(task.DependsOn))
+		changed := false
+		for _, dep := range task.DependsOn {
+			if strings.Contains(dep, "#") {
+				project, _, ok := splitPipelineTaskName(dep)
+				if ok && prefixes[pipelineProjectPrefix(project)] {
+					changed = true
+					cleanedDeps = append(cleanedDeps, key+" -> "+dep)
+					continue
+				}
+			}
+			kept = append(kept, dep)
+		}
+		if changed {
+			task.DependsOn = kept
+			c.Pipeline[key] = task
+		}
+	}
+	sort.Strings(removedTasks)
+	sort.Strings(cleanedDeps)
+	return
+}
+
+// PipelineOrphanRef describes either a pipeline task belonging to an unknown project or a
+// dependency referring to such a task.
+type PipelineOrphanRef struct {
+	Task    string // the pipeline task holding the reference
+	Project string // the unknown project prefix
+	Dep     string // the offending dependency (empty for orphan tasks)
+	IsDep   bool
+}
+
+// PipelineOrphanReport lists orphan pipeline tasks and dependencies referring to them
+type PipelineOrphanReport struct {
+	Tasks []PipelineOrphanRef
+	Deps  []PipelineOrphanRef
+}
+
+// IsEmpty returns true when no orphan was found
+func (r PipelineOrphanReport) IsEmpty() bool {
+	return len(r.Tasks) == 0 && len(r.Deps) == 0
+}
+
+// PipelineFindOrphans reports pipeline tasks belonging to an unknown project or alias and the
+// dependencies referring to them. The config is left untouched.
+func (c *MonospaceConfig) PipelineFindOrphans() PipelineOrphanReport {
+	report := PipelineOrphanReport{}
+	orphanTasks := map[string]bool{}
+	for key := range c.Pipeline {
+		project, _, ok := splitPipelineTaskName(key)
+		if !ok {
+			report.Tasks = append(report.Tasks, PipelineOrphanRef{Task: key})
+			orphanTasks[key] = true
+			continue
+		}
+		prefix := pipelineProjectPrefix(project)
+		if !c.pipelineProjectIsValid(prefix) {
+			report.Tasks = append(report.Tasks, PipelineOrphanRef{Task: key, Project: prefix})
+			orphanTasks[key] = true
+		}
+	}
+	seenDeps := map[string]bool{}
+	for key, task := range c.Pipeline {
+		if orphanTasks[key] {
+			continue
+		}
+		for _, dep := range task.DependsOn {
+			if !strings.Contains(dep, "#") {
+				continue
+			}
+			// a dependency may be declared more than once, report it only once
+			depKey := key + "\x00" + dep
+			if seenDeps[depKey] {
+				continue
+			}
+			seenDeps[depKey] = true
+			project, _, ok := splitPipelineTaskName(dep)
+			if !ok {
+				report.Deps = append(report.Deps, PipelineOrphanRef{Task: key, Dep: dep, IsDep: true})
+				continue
+			}
+			prefix := pipelineProjectPrefix(project)
+			if !c.pipelineProjectIsValid(prefix) {
+				report.Deps = append(report.Deps, PipelineOrphanRef{Task: key, Project: prefix, Dep: dep, IsDep: true})
+			}
+		}
+	}
+	sort.Slice(report.Tasks, func(i, j int) bool { return report.Tasks[i].Task < report.Tasks[j].Task })
+	sort.Slice(report.Deps, func(i, j int) bool {
+		if report.Deps[i].Task == report.Deps[j].Task {
+			return report.Deps[i].Dep < report.Deps[j].Dep
+		}
+		return report.Deps[i].Task < report.Deps[j].Task
+	})
+	return report
+}
+
+// PipelineFixOrphans removes orphan pipeline tasks and the dependencies referring to them,
+// it returns the report of what has been removed.
+func (c *MonospaceConfig) PipelineFixOrphans() PipelineOrphanReport {
+	report := c.PipelineFindOrphans()
+	for _, orphan := range report.Tasks {
+		delete(c.Pipeline, orphan.Task)
+	}
+	for _, orphan := range report.Deps {
+		c.PipelineRemoveDep(orphan.Task, orphan.Dep)
+	}
+	return report
+}
+
+// PipelineConfigWithoutOrphans returns a copy of the config where orphan pipeline tasks and
+// dependencies have been removed. It is used to run the remaining pipeline checks on a config
+// which can be standardized, without mutating the original config nor exiting.
+func (c *MonospaceConfig) PipelineConfigWithoutOrphans() *MonospaceConfig {
+	clone := *c
+	clone.Pipeline = make(map[string]MonospaceConfigTask, len(c.Pipeline))
+	for key, task := range c.Pipeline {
+		clone.Pipeline[key] = task
+	}
+	clone.PipelineFixOrphans()
+	return &clone
+}
+
+// PipelineRemoveDep removes the given dependency from a pipeline task
+func (c *MonospaceConfig) PipelineRemoveDep(taskKey, dep string) bool {
+	task, ok := c.Pipeline[taskKey]
+	if !ok {
+		return false
+	}
+	kept := make([]string, 0, len(task.DependsOn))
+	removed := false
+	for _, taskDep := range task.DependsOn {
+		if taskDep == dep {
+			removed = true
+			continue
+		}
+		kept = append(kept, taskDep)
+	}
+	if !removed {
+		return false
+	}
+	task.DependsOn = kept
+	c.Pipeline[taskKey] = task
+	return true
 }
 
 // Add given env vars to the current env prefixing them with MONOSPACE_

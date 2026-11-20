@@ -32,10 +32,10 @@ Here's the reported anomalies and the action taken when --fix flag is used:
 More choices may be available when --interactive flag is used
 
 ## Check pipeline (skipped if --project-filter is used)
-- Check tasks are associated with existing projects.
+- Check tasks are associated with existing projects: fixed by removing the task and
+  the references to it in other tasks dependencies.
 - Check tasks depends on existing non persistent tasks.
 - Check for circular task dependencies
-There's no fix available on pipeline errors
 
 ## Check githooks path (warning only, skipped if --project-filter is used)
 - if a .monospace/githooks dir exists check git core.hooksPath is set to it
