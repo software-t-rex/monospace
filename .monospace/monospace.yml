@@ -30,7 +30,7 @@ pipeline:
         cmd: [test.sh]
         dependsOn: [packageJson#test]
     monospace#build:
-        cmd: [goreleaser, release, --clean, --skip-publish]
+        cmd: [goreleaser, release, --clean, --skip=publish]
         dependsOn: [monospace#test]
         output_mode: interleaved
     monospace#buildnext:
