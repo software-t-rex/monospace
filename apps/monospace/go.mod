@@ -1,15 +1,15 @@
 module github.com/software-t-rex/monospace
 
-go 1.21.6
+go 1.23
 
 // modules from the monospace
 require (
-	github.com/software-t-rex/go-jobExecutor/v2 v2.1.2
-	github.com/software-t-rex/js-packagemanager v0.0.5
+	github.com/software-t-rex/go-jobExecutor/v2 v2.1.3
+	github.com/software-t-rex/js-packagemanager v0.0.7
 	github.com/software-t-rex/monospace/gomodules/scaffolders v0.0.0
 	github.com/software-t-rex/monospace/gomodules/ui v0.0.0
 	github.com/software-t-rex/monospace/gomodules/utils v0.0.0
-	github.com/software-t-rex/packageJson v0.0.3
+	github.com/software-t-rex/packageJson v0.0.4
 )
 
 replace (

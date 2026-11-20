@@ -2,6 +2,7 @@ go 1.23.9
 
 use (
 	./apps/monospace
+	./apps/monospace/doc
 	./gomodules/go-jobexecutor
 	./gomodules/js-packagemanager
 	./gomodules/packageJson
